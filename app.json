@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "OrangeUni",
+    "slug": "orangeuni",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"]
+  }
+}
