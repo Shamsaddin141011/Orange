@@ -3,6 +3,89 @@ import { MatchResult, StudentProfile, University } from '../types';
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
 /**
+ * Maps user-facing major names to the broad categories stored in the DB.
+ * DB categories: Computer Science, Business, Engineering, Biology,
+ * Medicine & Health, Social Sciences, Mathematics, Psychology,
+ * Humanities, Law, Physics, Liberal Arts
+ */
+const MAJOR_SYNONYMS: Record<string, string[]> = {
+  'computer science':        ['Computer Science'],
+  'data science':            ['Computer Science', 'Mathematics'],
+  'software engineering':    ['Computer Science', 'Engineering'],
+  'information technology':  ['Computer Science'],
+  'cybersecurity':           ['Computer Science'],
+  'artificial intelligence': ['Computer Science', 'Mathematics'],
+  'machine learning':        ['Computer Science', 'Mathematics'],
+  'mathematics':             ['Mathematics'],
+  'statistics':              ['Mathematics', 'Computer Science'],
+  'physics':                 ['Physics'],
+  'chemistry':               ['Physics', 'Biology'],
+  'biology':                 ['Biology'],
+  'environmental science':   ['Biology', 'Physics'],
+  'neuroscience':            ['Biology', 'Psychology'],
+  'biomedical engineering':  ['Engineering', 'Biology'],
+  'engineering':             ['Engineering'],
+  'electrical engineering':  ['Engineering'],
+  'mechanical engineering':  ['Engineering'],
+  'civil engineering':       ['Engineering'],
+  'chemical engineering':    ['Engineering', 'Physics'],
+  'architecture':            ['Engineering', 'Humanities'],
+  'business':                ['Business'],
+  'finance':                 ['Business', 'Mathematics'],
+  'accounting':              ['Business'],
+  'marketing':               ['Business'],
+  'management':              ['Business'],
+  'international business':  ['Business', 'Social Sciences'],
+  'entrepreneurship':        ['Business'],
+  'economics':               ['Business', 'Social Sciences'],
+  'psychology':              ['Psychology'],
+  'sociology':               ['Social Sciences'],
+  'political science':       ['Social Sciences', 'Law'],
+  'anthropology':            ['Social Sciences', 'Humanities'],
+  'geography':               ['Social Sciences'],
+  'criminology':             ['Social Sciences', 'Law'],
+  'social work':             ['Social Sciences'],
+  'international relations': ['Social Sciences'],
+  'law':                     ['Law'],
+  'humanities':              ['Humanities'],
+  'history':                 ['Humanities', 'Social Sciences'],
+  'philosophy':              ['Humanities'],
+  'english':                 ['Humanities'],
+  'literature':              ['Humanities'],
+  'linguistics':             ['Humanities'],
+  'communications':          ['Humanities', 'Social Sciences'],
+  'journalism':              ['Humanities'],
+  'media studies':           ['Humanities', 'Social Sciences'],
+  'film':                    ['Humanities'],
+  'theater':                 ['Humanities', 'Liberal Arts'],
+  'art':                     ['Humanities', 'Liberal Arts'],
+  'design':                  ['Humanities', 'Computer Science'],
+  'music':                   ['Humanities', 'Liberal Arts'],
+  'education':               ['Social Sciences', 'Humanities'],
+  'medicine':                ['Medicine & Health'],
+  'nursing':                 ['Medicine & Health'],
+  'public health':           ['Medicine & Health'],
+  'pharmacy':                ['Medicine & Health', 'Biology'],
+  'dentistry':               ['Medicine & Health'],
+  'liberal arts':            ['Liberal Arts', 'Humanities'],
+};
+
+/** Expand a user interest to its DB-matching categories */
+function expandInterest(interest: string): string[] {
+  const key = interest.toLowerCase();
+  // Direct synonym lookup
+  if (MAJOR_SYNONYMS[key]) return MAJOR_SYNONYMS[key].map((s) => s.toLowerCase());
+  // Fallback: check if the interest is a substring of any synonym key or vice versa
+  for (const [synKey, synVals] of Object.entries(MAJOR_SYNONYMS)) {
+    if (synKey.includes(key) || key.includes(synKey)) {
+      return synVals.map((s) => s.toLowerCase());
+    }
+  }
+  // Last resort: return the interest itself (handles direct DB category matches)
+  return [key];
+}
+
+/**
  * Final score = 0.40 interest (recall) + 0.35 SAT + 0.15 prestige + 0.10 preference
  *
  * Interest uses recall (overlap / user_interests) so large universities with many
@@ -14,11 +97,18 @@ const clamp = (n: number) => Math.max(0, Math.min(1, n));
  * Prestige: derived from acceptance rate so high-SAT students surface elite schools.
  */
 export const scoreUniversity = (profile: StudentProfile, university: University): MatchResult => {
-  // Interest — recall-based: what fraction of the student's interests does this school cover?
-  const interestSet = new Set(profile.interests.map((i) => i.toLowerCase()));
-  const majorSet = new Set(university.majors.map((m) => m.toLowerCase()));
-  const matchedInterests = [...interestSet].filter((i) => majorSet.has(i));
-  const interestScore = interestSet.size > 0 ? matchedInterests.length / interestSet.size : 0.5;
+  // Interest — expand user interests to DB categories via synonym map,
+  // then check recall against what the university offers.
+  const majorList = university.majors.map((m) => m.toLowerCase());
+  const matchedInterests = profile.interests.filter((interest) => {
+    const expanded = expandInterest(interest);
+    return expanded.some((term) =>
+      majorList.some((major) => major.includes(term) || term.includes(major))
+    );
+  });
+  const interestScore = profile.interests.length > 0
+    ? matchedInterests.length / profile.interests.length
+    : 0.5;
 
   // SAT — no penalty for being above the range; only penalise for being below
   let satScore = 0.5;

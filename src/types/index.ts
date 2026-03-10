@@ -28,6 +28,7 @@ export interface University {
 export interface StudentProfile {
   country: Country;
   interests: string[];
+  budgetMin?: number;
   budgetMax?: number;
   preferredLocation?: string;
   satTotal?: number;

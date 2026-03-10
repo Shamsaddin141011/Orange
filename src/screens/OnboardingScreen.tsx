@@ -6,14 +6,31 @@ import { Country } from '../types';
 import { validateSat, validateSectionSat } from '../utils/scoring';
 import { DiscoverStackParamList } from '../navigation/AppNavigator';
 
-const interests = ['Computer Science', 'Data Science', 'Mathematics', 'Business', 'Economics', 'Biology', 'Psychology', 'Physics'];
+const KNOWN_MAJORS = [
+  'Computer Science', 'Data Science', 'Mathematics', 'Business', 'Economics',
+  'Biology', 'Psychology', 'Physics', 'Chemistry', 'Engineering',
+  'Electrical Engineering', 'Mechanical Engineering', 'Civil Engineering',
+  'Chemical Engineering', 'Biomedical Engineering', 'Software Engineering',
+  'Information Technology', 'Cybersecurity', 'Artificial Intelligence',
+  'Machine Learning', 'Finance', 'Accounting', 'Marketing', 'Management',
+  'International Business', 'Entrepreneurship', 'Law', 'Political Science',
+  'History', 'Philosophy', 'English', 'Literature', 'Linguistics',
+  'Sociology', 'Anthropology', 'Geography', 'Environmental Science',
+  'Architecture', 'Art', 'Design', 'Music', 'Film', 'Theater',
+  'Nursing', 'Medicine', 'Public Health', 'Pharmacy', 'Dentistry',
+  'Education', 'Communications', 'Journalism', 'Media Studies',
+  'Social Work', 'Criminology', 'Neuroscience', 'Statistics',
+];
 
 type Props = NativeStackScreenProps<DiscoverStackParamList, 'Onboarding'>;
 
 export function OnboardingScreen({ navigation }: Props) {
   const [country, setCountry] = useState<Country>('USA');
   const [selected, setSelected] = useState<string[]>(['Computer Science']);
-  const [budget, setBudget] = useState('');
+  const [majorInput, setMajorInput] = useState('');
+  const [majorError, setMajorError] = useState('');
+  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMax, setBudgetMax] = useState('');
   const [location, setLocation] = useState('');
   const [satTotal, setSatTotal] = useState('1200');
   const [satMath, setSatMath] = useState('');
@@ -22,8 +39,27 @@ export function OnboardingScreen({ navigation }: Props) {
   const [error, setError] = useState('');
   const { fetchAndScore, loading, error: fetchError } = useAppStore();
 
-  const toggle = (value: string) =>
-    setSelected((prev) => prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]);
+  const addMajor = () => {
+    const trimmed = majorInput.trim();
+    if (!trimmed) return;
+    const match = KNOWN_MAJORS.find(
+      (m) => m.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (!match) {
+      setMajorError(`"${trimmed}" isn't a recognised major. Try something like: Psychology, Engineering, Biology.`);
+      return;
+    }
+    if (selected.includes(match)) {
+      setMajorError(`"${match}" is already added.`);
+      return;
+    }
+    setSelected((prev) => [...prev, match]);
+    setMajorInput('');
+    setMajorError('');
+  };
+
+  const removeMajor = (value: string) =>
+    setSelected((prev) => prev.filter((v) => v !== value));
 
   const canContinue = useMemo(() => selected.length > 0, [selected.length]);
 
@@ -35,10 +71,17 @@ export function OnboardingScreen({ navigation }: Props) {
       setError('Invalid SAT values. Total must be 400–1600 and sections 200–800.');
       return;
     }
+    const bMin = budgetMin ? Number(budgetMin) : undefined;
+    const bMax = budgetMax ? Number(budgetMax) : undefined;
+    if (bMin !== undefined && bMax !== undefined && bMin >= bMax) {
+      setError('Min budget must be less than max budget.');
+      return;
+    }
     const profile = {
       country,
       interests: selected,
-      budgetMax: budget ? Number(budget) : undefined,
+      budgetMin: bMin,
+      budgetMax: bMax,
       preferredLocation: location || undefined,
       satTotal: sat,
       satMath: math,
@@ -57,22 +100,43 @@ export function OnboardingScreen({ navigation }: Props) {
       <Text style={styles.label}>Where do you want to study?</Text>
       <View style={styles.row}>
         {(['USA', 'UK', 'EU', 'China'] as Country[]).map((c) => (
-          <Pressable key={c} onPress={() => setCountry(c)} style={[styles.option, country === c && styles.optionActive]}>
-            <Text style={[styles.optionText, country === c && styles.optionTextActive]}>
+          <Pressable key={c} onPress={() => setCountry(c)} style={[styles.chip, country === c && styles.chipActive]}>
+            <Text style={[styles.chipText, country === c && styles.chipTextActive]}>
               {c === 'USA' ? '🇺🇸 USA' : c === 'UK' ? '🇬🇧 UK' : c === 'EU' ? '🇪🇺 Europe' : '🇨🇳 China'}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.label}>Interests</Text>
-      <View style={styles.row}>
-        {interests.map((i) => (
-          <Pressable key={i} onPress={() => toggle(i)} style={[styles.option, selected.includes(i) && styles.optionActive]}>
-            <Text style={[styles.optionText, selected.includes(i) && styles.optionTextActive]}>{i}</Text>
-          </Pressable>
-        ))}
+      <Text style={styles.label}>Interests / Majors</Text>
+      <View style={styles.majorRow}>
+        <TextInput
+          style={[styles.majorInput, majorError ? styles.majorInputError : null]}
+          value={majorInput}
+          onChangeText={(t) => { setMajorInput(t); setMajorError(''); }}
+          onSubmitEditing={addMajor}
+          placeholder="e.g. Psychology"
+          placeholderTextColor="#9ca3af"
+          returnKeyType="done"
+        />
+        <Pressable onPress={addMajor} style={styles.addBtn}>
+          <Text style={styles.addBtnText}>Add</Text>
+        </Pressable>
       </View>
+      {!!majorError && (
+        <View style={styles.inlineError}>
+          <Text style={styles.inlineErrorText}>{majorError}</Text>
+        </View>
+      )}
+      {selected.length > 0 && (
+        <View style={[styles.row, { marginTop: 8 }]}>
+          {selected.map((item) => (
+            <Pressable key={item} onPress={() => removeMajor(item)} style={styles.chipActive}>
+              <Text style={styles.chipTextActive}>{item} ×</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       <Text style={styles.label}>SAT Total Score</Text>
       <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
@@ -91,8 +155,17 @@ export function OnboardingScreen({ navigation }: Props) {
       <Text style={styles.label}>GPA <Text style={styles.optional}>(optional)</Text></Text>
       <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="e.g. 3.8" placeholderTextColor="#9ca3af" />
 
-      <Text style={styles.label}>Max Budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
-      <TextInput style={styles.input} keyboardType="number-pad" value={budget} onChangeText={setBudget} placeholder="e.g. 50000" placeholderTextColor="#9ca3af" />
+      <Text style={styles.label}>Budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
+      <View style={styles.twoCol}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sublabel}>Min</Text>
+          <TextInput style={styles.input} keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 10000" placeholderTextColor="#9ca3af" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sublabel}>Max</Text>
+          <TextInput style={styles.input} keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" placeholderTextColor="#9ca3af" />
+        </View>
+      </View>
 
       <Text style={styles.label}>Preferred City/State <Text style={styles.optional}>(optional)</Text></Text>
       <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="e.g. Boston, CA" placeholderTextColor="#9ca3af" />
@@ -118,10 +191,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '800', color: '#111827', marginBottom: 4 },
   subtitle: { fontSize: 15, color: '#6b7280', marginBottom: 16, lineHeight: 22 },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginTop: 12, marginBottom: 6 },
+  sublabel: { fontSize: 12, fontWeight: '500', color: '#6b7280', marginBottom: 4 },
   optional: { fontWeight: '400', color: '#9ca3af' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   twoCol: { flexDirection: 'row', gap: 12 },
-  option: {
+  chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     backgroundColor: '#fff',
@@ -129,9 +203,38 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
   },
-  optionActive: { backgroundColor: '#fff7ed', borderColor: '#f97316' },
-  optionText: { fontSize: 13, fontWeight: '500', color: '#6b7280' },
-  optionTextActive: { color: '#f97316', fontWeight: '700' },
+  chipActive: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#fff7ed',
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#f97316',
+  },
+  chipText: { fontSize: 13, fontWeight: '500', color: '#6b7280' },
+  chipTextActive: { fontSize: 13, color: '#f97316', fontWeight: '700' },
+  majorRow: { flexDirection: 'row', gap: 8 },
+  majorInput: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: '#111827',
+  },
+  majorInputError: { borderColor: '#f87171' },
+  addBtn: {
+    backgroundColor: '#f97316',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  inlineError: { marginTop: 6, backgroundColor: '#fef2f2', borderRadius: 8, padding: 8, borderWidth: 1, borderColor: '#fca5a5' },
+  inlineErrorText: { color: '#dc2626', fontSize: 13 },
   input: {
     backgroundColor: '#fff',
     borderWidth: 1.5,

@@ -37,16 +37,21 @@ export interface UniversityRow {
 export async function fetchUniversities(params: {
   country: string;
   satTotal?: number;
+  budgetMin?: number;
   budgetMax?: number;
   limit?: number;
 }): Promise<UniversityRow[]> {
-  const { country, satTotal, budgetMax, limit = 2000 } = params;
+  const { country, satTotal, budgetMin, budgetMax, limit = 2000 } = params;
 
   let query = supabase
     .from('universities')
     .select('*')
     .eq('country', country)
     .limit(limit);
+
+  if (budgetMin) {
+    query = query.gte('tuition_estimate', budgetMin);
+  }
 
   if (budgetMax) {
     query = query.lte('tuition_estimate', budgetMax);

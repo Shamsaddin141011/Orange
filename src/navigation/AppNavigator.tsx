@@ -93,16 +93,14 @@ export function AppNavigator() {
   const { setSession: storeSetSession, loadUserData } = useAppStore();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      storeSetSession(session);
-      setInitialising(false);
-    });
-
+    // In Supabase v2, onAuthStateChange always emits INITIAL_SESSION on mount.
+    // This also correctly handles the OAuth redirect case where the hash/code
+    // is still being parsed when getSession() would otherwise return null.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       storeSetSession(session);
       if (session) loadUserData();
+      setInitialising(false);
     });
 
     return () => subscription.unsubscribe();

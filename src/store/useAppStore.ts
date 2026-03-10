@@ -54,12 +54,15 @@ export const useAppStore = create<AppState>()(
           const rows = await fetchUniversities({
             country: profile.country,
             satTotal: profile.satTotal,
+            budgetMin: profile.budgetMin,
             budgetMax: profile.budgetMax,
             limit: 2000,
           });
           const universities = rows.map(rowToUniversity);
+          const hasInterests = profile.interests.length > 0;
           const scored = universities
             .map((u) => scoreUniversity(profile, u))
+            .filter((r) => !hasInterests || r.breakdown.interest > 0)
             .sort((a, b) => b.score - a.score);
           set({ matches: scored, profile, loading: false });
         } catch (e: any) {
