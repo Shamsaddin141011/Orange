@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -15,8 +15,19 @@ export function AuthScreen() {
     setLoading(true);
     setError('');
     try {
-      const redirectTo = AuthSession.makeRedirectUri({ scheme: 'orangeuni' });
+      if (Platform.OS === 'web') {
+        // On web: just redirect the browser — Supabase handles the callback automatically
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin },
+        });
+        if (oauthError) setError(oauthError.message);
+        // Browser will redirect — no further action needed here
+        return;
+      }
 
+      // Native (iOS / Android)
+      const redirectTo = AuthSession.makeRedirectUri({ scheme: 'orangeuni' });
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, skipBrowserRedirect: true },
@@ -31,15 +42,12 @@ export function AuthScreen() {
 
       if (result.type === 'success') {
         const url = result.url;
-        // Extract tokens from the URL and set session
         const params = new URL(url);
         const accessToken = params.searchParams.get('access_token');
         const refreshToken = params.searchParams.get('refresh_token');
-
         if (accessToken && refreshToken) {
           await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
         } else {
-          // PKCE flow — exchange code for session
           await supabase.auth.exchangeCodeForSession(url);
         }
       }
