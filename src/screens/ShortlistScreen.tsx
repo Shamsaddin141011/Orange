@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
 import { colorIdx } from '../lib/transform';
-import { universities } from '../data/universities';
 import { useAppStore } from '../store/useAppStore';
 import { ShortlistTag } from '../types';
 
@@ -13,8 +12,11 @@ const TAG_COLORS: Record<ShortlistTag, { bg: string; text: string; border: strin
 };
 
 export function ShortlistScreen() {
-  const { shortlist, setShortlistMeta, toggleShortlist } = useAppStore();
-  const items = useMemo(() => universities.filter((u) => shortlist[u.id]), [shortlist]);
+  const { shortlist, setShortlistMeta, toggleShortlist, matches } = useAppStore();
+  const items = useMemo(
+    () => matches.filter((m) => shortlist[m.university.id]).map((m) => m.university),
+    [matches, shortlist],
+  );
 
   if (!items.length) {
     return (

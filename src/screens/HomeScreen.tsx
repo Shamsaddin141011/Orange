@@ -3,17 +3,15 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
 import { colorIdx } from '../lib/transform';
-import { universities } from '../data/universities';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-
-const FEATURED = universities.slice(0, 4);
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
   const { shortlist, matches } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const matchCount = matches.length;
+  const featured = matches.slice(0, 4);
   const [totalSchools, setTotalSchools] = useState<number | null>(null);
 
   useEffect(() => {
@@ -62,19 +60,23 @@ export function HomeScreen() {
         ))}
       </View>
 
-      {/* Featured schools */}
-      <Text style={styles.sectionTitle}>Featured Schools</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
-        {FEATURED.map((u) => (
-          <Pressable key={u.id} style={styles.featuredCard} onPress={() => navigation.navigate('Discover')}>
-            <CardBanner name={u.name} city={u.city} state={u.state} country={u.country} idx={colorIdx(u.id)} height={110} />
-            <View style={styles.featuredInfo}>
-              <Text style={styles.featuredName} numberOfLines={1}>{u.name}</Text>
-              <Text style={styles.featuredMeta}>{u.city} · {u.country}</Text>
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
+      {/* Featured schools — only shown after a search */}
+      {featured.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Top Matches</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
+            {featured.map((m) => (
+              <Pressable key={m.university.id} style={styles.featuredCard} onPress={() => navigation.navigate('Discover')}>
+                <CardBanner name={m.university.name} city={m.university.city} state={m.university.state} country={m.university.country} idx={colorIdx(m.university.id)} height={110} />
+                <View style={styles.featuredInfo}>
+                  <Text style={styles.featuredName} numberOfLines={1}>{m.university.name}</Text>
+                  <Text style={styles.featuredMeta}>{m.university.city} · {m.score}% match</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      )}
 
       <View style={{ height: 32 }} />
     </ScrollView>

@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
 import { colorIdx } from '../lib/transform';
-import { universities } from '../data/universities';
 import { useAppStore } from '../store/useAppStore';
 
 const STATUS_OPTIONS = ['not_started', 'in_progress', 'submitted'] as const;
@@ -29,8 +28,11 @@ const CHECKLIST_ITEMS = [
 const base = { essays: false, recommendations: false, testScores: false, feeWaiver: false, visaDocs: false, status: 'not_started' as const, reminder: '' };
 
 export function TrackerScreen() {
-  const { shortlist, tracker, setTracker } = useAppStore();
-  const items = useMemo(() => universities.filter((u) => shortlist[u.id]), [shortlist]);
+  const { shortlist, tracker, setTracker, matches } = useAppStore();
+  const items = useMemo(
+    () => matches.filter((m) => shortlist[m.university.id]).map((m) => m.university),
+    [matches, shortlist],
+  );
 
   if (!items.length) {
     return (
