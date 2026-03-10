@@ -1,8 +1,10 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getPalette, getInitials } from '../components/CardBanner';
-import { colorIdx } from '../lib/transform';
+import { supabase } from '../lib/supabase';
+import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
-import { MatchResult, University } from '../types';
+import { University } from '../types';
 
 const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 
@@ -75,8 +77,40 @@ function getWinnerIndices(unis: University[], metric: MetricDef): boolean[] {
 }
 
 export function CompareScreen() {
-  const { compareIds, matches } = useAppStore();
-  const compareItems = matches.filter((m) => compareIds.includes(m.university.id));
+  const { compareIds, matches, toggleCompare } = useAppStore();
+  const [fetchedUnis, setFetchedUnis] = useState<Record<string, University>>({});
+
+  // Build a map of unis already in matches
+  const matchedUnis: Record<string, { uni: University; match: MatchResult }> = {};
+  for (const m of matches) matchedUnis[m.university.id] = { uni: m.university, match: m };
+
+  // Fetch any compareIds not covered by matches
+  useEffect(() => {
+    const missingIds = compareIds.filter((id) => !matchedUnis[id] && !fetchedUnis[id]);
+    if (!missingIds.length) return;
+    supabase
+      .from('universities')
+      .select('*')
+      .in('id', missingIds)
+      .then(({ data }) => {
+        if (!data) return;
+        setFetchedUnis((prev) => {
+          const next = { ...prev };
+          for (const row of data) next[row.id] = rowToUniversity(row as any);
+          return next;
+        });
+      });
+  }, [compareIds.join(',')]);
+
+  // Build compareItems — prefer match data, fall back to fetched uni
+  const compareItems: Array<{ university: University; score?: number }> = compareIds
+    .map((id) => {
+      if (matchedUnis[id]) return matchedUnis[id].match;
+      if (fetchedUnis[id]) return { university: fetchedUnis[id], score: undefined };
+      return null;
+    })
+    .filter(Boolean) as Array<{ university: University; score?: number }>;
+
   const unis = compareItems.map((m) => m.university);
 
   if (!unis.length) {
@@ -104,7 +138,9 @@ export function CompareScreen() {
           const [bgA, bgB] = getPalette(colorIdx(u.id));
           const initials = getInitials(u.name);
           const scoreColor =
-            item.score >= 80 ? '#16a34a' : item.score >= 60 ? '#f97316' : '#6b7280';
+            item.score != null
+              ? item.score >= 80 ? '#16a34a' : item.score >= 60 ? '#f97316' : '#6b7280'
+              : '#9ca3af';
 
           return (
             <View key={u.id} style={styles.headerCard}>
@@ -117,15 +153,22 @@ export function CompareScreen() {
 
               {/* Info below banner */}
               <View style={styles.headerInfo}>
-                <Text style={styles.headerName} numberOfLines={2}>{u.name}</Text>
+                <View style={styles.headerNameRow}>
+                  <Text style={[styles.headerName, { flex: 1 }]} numberOfLines={2}>{u.name}</Text>
+                  <Pressable onPress={() => toggleCompare(u.id)} style={styles.removeBtn} hitSlop={8}>
+                    <Text style={styles.removeBtnText}>✕</Text>
+                  </Pressable>
+                </View>
                 <Text style={styles.headerCity}>
                   {u.city}{u.state ? `, ${u.state}` : ''}
                 </Text>
-                <View style={[styles.scorePill, { borderColor: scoreColor }]}>
-                  <Text style={[styles.scorePillText, { color: scoreColor }]}>
-                    {item.score}% match
-                  </Text>
-                </View>
+                {item.score != null && (
+                  <View style={[styles.scorePill, { borderColor: scoreColor }]}>
+                    <Text style={[styles.scorePillText, { color: scoreColor }]}>
+                      {item.score}% match
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           );
@@ -258,6 +301,9 @@ const styles = StyleSheet.create({
   },
   headerFlag: { fontSize: 24 },
   headerInfo: { padding: 12, gap: 3 },
+  headerNameRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginBottom: 2 },
+  removeBtn: { padding: 2 },
+  removeBtnText: { fontSize: 12, color: '#9ca3af', fontWeight: '700' },
   headerName: {
     fontSize: 13,
     fontWeight: '800',

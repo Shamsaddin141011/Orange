@@ -7,7 +7,7 @@ import { DiscoverStackParamList } from '../navigation/AppNavigator';
 import { useAppStore } from '../store/useAppStore';
 
 export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverStackParamList, 'DiscoverResults'>) {
-  const { matches, shortlist, compareIds, toggleShortlist, toggleCompare } = useAppStore();
+  const { matches, toggleShortlist, toggleCompare } = useAppStore();
   const [search, setSearch] = useState('');
   const [tuitionMax, setTuitionMax] = useState('100000');
   const [requireSatFit, setRequireSatFit] = useState(false);
@@ -67,14 +67,11 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
         <FlatList
           data={filtered}
           keyExtractor={(i) => i.university.id}
-          extraData={compareIds}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
             <UniversityCard
               item={item}
-              saved={!!shortlist[item.university.id]}
-              compared={compareIds.includes(item.university.id)}
               onSave={() => toggleShortlist(item.university.id)}
               onCompare={() => toggleCompare(item.university.id)}
               onPress={() => navigation.navigate('UniversityDetail', { id: item.university.id })}

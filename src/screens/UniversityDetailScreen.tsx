@@ -1,15 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
-import { colorIdx } from '../lib/transform';
-import { DiscoverStackParamList } from '../navigation/AppNavigator';
+import { supabase } from '../lib/supabase';
+import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
+import { University } from '../types';
 
-export function UniversityDetailScreen({ route, navigation }: NativeStackScreenProps<DiscoverStackParamList, 'UniversityDetail'>) {
+type Props = {
+  route: { params: { id: string } };
+  navigation: { goBack: () => void };
+};
+
+export function UniversityDetailScreen({ route, navigation }: Props) {
   const { shortlist, toggleShortlist, compareIds, toggleCompare, matches } = useAppStore();
-  const uni = matches.find((m) => m.university.id === route.params.id)?.university;
-  if (!uni) return <View style={styles.center}><Text>University not found.</Text></View>;
+  const [fetchedUni, setFetchedUni] = useState<University | null>(null);
+
+  const matchedUni = matches.find((m) => m.university.id === route.params.id)?.university;
+
+  useEffect(() => {
+    if (matchedUni) return;
+    supabase.from('universities').select('*').eq('id', route.params.id).single().then(({ data }) => {
+      if (data) setFetchedUni(rowToUniversity(data as any));
+    });
+  }, [route.params.id]);
+
+  const uni = matchedUni ?? fetchedUni;
+  if (!uni) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color="#f97316" />
+      </View>
+    );
+  }
 
   const saved = !!shortlist[uni.id];
   const compared = compareIds.includes(uni.id);

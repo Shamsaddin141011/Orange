@@ -1,11 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colorIdx } from '../lib/transform';
+import { useAppStore } from '../store/useAppStore';
 import { MatchResult } from '../types';
 
 type Props = {
   item: MatchResult;
-  saved: boolean;
-  compared: boolean;
   onPress: () => void;
   onSave: () => void;
   onCompare: () => void;
@@ -40,7 +39,9 @@ function getInitials(name: string): string {
 
 const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 
-export function UniversityCard({ item, saved, compared, onPress, onSave, onCompare }: Props) {
+export function UniversityCard({ item, onPress, onSave, onCompare }: Props) {
+  const saved = useAppStore((s) => !!s.shortlist[item.university.id]);
+  const compared = useAppStore((s) => s.compareIds.includes(item.university.id));
   const { university } = item;
   const scoreColor = item.score >= 80 ? '#16a34a' : item.score >= 60 ? '#f97316' : '#6b7280';
   const [bgA, bgB] = getPalette(colorIdx(university.id));
@@ -78,7 +79,12 @@ export function UniversityCard({ item, saved, compared, onPress, onSave, onCompa
           ))}
         </View>
         <View style={styles.footer}>
-          <Text style={styles.tuition}>${university.tuition_estimate.toLocaleString()}/yr</Text>
+          <View>
+            <Text style={styles.tuition}>${university.tuition_estimate.toLocaleString()}/yr</Text>
+            {university.student_size != null && (
+              <Text style={styles.studentSize}>👥 {university.student_size.toLocaleString()}</Text>
+            )}
+          </View>
           <View style={styles.actions}>
             <Pressable style={[styles.actionBtn, saved && styles.actionBtnActive]} onPress={onSave}>
               <Text style={[styles.actionText, saved && styles.actionTextActive]}>{saved ? '♥ Saved' : '♡ Save'}</Text>
@@ -158,6 +164,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, color: '#ea580c', fontWeight: '500' },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tuition: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  studentSize: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
   actions: { flexDirection: 'row', gap: 8 },
   actionBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1.5, borderColor: '#e5e7eb' },
   actionBtnActive: { borderColor: '#f97316', backgroundColor: '#fff7ed' },

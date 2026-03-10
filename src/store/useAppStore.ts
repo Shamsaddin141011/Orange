@@ -155,32 +155,37 @@ export const useAppStore = create<AppState>()(
           return { shortlist };
         });
         // Sync to Supabase
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
           const { shortlist } = get();
           if (shortlist[id]) {
-            supabase.from('shortlist').upsert(
+            const { error } = await supabase.from('shortlist').upsert(
               { user_id: session.user.id, university_id: id, ...shortlist[id] },
               { onConflict: 'user_id,university_id' }
             );
+            if (error) console.error('[shortlist upsert]', error.message);
           } else {
-            supabase.from('shortlist')
+            const { error } = await supabase.from('shortlist')
               .delete()
               .eq('user_id', session.user.id)
               .eq('university_id', id);
+            if (error) console.error('[shortlist delete]', error.message);
           }
-        });
+        })();
       },
 
       setShortlistMeta: (id, tag, note) => {
         set((state) => ({ shortlist: { ...state.shortlist, [id]: { tag, note } } }));
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
-          supabase.from('shortlist').upsert(
+          const { error } = await supabase.from('shortlist').upsert(
             { user_id: session.user.id, university_id: id, tag, note },
             { onConflict: 'user_id,university_id' }
           );
-        });
+          if (error) console.error('[shortlistMeta upsert]', error.message);
+        })();
       },
 
       toggleCompare: (id) => {
@@ -191,21 +196,24 @@ export const useAppStore = create<AppState>()(
           return { compareIds: [...state.compareIds, id] };
         });
         // Sync to Supabase
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
           const { compareIds } = get();
-          supabase.from('compare_list').upsert(
+          const { error } = await supabase.from('compare_list').upsert(
             { user_id: session.user.id, university_ids: compareIds },
             { onConflict: 'user_id' }
           );
-        });
+          if (error) console.error('[compare_list upsert]', error.message);
+        })();
       },
 
       setTracker: (id, trackerItem) => {
         set((state) => ({ tracker: { ...state.tracker, [id]: trackerItem } }));
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
-          supabase.from('tracker').upsert(
+          const { error } = await supabase.from('tracker').upsert(
             {
               user_id: session.user.id,
               university_id: id,
@@ -219,7 +227,8 @@ export const useAppStore = create<AppState>()(
             },
             { onConflict: 'user_id,university_id' }
           );
-        });
+          if (error) console.error('[tracker upsert]', error.message);
+        })();
       },
 
       signOut: async () => {
@@ -237,12 +246,9 @@ export const useAppStore = create<AppState>()(
     {
       name: 'orangeuni-store',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({
-        profile: s.profile,
-        shortlist: s.shortlist,
-        compareIds: s.compareIds,
-        tracker: s.tracker,
-      }),
+      // Only persist profile locally — shortlist/compare/tracker are loaded
+      // fresh from Supabase on sign-in to avoid stale-cache race conditions.
+      partialize: (s) => ({ profile: s.profile }),
     }
   )
 );

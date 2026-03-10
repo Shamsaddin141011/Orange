@@ -23,8 +23,30 @@ export type DiscoverStackParamList = {
   UniversityDetail: { id: string };
 };
 
+export type ShortlistStackParamList = {
+  ShortlistMain: undefined;
+  UniversityDetail: { id: string };
+};
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<DiscoverStackParamList>();
+const ShortlistNav = createNativeStackNavigator<ShortlistStackParamList>();
+
+function ShortlistStack() {
+  return (
+    <ShortlistNav.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#fff' },
+        headerShadowVisible: false,
+        headerTitleStyle: { fontWeight: '700', color: '#111827' },
+        headerTintColor: '#f97316',
+      }}
+    >
+      <ShortlistNav.Screen name="ShortlistMain" component={ShortlistScreen} options={{ title: 'Shortlist' }} />
+      <ShortlistNav.Screen name="UniversityDetail" component={UniversityDetailScreen} options={{ title: '' }} />
+    </ShortlistNav.Navigator>
+  );
+}
 
 function DiscoverStack() {
   return (
@@ -79,7 +101,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Discover" component={DiscoverStack} />
-      <Tab.Screen name="Shortlist" component={ShortlistScreen} />
+      <Tab.Screen name="Shortlist" component={ShortlistStack} />
       <Tab.Screen name="Compare" component={CompareScreen} />
       <Tab.Screen name="Tracker" component={TrackerScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -96,10 +118,12 @@ export function AppNavigator() {
     // In Supabase v2, onAuthStateChange always emits INITIAL_SESSION on mount.
     // This also correctly handles the OAuth redirect case where the hash/code
     // is still being parsed when getSession() would otherwise return null.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       storeSetSession(session);
-      if (session) loadUserData();
+      if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+        loadUserData();
+      }
       setInitialising(false);
     });
 

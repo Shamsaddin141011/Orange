@@ -1,14 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
 import { useEffect, useState } from 'react';
+import { Country } from '../types';
+
+const COUNTRIES: Country[] = ['USA', 'UK', 'EU', 'China'];
 
 export function ProfileScreen() {
-  const { profile, shortlist, matches, signOut } = useAppStore();
+  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Edit form state
+  const [country, setCountry] = useState<Country>(profile.country);
+  const [satTotal, setSatTotal] = useState(profile.satTotal?.toString() ?? '');
+  const [gpa, setGpa] = useState(profile.gpa?.toString() ?? '');
+  const [budgetMax, setBudgetMax] = useState(profile.budgetMax?.toString() ?? '');
+  const [preferredLocation, setPreferredLocation] = useState(profile.preferredLocation ?? '');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -18,6 +30,31 @@ export function ProfileScreen() {
       }
     });
   }, []);
+
+  const startEditing = () => {
+    setCountry(profile.country);
+    setSatTotal(profile.satTotal?.toString() ?? '');
+    setGpa(profile.gpa?.toString() ?? '');
+    setBudgetMax(profile.budgetMax?.toString() ?? '');
+    setPreferredLocation(profile.preferredLocation ?? '');
+    setEditing(true);
+  };
+
+  const saveEdits = async () => {
+    setSaving(true);
+    const updated = {
+      ...profile,
+      country,
+      satTotal: satTotal ? Number(satTotal) : undefined,
+      gpa: gpa ? Number(gpa) : undefined,
+      budgetMax: budgetMax ? Number(budgetMax) : undefined,
+      preferredLocation: preferredLocation || undefined,
+    };
+    await saveProfile(updated);
+    await fetchAndScore(updated);
+    setSaving(false);
+    setEditing(false);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -46,18 +83,58 @@ export function ProfileScreen() {
         </View>
       </View>
 
-      {/* Details */}
+      {/* Academic Info */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Academic Info</Text>
-        <InfoRow icon="school-outline" label="Country" value={profile.country} />
-        <InfoRow icon="ribbon-outline" label="SAT Total" value={profile.satTotal?.toString() ?? 'Not set'} />
-        <InfoRow icon="trophy-outline" label="GPA" value={profile.gpa?.toString() ?? 'Not set'} />
-      </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Academic Info</Text>
+          {!editing && (
+            <Pressable onPress={startEditing} style={styles.editBtn}>
+              <Ionicons name="pencil-outline" size={14} color="#f97316" />
+              <Text style={styles.editBtnText}>Edit</Text>
+            </Pressable>
+          )}
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        <InfoRow icon="cash-outline" label="Max Budget" value={profile.budgetMax ? `$${profile.budgetMax.toLocaleString()}` : 'Not set'} />
-        <InfoRow icon="location-outline" label="Preferred Location" value={profile.preferredLocation ?? 'Not set'} />
+        {editing ? (
+          <>
+            <Text style={styles.fieldLabel}>Study Destination</Text>
+            <View style={styles.countryRow}>
+              {COUNTRIES.map((c) => (
+                <Pressable
+                  key={c}
+                  onPress={() => setCountry(c)}
+                  style={[styles.countryChip, country === c && styles.countryChipActive]}
+                >
+                  <Text style={[styles.countryChipText, country === c && styles.countryChipTextActive]}>{c}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.fieldLabel}>SAT Total</Text>
+            <TextInput style={styles.fieldInput} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
+            <Text style={styles.fieldLabel}>GPA</Text>
+            <TextInput style={styles.fieldInput} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="e.g. 3.8" placeholderTextColor="#9ca3af" />
+            <Text style={styles.fieldLabel}>Max Budget (USD/yr)</Text>
+            <TextInput style={styles.fieldInput} keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" placeholderTextColor="#9ca3af" />
+            <Text style={styles.fieldLabel}>Preferred Location</Text>
+            <TextInput style={styles.fieldInput} value={preferredLocation} onChangeText={setPreferredLocation} placeholder="e.g. Boston, CA" placeholderTextColor="#9ca3af" />
+            <View style={styles.editActions}>
+              <Pressable onPress={() => setEditing(false)} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={saveEdits} style={styles.saveBtn} disabled={saving}>
+                {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Save & Update Matches</Text>}
+              </Pressable>
+            </View>
+          </>
+        ) : (
+          <>
+            <InfoRow icon="school-outline" label="Country" value={profile.country} />
+            <InfoRow icon="ribbon-outline" label="SAT Total" value={profile.satTotal?.toString() ?? 'Not set'} />
+            <InfoRow icon="trophy-outline" label="GPA" value={profile.gpa?.toString() ?? 'Not set'} />
+            <InfoRow icon="cash-outline" label="Max Budget" value={profile.budgetMax ? `$${profile.budgetMax.toLocaleString()}` : 'Not set'} />
+            <InfoRow icon="location-outline" label="Preferred Location" value={profile.preferredLocation ?? 'Not set'} />
+          </>
+        )}
       </View>
 
       <View style={styles.section}>
@@ -67,11 +144,6 @@ export function ProfileScreen() {
             <View key={i} style={styles.pill}><Text style={styles.pillText}>{i}</Text></View>
           )) : <Text style={styles.none}>None selected</Text>}
         </View>
-      </View>
-
-      <View style={styles.notice}>
-        <Ionicons name="information-circle-outline" size={16} color="#9ca3af" />
-        <Text style={styles.noticeText}>Data is approximate and for guidance only. Re-run Discover to update your profile.</Text>
       </View>
 
       <Pressable style={styles.signOutBtn} onPress={signOut}>
@@ -128,8 +200,21 @@ const styles = StyleSheet.create({
   pill: { backgroundColor: '#fff7ed', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   pillText: { fontSize: 13, color: '#f97316', fontWeight: '600' },
   none: { fontSize: 14, color: '#9ca3af' },
-  notice: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  noticeText: { flex: 1, fontSize: 12, color: '#9ca3af', lineHeight: 18 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1.5, borderColor: '#f97316' },
+  editBtnText: { fontSize: 12, fontWeight: '700', color: '#f97316' },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginTop: 12, marginBottom: 4 },
+  fieldInput: { backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 10, padding: 10, fontSize: 14, color: '#111827' },
+  countryRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  countryChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, borderWidth: 1.5, borderColor: '#e5e7eb', backgroundColor: '#f9fafb' },
+  countryChipActive: { borderColor: '#f97316', backgroundColor: '#fff7ed' },
+  countryChipText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
+  countryChipTextActive: { color: '#f97316' },
+  editActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: '#e5e7eb', alignItems: 'center' },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
+  saveBtn: { flex: 2, paddingVertical: 10, borderRadius: 12, backgroundColor: '#f97316', alignItems: 'center' },
+  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#fef2f2', borderRadius: 14, padding: 14,

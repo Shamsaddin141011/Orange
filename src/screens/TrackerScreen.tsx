@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
-import { colorIdx } from '../lib/transform';
+import { supabase } from '../lib/supabase';
+import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
+import { University } from '../types';
 
 const STATUS_OPTIONS = ['not_started', 'in_progress', 'submitted'] as const;
 const STATUS_LABELS: Record<string, string> = {
@@ -29,9 +31,31 @@ const base = { essays: false, recommendations: false, testScores: false, feeWaiv
 
 export function TrackerScreen() {
   const { shortlist, tracker, setTracker, matches } = useAppStore();
+  const [fetchedUnis, setFetchedUnis] = useState<Record<string, University>>({});
+
+  const shortlistIds = Object.keys(shortlist);
+  const matchedUnis = useMemo(() => {
+    const map: Record<string, University> = {};
+    for (const m of matches) map[m.university.id] = m.university;
+    return map;
+  }, [matches]);
+
+  useEffect(() => {
+    const missingIds = shortlistIds.filter((id) => !matchedUnis[id] && !fetchedUnis[id]);
+    if (!missingIds.length) return;
+    supabase.from('universities').select('*').in('id', missingIds).then(({ data }) => {
+      if (!data) return;
+      setFetchedUnis((prev) => {
+        const next = { ...prev };
+        for (const row of data) next[row.id] = rowToUniversity(row as any);
+        return next;
+      });
+    });
+  }, [shortlistIds.join(',')]);
+
   const items = useMemo(
-    () => matches.filter((m) => shortlist[m.university.id]).map((m) => m.university),
-    [matches, shortlist],
+    () => shortlistIds.map((id) => matchedUnis[id] ?? fetchedUnis[id]).filter(Boolean) as University[],
+    [shortlistIds.join(','), matchedUnis, fetchedUnis],
   );
 
   if (!items.length) {

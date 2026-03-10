@@ -1,9 +1,14 @@
-import { useMemo } from 'react';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
-import { colorIdx } from '../lib/transform';
+import { colorIdx, rowToUniversity } from '../lib/transform';
+import { supabase } from '../lib/supabase';
+import { ShortlistStackParamList } from '../navigation/AppNavigator';
 import { useAppStore } from '../store/useAppStore';
-import { ShortlistTag } from '../types';
+import { ShortlistTag, University } from '../types';
+
+type Props = NativeStackScreenProps<ShortlistStackParamList, 'ShortlistMain'>;
 
 const TAG_COLORS: Record<ShortlistTag, { bg: string; text: string; border: string }> = {
   reach:  { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5' },
@@ -11,11 +16,40 @@ const TAG_COLORS: Record<ShortlistTag, { bg: string; text: string; border: strin
   safety: { bg: '#f0fdf4', text: '#16a34a', border: '#86efac' },
 };
 
-export function ShortlistScreen() {
-  const { shortlist, setShortlistMeta, toggleShortlist, matches } = useAppStore();
+export function ShortlistScreen({ navigation }: Props) {
+  const { shortlist, setShortlistMeta, toggleShortlist, toggleCompare, compareIds, matches } = useAppStore();
+  const [fetchedUnis, setFetchedUnis] = useState<Record<string, University>>({});
+
+  const shortlistIds = Object.keys(shortlist);
+
+  // Universities already in matches (from a discover search)
+  const matchedUnis = useMemo(() => {
+    const map: Record<string, University> = {};
+    for (const m of matches) map[m.university.id] = m.university;
+    return map;
+  }, [matches]);
+
+  // Fetch any shortlisted unis that aren't in matches
+  useEffect(() => {
+    const missingIds = shortlistIds.filter((id) => !matchedUnis[id] && !fetchedUnis[id]);
+    if (!missingIds.length) return;
+    supabase
+      .from('universities')
+      .select('*')
+      .in('id', missingIds)
+      .then(({ data }) => {
+        if (!data) return;
+        setFetchedUnis((prev) => {
+          const next = { ...prev };
+          for (const row of data) next[row.id] = rowToUniversity(row as any);
+          return next;
+        });
+      });
+  }, [shortlistIds.join(',')]);
+
   const items = useMemo(
-    () => matches.filter((m) => shortlist[m.university.id]).map((m) => m.university),
-    [matches, shortlist],
+    () => shortlistIds.map((id) => matchedUnis[id] ?? fetchedUnis[id]).filter(Boolean) as University[],
+    [shortlistIds.join(','), matchedUnis, fetchedUnis],
   );
 
   if (!items.length) {
@@ -38,15 +72,18 @@ export function ShortlistScreen() {
       ListHeaderComponent={<Text style={styles.header}>{items.length} saved school{items.length !== 1 ? 's' : ''}</Text>}
       renderItem={({ item }) => {
         const meta = shortlist[item.id] ?? { tag: 'match' as const, note: '' };
+        const compared = compareIds.includes(item.id);
         return (
           <View style={styles.card}>
-            <CardBanner name={item.name} city={item.city} state={item.state} country={item.country} idx={colorIdx(item.id)} height={90} showText={false} />
+            <Pressable onPress={() => navigation.navigate('UniversityDetail', { id: item.id })}>
+              <CardBanner name={item.name} city={item.city} state={item.state} country={item.country} idx={colorIdx(item.id)} height={90} showText={false} />
+            </Pressable>
             <View style={styles.cardBody}>
               <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
+                <Pressable style={{ flex: 1 }} onPress={() => navigation.navigate('UniversityDetail', { id: item.id })}>
                   <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
                   <Text style={styles.location}>{item.city} · {item.country}</Text>
-                </View>
+                </Pressable>
                 <Pressable onPress={() => toggleShortlist(item.id)} style={styles.removeBtn}>
                   <Text style={styles.removeText}>✕</Text>
                 </Pressable>
@@ -77,6 +114,15 @@ export function ShortlistScreen() {
                 value={meta.note}
                 onChangeText={(note) => setShortlistMeta(item.id, meta.tag, note)}
               />
+
+              <Pressable
+                onPress={() => toggleCompare(item.id)}
+                style={[styles.compareBtn, compared && styles.compareBtnActive]}
+              >
+                <Text style={[styles.compareBtnText, compared && styles.compareBtnTextActive]}>
+                  {compared ? '✓ Added to Compare' : '+ Add to Compare'}
+                </Text>
+              </Pressable>
             </View>
           </View>
         );
@@ -121,4 +167,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
+  compareBtn: {
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  compareBtnActive: { borderColor: '#f97316', backgroundColor: '#fff7ed' },
+  compareBtnText: { fontSize: 13, fontWeight: '600', color: '#9ca3af' },
+  compareBtnTextActive: { color: '#f97316' },
 });
