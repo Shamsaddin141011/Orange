@@ -17,7 +17,7 @@ const PALETTES: [string, string][] = [
   ['#0a2a2a', '#134e4a'],
 ];
 
-const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧' };
+const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 
 export function getPalette(idx: number): [string, string] {
   return PALETTES[Math.abs(idx) % PALETTES.length] as [string, string];

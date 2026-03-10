@@ -56,9 +56,11 @@ export function OnboardingScreen({ navigation }: Props) {
 
       <Text style={styles.label}>Where do you want to study?</Text>
       <View style={styles.row}>
-        {(['USA', 'UK'] as Country[]).map((c) => (
+        {(['USA', 'UK', 'EU', 'China'] as Country[]).map((c) => (
           <Pressable key={c} onPress={() => setCountry(c)} style={[styles.option, country === c && styles.optionActive]}>
-            <Text style={[styles.optionText, country === c && styles.optionTextActive]}>{c === 'USA' ? '🇺🇸 USA' : '🇬🇧 UK'}</Text>
+            <Text style={[styles.optionText, country === c && styles.optionTextActive]}>
+              {c === 'USA' ? '🇺🇸 USA' : c === 'UK' ? '🇬🇧 UK' : c === 'EU' ? '🇪🇺 Europe' : '🇨🇳 China'}
+            </Text>
           </Pressable>
         ))}
       </View>

@@ -38,7 +38,7 @@ function getInitials(name: string): string {
     .join('');
 }
 
-const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧' };
+const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 
 export function UniversityCard({ item, saved, compared, onPress, onSave, onCompare }: Props) {
   const { university } = item;

@@ -67,6 +67,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
         <FlatList
           data={filtered}
           keyExtractor={(i) => i.university.id}
+          extraData={compareIds}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (

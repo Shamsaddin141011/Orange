@@ -1,4 +1,4 @@
-export type Country = 'USA' | 'UK';
+export type Country = 'USA' | 'UK' | 'EU' | 'China';
 export type AidStatus = 'yes' | 'no' | 'unknown';
 export type ShortlistTag = 'reach' | 'match' | 'safety';
 
