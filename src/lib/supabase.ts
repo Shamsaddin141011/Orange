@@ -30,7 +30,7 @@ export async function fetchUniversities(params: {
   budgetMax?: number;
   limit?: number;
 }): Promise<UniversityRow[]> {
-  const { country, satTotal, budgetMax, limit = 500 } = params;
+  const { country, satTotal, budgetMax, limit = 2000 } = params;
 
   let query = supabase
     .from('universities')

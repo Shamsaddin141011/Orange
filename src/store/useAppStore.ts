@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>()(
             country: profile.country,
             satTotal: profile.satTotal,
             budgetMax: profile.budgetMax,
-            limit: 600,
+            limit: 2000,
           });
 
           const universities = rows.map(rowToUniversity);
