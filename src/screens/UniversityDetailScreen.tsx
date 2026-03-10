@@ -3,13 +3,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
 import { colorIdx } from '../lib/transform';
-import { universities } from '../data/universities';
 import { DiscoverStackParamList } from '../navigation/AppNavigator';
 import { useAppStore } from '../store/useAppStore';
 
 export function UniversityDetailScreen({ route, navigation }: NativeStackScreenProps<DiscoverStackParamList, 'UniversityDetail'>) {
-  const uni = universities.find((u) => u.id === route.params.id);
-  const { shortlist, toggleShortlist, compareIds, toggleCompare } = useAppStore();
+  const { shortlist, toggleShortlist, compareIds, toggleCompare, matches } = useAppStore();
+  const uni = matches.find((m) => m.university.id === route.params.id)?.university;
   if (!uni) return <View style={styles.center}><Text>University not found.</Text></View>;
 
   const saved = !!shortlist[uni.id];

@@ -1,8 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CardBanner } from '../components/CardBanner';
 import { colorIdx } from '../lib/transform';
 import { universities } from '../data/universities';
+import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 
 const FEATURED = universities.slice(0, 4);
@@ -12,6 +14,13 @@ export function HomeScreen() {
   const { shortlist, matches } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const matchCount = matches.length;
+  const [totalSchools, setTotalSchools] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase.from('universities').select('*', { count: 'exact', head: true }).then(({ count }) => {
+      if (count !== null) setTotalSchools(count);
+    });
+  }, []);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -36,7 +45,7 @@ export function HomeScreen() {
           <Text style={styles.statLabel}>Saved</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNum}>50</Text>
+          <Text style={styles.statNum}>{totalSchools ?? '—'}</Text>
           <Text style={styles.statLabel}>Schools</Text>
         </View>
       </View>
