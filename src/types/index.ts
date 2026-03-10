@@ -22,6 +22,7 @@ export interface University {
   deadlines: DeadlineItem[];
   tags: string[];
   brief_description: string;
+  student_size?: number;
 }
 
 export interface StudentProfile {
