@@ -2,6 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+import { useAppStore } from '../store/useAppStore';
+import { AuthScreen } from '../screens/AuthScreen';
 import { CompareScreen } from '../screens/CompareScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -40,45 +46,79 @@ function DiscoverStack() {
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }> = {
-  Home:      { active: 'home',           inactive: 'home-outline' },
-  Discover:  { active: 'search',         inactive: 'search-outline' },
-  Shortlist: { active: 'heart',          inactive: 'heart-outline' },
-  Compare:   { active: 'git-compare',    inactive: 'git-compare-outline' },
+  Home:      { active: 'home',             inactive: 'home-outline' },
+  Discover:  { active: 'search',           inactive: 'search-outline' },
+  Shortlist: { active: 'heart',            inactive: 'heart-outline' },
+  Compare:   { active: 'git-compare',      inactive: 'git-compare-outline' },
   Tracker:   { active: 'checkmark-circle', inactive: 'checkmark-circle-outline' },
-  Profile:   { active: 'person',         inactive: 'person-outline' },
+  Profile:   { active: 'person',           inactive: 'person-outline' },
 };
 
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#f97316',
+        tabBarInactiveTintColor: '#9ca3af',
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopColor: '#f3f4f6',
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons = TAB_ICONS[route.name];
+          if (!icons) return null;
+          return <Ionicons name={focused ? icons.active : icons.inactive} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Discover" component={DiscoverStack} />
+      <Tab.Screen name="Shortlist" component={ShortlistScreen} />
+      <Tab.Screen name="Compare" component={CompareScreen} />
+      <Tab.Screen name="Tracker" component={TrackerScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
 export function AppNavigator() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [initialising, setInitialising] = useState(true);
+  const { setSession: storeSetSession, loadUserData } = useAppStore();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      storeSetSession(session);
+      setInitialising(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      storeSetSession(session);
+      if (session) loadUserData();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (initialising) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a' }}>
+        <ActivityIndicator size="large" color="#f97316" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: '#f97316',
-          tabBarInactiveTintColor: '#9ca3af',
-          tabBarStyle: {
-            backgroundColor: '#fff',
-            borderTopColor: '#f3f4f6',
-            borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 6,
-          },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-          tabBarIcon: ({ focused, color, size }) => {
-            const icons = TAB_ICONS[route.name];
-            if (!icons) return null;
-            return <Ionicons name={focused ? icons.active : icons.inactive} size={size} color={color} />;
-          },
-        })}
-      >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Discover" component={DiscoverStack} />
-        <Tab.Screen name="Shortlist" component={ShortlistScreen} />
-        <Tab.Screen name="Compare" component={CompareScreen} />
-        <Tab.Screen name="Tracker" component={TrackerScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
-      </Tab.Navigator>
+      {session ? <MainTabs /> : <AuthScreen />}
     </NavigationContainer>
   );
 }

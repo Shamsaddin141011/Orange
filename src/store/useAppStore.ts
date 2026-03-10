@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { fetchUniversities } from '../lib/supabase';
+import { fetchUniversities, supabase } from '../lib/supabase';
 import { rowToUniversity } from '../lib/transform';
 import { scoreUniversity } from '../utils/scoring';
 import { MatchResult, ShortlistTag, StudentProfile, TrackerItemState } from '../types';
 
 interface AppState {
+  session: Session | null;
   profile: StudentProfile;
   shortlist: Record<string, { tag: ShortlistTag; note: string }>;
   compareIds: string[];
@@ -14,13 +16,18 @@ interface AppState {
   matches: MatchResult[];
   loading: boolean;
   error: string | null;
+
+  setSession: (session: Session | null) => void;
   setProfile: (profile: StudentProfile) => void;
   setMatches: (matches: MatchResult[]) => void;
   fetchAndScore: (profile: StudentProfile) => Promise<void>;
+  loadUserData: () => Promise<void>;
+  saveProfile: (profile: StudentProfile) => Promise<void>;
   toggleShortlist: (id: string) => void;
   setShortlistMeta: (id: string, tag: ShortlistTag, note: string) => void;
   toggleCompare: (id: string) => void;
   setTracker: (id: string, tracker: TrackerItemState) => void;
+  signOut: () => Promise<void>;
 }
 
 const defaultProfile: StudentProfile = { country: 'USA', interests: [] };
@@ -28,6 +35,7 @@ const defaultProfile: StudentProfile = { country: 'USA', interests: [] };
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      session: null,
       profile: defaultProfile,
       shortlist: {},
       compareIds: [],
@@ -36,6 +44,7 @@ export const useAppStore = create<AppState>()(
       loading: false,
       error: null,
 
+      setSession: (session) => set({ session }),
       setProfile: (profile) => set({ profile }),
       setMatches: (matches) => set({ matches }),
 
@@ -48,40 +57,179 @@ export const useAppStore = create<AppState>()(
             budgetMax: profile.budgetMax,
             limit: 2000,
           });
-
           const universities = rows.map(rowToUniversity);
-
           const scored = universities
             .map((u) => scoreUniversity(profile, u))
             .sort((a, b) => b.score - a.score);
-
           set({ matches: scored, profile, loading: false });
         } catch (e: any) {
           set({ loading: false, error: e?.message ?? 'Failed to load universities.' });
         }
       },
 
-      toggleShortlist: (id) =>
+      // Load all user data from Supabase after sign-in
+      loadUserData: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const uid = session.user.id;
+
+        const [profileRes, shortlistRes, trackerRes, compareRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', uid).single(),
+          supabase.from('shortlist').select('*').eq('user_id', uid),
+          supabase.from('tracker').select('*').eq('user_id', uid),
+          supabase.from('compare_list').select('university_ids').eq('user_id', uid).single(),
+        ]);
+
+        if (profileRes.data) {
+          const p = profileRes.data;
+          set({
+            profile: {
+              country: p.country ?? 'USA',
+              interests: p.interests ?? [],
+              budgetMax: p.budget_max ?? undefined,
+              preferredLocation: p.preferred_location ?? undefined,
+              satTotal: p.sat_total ?? undefined,
+              satMath: p.sat_math ?? undefined,
+              satEbrw: p.sat_ebrw ?? undefined,
+              gpa: p.gpa ?? undefined,
+            },
+          });
+        }
+
+        if (shortlistRes.data) {
+          const shortlist: Record<string, { tag: ShortlistTag; note: string }> = {};
+          for (const row of shortlistRes.data) {
+            shortlist[row.university_id] = { tag: row.tag, note: row.note };
+          }
+          set({ shortlist });
+        }
+
+        if (trackerRes.data) {
+          const tracker: Record<string, TrackerItemState> = {};
+          for (const row of trackerRes.data) {
+            tracker[row.university_id] = {
+              essays: row.essays,
+              recommendations: row.recommendations,
+              testScores: row.test_scores,
+              feeWaiver: row.fee_waiver,
+              visaDocs: row.visa_docs,
+              status: row.status,
+              reminder: row.reminder,
+            };
+          }
+          set({ tracker });
+        }
+
+        if (compareRes.data) {
+          set({ compareIds: compareRes.data.university_ids ?? [] });
+        }
+      },
+
+      // Save profile to Supabase
+      saveProfile: async (profile) => {
+        set({ profile });
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        await supabase.from('profiles').upsert({
+          id: session.user.id,
+          country: profile.country,
+          interests: profile.interests,
+          budget_max: profile.budgetMax ?? null,
+          preferred_location: profile.preferredLocation ?? null,
+          sat_total: profile.satTotal ?? null,
+          sat_math: profile.satMath ?? null,
+          sat_ebrw: profile.satEbrw ?? null,
+          gpa: profile.gpa ?? null,
+          updated_at: new Date().toISOString(),
+        });
+      },
+
+      toggleShortlist: (id) => {
         set((state) => {
           const shortlist = { ...state.shortlist };
           if (shortlist[id]) delete shortlist[id];
           else shortlist[id] = { tag: 'match', note: '' };
           return { shortlist };
-        }),
+        });
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          const { shortlist } = get();
+          if (shortlist[id]) {
+            supabase.from('shortlist').upsert(
+              { user_id: session.user.id, university_id: id, ...shortlist[id] },
+              { onConflict: 'user_id,university_id' }
+            );
+          } else {
+            supabase.from('shortlist')
+              .delete()
+              .eq('user_id', session.user.id)
+              .eq('university_id', id);
+          }
+        });
+      },
 
-      setShortlistMeta: (id, tag, note) =>
-        set((state) => ({ shortlist: { ...state.shortlist, [id]: { tag, note } } })),
+      setShortlistMeta: (id, tag, note) => {
+        set((state) => ({ shortlist: { ...state.shortlist, [id]: { tag, note } } }));
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          supabase.from('shortlist').upsert(
+            { user_id: session.user.id, university_id: id, tag, note },
+            { onConflict: 'user_id,university_id' }
+          );
+        });
+      },
 
-      toggleCompare: (id) =>
+      toggleCompare: (id) => {
         set((state) => {
           const exists = state.compareIds.includes(id);
           if (exists) return { compareIds: state.compareIds.filter((v) => v !== id) };
           if (state.compareIds.length >= 3) return state;
           return { compareIds: [...state.compareIds, id] };
-        }),
+        });
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          const { compareIds } = get();
+          supabase.from('compare_list').upsert(
+            { user_id: session.user.id, university_ids: compareIds },
+            { onConflict: 'user_id' }
+          );
+        });
+      },
 
-      setTracker: (id, tracker) =>
-        set((state) => ({ tracker: { ...state.tracker, [id]: tracker } })),
+      setTracker: (id, trackerItem) => {
+        set((state) => ({ tracker: { ...state.tracker, [id]: trackerItem } }));
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          supabase.from('tracker').upsert(
+            {
+              user_id: session.user.id,
+              university_id: id,
+              essays: trackerItem.essays,
+              recommendations: trackerItem.recommendations,
+              test_scores: trackerItem.testScores,
+              fee_waiver: trackerItem.feeWaiver,
+              visa_docs: trackerItem.visaDocs,
+              status: trackerItem.status,
+              reminder: trackerItem.reminder,
+            },
+            { onConflict: 'user_id,university_id' }
+          );
+        });
+      },
+
+      signOut: async () => {
+        await supabase.auth.signOut();
+        set({
+          session: null,
+          profile: defaultProfile,
+          shortlist: {},
+          compareIds: [],
+          tracker: {},
+          matches: [],
+        });
+      },
     }),
     {
       name: 'orangeuni-store',

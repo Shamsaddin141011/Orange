@@ -1,10 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
+import { supabase } from '../lib/supabase';
+import { useEffect, useState } from 'react';
 
 export function ProfileScreen() {
-  const { profile, shortlist, matches } = useAppStore();
+  const { profile, shortlist, matches, signOut } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setEmail(user.email ?? '');
+        setDisplayName(user.user_metadata?.full_name ?? user.email ?? 'Student');
+      }
+    });
+  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -13,8 +26,8 @@ export function ProfileScreen() {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>🎓</Text>
         </View>
-        <Text style={styles.name}>My Profile</Text>
-        <Text style={styles.subtitle}>{profile.country} · {profile.interests[0] ?? 'No interest set'}</Text>
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.subtitle}>{email}</Text>
       </View>
 
       {/* Stats */}
@@ -60,6 +73,11 @@ export function ProfileScreen() {
         <Ionicons name="information-circle-outline" size={16} color="#9ca3af" />
         <Text style={styles.noticeText}>Data is approximate and for guidance only. Re-run Discover to update your profile.</Text>
       </View>
+
+      <Pressable style={styles.signOutBtn} onPress={signOut}>
+        <Ionicons name="log-out-outline" size={18} color="#dc2626" />
+        <Text style={styles.signOutText}>Sign out</Text>
+      </Pressable>
 
       <View style={{ height: 32 }} />
     </ScrollView>
@@ -112,4 +130,10 @@ const styles = StyleSheet.create({
   none: { fontSize: 14, color: '#9ca3af' },
   notice: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   noticeText: { flex: 1, fontSize: 12, color: '#9ca3af', lineHeight: 18 },
+  signOutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#fef2f2', borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: '#fca5a5',
+  },
+  signOutText: { fontSize: 15, fontWeight: '700', color: '#dc2626' },
 });
