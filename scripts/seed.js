@@ -126,13 +126,104 @@ function transformUS(s) {
   };
 }
 
+// ─── Top US Universities (curated, always seeded first) ───────────────────────
+// IDs match College Scorecard IDs so upsert-by-id deduplicates with API data.
+const TOP_US = [
+  // [scorecard_id, name, city, state, website, tuition, acceptance_rate, sat_min, sat_max, size, majors]
+  [243744, 'Stanford University',                   'Stanford',         'CA', 'https://www.stanford.edu',      57000, 0.04, 1500, 1570, 17000, ['Computer Science','Engineering','Business','Mathematics','Biology']],
+  [166683, 'Massachusetts Institute of Technology', 'Cambridge',        'MA', 'https://www.mit.edu',           55000, 0.04, 1510, 1580, 11500, ['Engineering','Computer Science','Mathematics','Physics','Business']],
+  [166027, 'Harvard University',                    'Cambridge',        'MA', 'https://www.harvard.edu',       56000, 0.04, 1460, 1570, 21000, ['Business','Law','Medicine & Health','Social Sciences','Humanities']],
+  [130794, 'Yale University',                       'New Haven',        'CT', 'https://www.yale.edu',          60000, 0.05, 1460, 1560, 13000, ['Humanities','Law','Social Sciences','Biology','Medicine & Health']],
+  [186131, 'Princeton University',                  'Princeton',        'NJ', 'https://www.princeton.edu',     57000, 0.05, 1490, 1570,  9000, ['Engineering','Computer Science','Mathematics','Social Sciences','Humanities']],
+  [190150, 'Columbia University',                   'New York',         'NY', 'https://www.columbia.edu',      63000, 0.05, 1450, 1560, 31000, ['Engineering','Business','Social Sciences','Humanities','Medicine & Health']],
+  [144050, 'University of Chicago',                 'Chicago',          'IL', 'https://www.uchicago.edu',      62000, 0.07, 1480, 1570, 17000, ['Social Sciences','Economics','Humanities','Mathematics','Physics']],
+  [198419, 'Duke University',                       'Durham',           'NC', 'https://www.duke.edu',          60000, 0.07, 1480, 1570, 16000, ['Medicine & Health','Engineering','Business','Social Sciences','Biology']],
+  [147767, 'Northwestern University',               'Evanston',         'IL', 'https://www.northwestern.edu',  60000, 0.07, 1470, 1560, 21000, ['Engineering','Business','Social Sciences','Humanities','Computer Science']],
+  [162928, 'Johns Hopkins University',              'Baltimore',        'MD', 'https://www.jhu.edu',           58000, 0.07, 1490, 1570, 27000, ['Medicine & Health','Engineering','Biology','Social Sciences','Computer Science']],
+  [110347, 'California Institute of Technology',    'Pasadena',         'CA', 'https://www.caltech.edu',       58000, 0.03, 1530, 1600,  2200, ['Engineering','Physics','Mathematics','Computer Science','Biology']],
+  [130448, 'University of Pennsylvania',            'Philadelphia',     'PA', 'https://www.upenn.edu',         63000, 0.07, 1460, 1560, 25000, ['Business','Engineering','Medicine & Health','Humanities','Social Sciences']],
+  [217156, 'Brown University',                      'Providence',       'RI', 'https://www.brown.edu',         62000, 0.07, 1440, 1550, 10000, ['Social Sciences','Humanities','Computer Science','Biology','Engineering']],
+  [182670, 'Dartmouth College',                     'Hanover',          'NH', 'https://www.dartmouth.edu',     61000, 0.07, 1440, 1560,  6600, ['Social Sciences','Humanities','Engineering','Business','Mathematics']],
+  [190415, 'Cornell University',                    'Ithaca',           'NY', 'https://www.cornell.edu',       62000, 0.09, 1400, 1540, 25000, ['Engineering','Computer Science','Humanities','Business','Biology']],
+  [221999, 'Vanderbilt University',                 'Nashville',        'TN', 'https://www.vanderbilt.edu',    58000, 0.07, 1450, 1560, 13000, ['Medicine & Health','Engineering','Social Sciences','Business','Humanities']],
+  [227757, 'Rice University',                       'Houston',          'TX', 'https://www.rice.edu',          52000, 0.11, 1490, 1580,  4100, ['Engineering','Computer Science','Mathematics','Social Sciences','Humanities']],
+  [152080, 'University of Notre Dame',              'Notre Dame',       'IN', 'https://www.nd.edu',            57000, 0.15, 1430, 1540, 12600, ['Business','Engineering','Humanities','Social Sciences','Law']],
+  [131496, 'Georgetown University',                 'Washington',       'DC', 'https://www.georgetown.edu',    57000, 0.12, 1380, 1540, 19000, ['Business','Law','Social Sciences','Humanities','Medicine & Health']],
+  [139658, 'Emory University',                      'Atlanta',          'GA', 'https://www.emory.edu',         55000, 0.15, 1400, 1530, 15000, ['Medicine & Health','Business','Biology','Social Sciences','Humanities']],
+  [211440, 'Carnegie Mellon University',            'Pittsburgh',       'PA', 'https://www.cmu.edu',           58000, 0.14, 1480, 1580, 14000, ['Computer Science','Engineering','Business','Mathematics','Humanities']],
+  [179867, 'Washington University in St. Louis',    'St. Louis',        'MO', 'https://www.wustl.edu',         58000, 0.13, 1470, 1560, 15000, ['Medicine & Health','Engineering','Business','Social Sciences','Humanities']],
+  [110635, 'University of California, Berkeley',    'Berkeley',         'CA', 'https://www.berkeley.edu',      44000, 0.17, 1300, 1530, 43000, ['Engineering','Computer Science','Business','Social Sciences','Biology']],
+  [110662, 'University of California, Los Angeles', 'Los Angeles',      'CA', 'https://www.ucla.edu',          44000, 0.14, 1290, 1510, 46000, ['Engineering','Computer Science','Social Sciences','Medicine & Health','Business']],
+  [170976, 'University of Michigan',                'Ann Arbor',        'MI', 'https://www.umich.edu',         51000, 0.20, 1360, 1530, 47000, ['Engineering','Business','Computer Science','Social Sciences','Medicine & Health']],
+  [193900, 'New York University',                   'New York',         'NY', 'https://www.nyu.edu',           58000, 0.21, 1310, 1510, 58000, ['Business','Humanities','Social Sciences','Computer Science','Medicine & Health']],
+  [234076, 'University of Virginia',                'Charlottesville',  'VA', 'https://www.virginia.edu',      52000, 0.21, 1360, 1510, 25000, ['Business','Engineering','Social Sciences','Humanities','Law']],
+  [123961, 'University of Southern California',     'Los Angeles',      'CA', 'https://www.usc.edu',           62000, 0.13, 1400, 1530, 49000, ['Engineering','Business','Computer Science','Social Sciences','Humanities']],
+  [164988, 'Boston University',                     'Boston',           'MA', 'https://www.bu.edu',            58000, 0.19, 1350, 1510, 36000, ['Engineering','Business','Social Sciences','Medicine & Health','Humanities']],
+  [167358, 'Northeastern University',               'Boston',           'MA', 'https://www.northeastern.edu',  58000, 0.18, 1430, 1560, 25000, ['Engineering','Computer Science','Business','Social Sciences','Medicine & Health']],
+  [168148, 'Tufts University',                      'Medford',          'MA', 'https://www.tufts.edu',         61000, 0.13, 1420, 1540, 12000, ['Engineering','Social Sciences','Humanities','Medicine & Health','Computer Science']],
+  [228778, 'University of Texas at Austin',         'Austin',           'TX', 'https://www.utexas.edu',        40000, 0.31, 1250, 1480, 51000, ['Engineering','Computer Science','Business','Social Sciences','Humanities']],
+  [139755, 'Georgia Institute of Technology',       'Atlanta',          'GA', 'https://www.gatech.edu',        32000, 0.21, 1400, 1540, 39000, ['Engineering','Computer Science','Mathematics','Business','Physics']],
+  [145637, 'University of Illinois Urbana-Champaign','Champaign',       'IL', 'https://www.illinois.edu',      33000, 0.45, 1310, 1500, 55000, ['Engineering','Computer Science','Business','Social Sciences','Mathematics']],
+  [243780, 'Purdue University',                     'West Lafayette',   'IN', 'https://www.purdue.edu',        28000, 0.67, 1220, 1440, 50000, ['Engineering','Computer Science','Mathematics','Business','Biology']],
+  [240444, 'University of Wisconsin-Madison',       'Madison',          'WI', 'https://www.wisc.edu',          38000, 0.57, 1290, 1470, 47000, ['Engineering','Business','Social Sciences','Biology','Humanities']],
+  [199120, 'University of North Carolina at Chapel Hill','Chapel Hill', 'NC', 'https://www.unc.edu',           37000, 0.23, 1300, 1490, 30000, ['Medicine & Health','Business','Social Sciences','Humanities','Engineering']],
+  [236948, 'University of Washington',              'Seattle',          'WA', 'https://www.washington.edu',    38000, 0.52, 1260, 1480, 47000, ['Computer Science','Engineering','Medicine & Health','Business','Social Sciences']],
+  [214777, 'Pennsylvania State University',         'University Park',  'PA', 'https://www.psu.edu',           34000, 0.55, 1200, 1400, 47000, ['Engineering','Business','Social Sciences','Computer Science','Biology']],
+  [204796, 'Ohio State University',                 'Columbus',         'OH', 'https://www.osu.edu',           32000, 0.57, 1230, 1430, 61000, ['Engineering','Business','Medicine & Health','Social Sciences','Computer Science']],
+  [134130, 'University of Florida',                 'Gainesville',      'FL', 'https://www.ufl.edu',           28000, 0.31, 1280, 1460, 52000, ['Engineering','Business','Social Sciences','Medicine & Health','Computer Science']],
+  [139940, 'University of Georgia',                 'Athens',           'GA', 'https://www.uga.edu',           30000, 0.45, 1240, 1430, 40000, ['Business','Social Sciences','Engineering','Biology','Humanities']],
+  [171100, 'University of Minnesota',               'Minneapolis',      'MN', 'https://www.umn.edu',           33000, 0.77, 1240, 1450, 51000, ['Engineering','Computer Science','Business','Medicine & Health','Social Sciences']],
+  [151351, 'Indiana University Bloomington',        'Bloomington',      'IN', 'https://www.indiana.edu',       37000, 0.83, 1150, 1370, 43000, ['Business','Social Sciences','Humanities','Computer Science','Medicine & Health']],
+  [126614, 'University of Colorado Boulder',        'Boulder',          'CO', 'https://www.colorado.edu',      37000, 0.85, 1200, 1400, 35000, ['Engineering','Computer Science','Business','Social Sciences','Biology']],
+  [104179, 'University of Arizona',                 'Tucson',           'AZ', 'https://www.arizona.edu',       31000, 0.85, 1130, 1350, 47000, ['Engineering','Business','Social Sciences','Computer Science','Medicine & Health']],
+  [104151, 'Arizona State University',              'Tempe',            'AZ', 'https://www.asu.edu',           31000, 0.91, 1100, 1340, 73000, ['Engineering','Business','Computer Science','Social Sciences','Humanities']],
+  [171128, 'Michigan State University',             'East Lansing',     'MI', 'https://www.msu.edu',           40000, 0.83, 1160, 1380, 50000, ['Engineering','Business','Social Sciences','Computer Science','Biology']],
+  [163286, 'University of Maryland',                'College Park',     'MD', 'https://www.umd.edu',           36000, 0.51, 1310, 1490, 40000, ['Engineering','Computer Science','Business','Social Sciences','Mathematics']],
+  [186380, 'Rutgers University',                    'New Brunswick',    'NJ', 'https://www.rutgers.edu',       32000, 0.68, 1210, 1410, 50000, ['Engineering','Business','Social Sciences','Medicine & Health','Computer Science']],
+  [164924, 'Boston College',                        'Chestnut Hill',    'MA', 'https://www.bc.edu',            60000, 0.23, 1400, 1520, 14000, ['Business','Social Sciences','Humanities','Engineering','Biology']],
+  [239105, 'Wake Forest University',                'Winston-Salem',    'NC', 'https://www.wfu.edu',           60000, 0.25, 1380, 1510,  8800, ['Business','Social Sciences','Humanities','Biology','Law']],
+  [211158, 'Case Western Reserve University',       'Cleveland',        'OH', 'https://www.case.edu',          56000, 0.30, 1400, 1540, 12000, ['Engineering','Medicine & Health','Computer Science','Biology','Social Sciences']],
+  [159391, 'Tulane University',                     'New Orleans',      'LA', 'https://www.tulane.edu',        59000, 0.17, 1340, 1510, 14000, ['Business','Social Sciences','Medicine & Health','Humanities','Engineering']],
+  [232566, 'University of Rochester',               'Rochester',        'NY', 'https://www.rochester.edu',     60000, 0.35, 1380, 1530, 12000, ['Engineering','Computer Science','Medicine & Health','Social Sciences','Humanities']],
+  [168218, 'Brandeis University',                   'Waltham',          'MA', 'https://www.brandeis.edu',      59000, 0.37, 1340, 1510,  5800, ['Social Sciences','Humanities','Biology','Computer Science','Psychology']],
+  [110680, 'University of California, San Diego',   'La Jolla',         'CA', 'https://www.ucsd.edu',          43000, 0.34, 1290, 1510, 38000, ['Computer Science','Engineering','Biology','Mathematics','Social Sciences']],
+  [110644, 'University of California, Davis',       'Davis',            'CA', 'https://www.ucdavis.edu',       44000, 0.49, 1200, 1440, 39000, ['Engineering','Biology','Social Sciences','Computer Science','Mathematics']],
+  [110705, 'University of California, Santa Barbara','Santa Barbara',   'CA', 'https://www.ucsb.edu',          43000, 0.37, 1260, 1470, 26000, ['Engineering','Computer Science','Social Sciences','Biology','Physics']],
+  [110617, 'University of California, Irvine',      'Irvine',           'CA', 'https://www.uci.edu',           43000, 0.26, 1200, 1430, 36000, ['Computer Science','Engineering','Social Sciences','Biology','Business']],
+];
+
+async function seedTopUS() {
+  console.log('\n── Top US: Curated dataset ─────────────────────');
+
+  const rows = TOP_US.map(([id, name, city, state, website, tuition, acceptance, sat_min, sat_max, size, majors]) => ({
+    id: `usa-${id}`,
+    name,
+    country: 'USA',
+    city,
+    state,
+    website,
+    majors,
+    sat_min,
+    sat_max,
+    acceptance_rate: acceptance,
+    tuition_estimate: tuition,
+    intl_aid: 'unknown',
+    tags: ['private', 'urban'],
+    brief_description: `${name} is a leading university in ${city}, ${state}.`,
+    student_size: size,
+  }));
+
+  const { error } = await supabase.from('universities').upsert(rows, { onConflict: 'id' });
+  if (error) console.error('Top US insert error:', error.message);
+  else console.log(`  Done: ${rows.length} top US universities`);
+}
+
 async function seedUS() {
-  console.log('\n── US: College Scorecard ──────────────────────');
-  const TARGET = 2000;
+  console.log('\n── US: College Scorecard (all schools) ────────');
   let page = 0;
   let totalInserted = 0;
 
-  while (totalInserted < TARGET) {
+  while (true) {
     const url =
       `https://api.data.gov/ed/collegescorecard/v1/schools.json` +
       `?api_key=${SCORECARD_API_KEY}` +
@@ -167,7 +258,7 @@ async function seedUS() {
     }
 
     page++;
-    if (page > 30) break; // safety cap (~3000 records max)
+    if (page > 100) break; // safety cap (100 pages × 100 = up to 10,000 records)
     await new Promise(r => setTimeout(r, 150)); // rate-limit buffer
   }
 
@@ -462,12 +553,126 @@ async function seedChina() {
   else console.log(`  Done: ${rows.length} Chinese universities`);
 }
 
+// ─── UK: UCAS provider search ─────────────────────────────────────────────────
+// Fetches all UK providers from the UCAS course-search API, merges with
+// curated stats (tuition, acceptance rate) where available, and falls back
+// to defaults for unknown providers.
+
+// Curated stats for known UK universities keyed by name substring match
+const UK_STATS = {};
+UK_UNIVERSITIES.forEach(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size]) => {
+  UK_STATS[name.toLowerCase()] = { city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size };
+});
+
+function findUKStats(name) {
+  const key = name.toLowerCase();
+  // Exact match first
+  if (UK_STATS[key]) return UK_STATS[key];
+  // Partial match
+  for (const k of Object.keys(UK_STATS)) {
+    if (key.includes(k) || k.includes(key)) return UK_STATS[k];
+  }
+  return null;
+}
+
+function ucasProviderToRow(provider, idx) {
+  const name = provider.providerName ?? provider.name ?? '';
+  const city = provider.townOrCity ?? provider.city ?? 'United Kingdom';
+  const region = provider.region ?? 'England';
+  const website = provider.websiteUrl
+    ? (provider.websiteUrl.startsWith('http') ? provider.websiteUrl : `https://${provider.websiteUrl}`)
+    : `https://www.${name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.ac.uk`;
+
+  const stats = findUKStats(name);
+
+  return {
+    id: `ucas-${idx + 1}`,
+    name,
+    country: 'UK',
+    city,
+    state: region,
+    website,
+    majors: UK_MAJOR_POOLS[idx % UK_MAJOR_POOLS.length],
+    sat_min: stats?.sat_min ?? 1000,
+    sat_max: stats?.sat_max ?? 1200,
+    acceptance_rate: stats?.acceptance ?? 0.80,
+    tuition_estimate: stats?.tuition ?? 22000,
+    intl_aid: stats?.intl_aid ?? 'unknown',
+    tags: stats?.tags ?? ['public', 'urban'],
+    brief_description: `${name} is a higher education provider in ${city}, UK.`,
+    student_size: stats?.size ?? null,
+  };
+}
+
+async function seedUKFromUCAS() {
+  console.log('\n── UK: UCAS provider search ────────────────────');
+
+  // First seed the curated list (accurate stats)
+  await seedUK();
+
+  // Then fetch additional providers from UCAS and upsert any not already covered
+  let page = 1;
+  let totalNew = 0;
+  const curatedNames = new Set(UK_UNIVERSITIES.map(([name]) => name.toLowerCase()));
+
+  while (true) {
+    const url =
+      `https://digital.ucas.com/coursedisplay/results/providers` +
+      `?SearchTerm=&PageNumber=${page}&PageSize=100&SearchResultsTab=Providers`;
+
+    let data;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'OrangeUni/1.0 (university discovery app)',
+        }
+      });
+      if (!res.ok) {
+        console.log(`  UCAS API returned ${res.status} on page ${page} — stopping.`);
+        break;
+      }
+      data = await res.json();
+    } catch (e) {
+      console.log(`  UCAS fetch error on page ${page}: ${e.message} — stopping.`);
+      break;
+    }
+
+    // UCAS may return providers under different keys depending on API version
+    const providers = data.providers ?? data.results ?? data.items ?? data ?? [];
+    if (!Array.isArray(providers) || providers.length === 0) break;
+
+    // Skip providers already in curated list
+    const novel = providers.filter(p => {
+      const name = (p.providerName ?? p.name ?? '').toLowerCase();
+      return name && !curatedNames.has(name);
+    });
+
+    if (novel.length) {
+      const rows = novel.map((p, i) => ucasProviderToRow(p, totalNew + i));
+      const { error } = await supabase.from('universities').upsert(rows, { onConflict: 'id' });
+      if (error) console.error(`  UCAS page ${page} error:`, error.message);
+      else {
+        totalNew += novel.length;
+        process.stdout.write(`\r  Inserted ${totalNew} additional UK providers from UCAS…`);
+      }
+    }
+
+    page++;
+    if (page > 30) break; // UCAS has ~300 providers, 30 pages of 100 is more than enough
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  console.log(`\n  Done: ${totalNew} additional UK universities from UCAS`);
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('OrangeUni seed script starting…');
+  await seedTopUS();
   await seedUS();
-  await seedUK();
+  await seedUKFromUCAS();
   await seedEU();
   await seedChina();
   console.log('\n✓ Seeding complete!');
