@@ -270,82 +270,82 @@ async function seedUS() {
 // Tuition figures are approximate USD/year for international undergrads (2024/25 GBP fees × ~1.27).
 // Source: each university's official international fees page.
 const UK_UNIVERSITIES = [
-  // [name, city, state/region, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size]
-  ['University of Oxford', 'Oxford', 'England', 'https://www.ox.ac.uk', 59000, 0.17, 1380, 1560, 'yes', ['private', 'urban'], 24000],
-  ['University of Cambridge', 'Cambridge', 'England', 'https://www.cam.ac.uk', 60000, 0.18, 1380, 1560, 'yes', ['private', 'suburban'], 24000],
-  ['Imperial College London', 'London', 'England', 'https://www.imperial.ac.uk', 51000, 0.14, 1360, 1540, 'yes', ['private', 'urban'], 19000],
-  ['University College London', 'London', 'England', 'https://www.ucl.ac.uk', 41000, 0.63, 1280, 1480, 'unknown', ['private', 'urban'], 44000],
-  ["King's College London", 'London', 'England', 'https://www.kcl.ac.uk', 40000, 0.55, 1240, 1440, 'unknown', ['private', 'urban'], 35000],
-  ['London School of Economics', 'London', 'England', 'https://www.lse.ac.uk', 39000, 0.16, 1300, 1520, 'unknown', ['private', 'urban'], 12000],
-  ['University of Edinburgh', 'Edinburgh', 'Scotland', 'https://www.ed.ac.uk', 37000, 0.44, 1260, 1460, 'unknown', ['public', 'urban'], 40000],
-  ['University of Manchester', 'Manchester', 'England', 'https://www.manchester.ac.uk', 37000, 0.59, 1220, 1420, 'unknown', ['public', 'urban'], 45000],
-  ['University of Bristol', 'Bristol', 'England', 'https://www.bristol.ac.uk', 36000, 0.54, 1240, 1440, 'unknown', ['public', 'urban'], 28000],
-  ['University of Warwick', 'Coventry', 'England', 'https://warwick.ac.uk', 37000, 0.13, 1280, 1500, 'unknown', ['public', 'suburban'], 27000],
-  ['University of Glasgow', 'Glasgow', 'Scotland', 'https://www.gla.ac.uk', 32000, 0.66, 1200, 1400, 'unknown', ['public', 'urban'], 36000],
-  ['University of Leeds', 'Leeds', 'England', 'https://www.leeds.ac.uk', 33000, 0.72, 1180, 1380, 'unknown', ['public', 'urban'], 38000],
-  ['University of Birmingham', 'Birmingham', 'England', 'https://www.birmingham.ac.uk', 34000, 0.69, 1180, 1380, 'unknown', ['public', 'urban'], 36000],
-  ['University of Southampton', 'Southampton', 'England', 'https://www.southampton.ac.uk', 32000, 0.72, 1180, 1380, 'unknown', ['public', 'urban'], 27000],
-  ['University of Sheffield', 'Sheffield', 'England', 'https://www.sheffield.ac.uk', 32000, 0.75, 1160, 1360, 'unknown', ['public', 'urban'], 30000],
-  ['Durham University', 'Durham', 'England', 'https://www.durham.ac.uk', 36000, 0.12, 1300, 1500, 'unknown', ['public', 'suburban'], 20000],
-  ['University of Nottingham', 'Nottingham', 'England', 'https://www.nottingham.ac.uk', 32000, 0.68, 1180, 1380, 'unknown', ['public', 'suburban'], 34000],
-  ['University of York', 'York', 'England', 'https://www.york.ac.uk', 31000, 0.71, 1180, 1380, 'unknown', ['public', 'suburban'], 20000],
-  ['University of Bath', 'Bath', 'England', 'https://www.bath.ac.uk', 33000, 0.17, 1280, 1480, 'unknown', ['public', 'urban'], 18000],
-  ['University of Exeter', 'Exeter', 'England', 'https://www.exeter.ac.uk', 32000, 0.68, 1200, 1400, 'unknown', ['public', 'suburban'], 27000],
-  ['University of Liverpool', 'Liverpool', 'England', 'https://www.liverpool.ac.uk', 32000, 0.73, 1160, 1360, 'unknown', ['public', 'urban'], 26000],
-  ['Queen Mary University of London', 'London', 'England', 'https://www.qmul.ac.uk', 32000, 0.62, 1180, 1380, 'unknown', ['public', 'urban'], 27000],
-  ['Lancaster University', 'Lancaster', 'England', 'https://www.lancaster.ac.uk', 30000, 0.74, 1160, 1360, 'unknown', ['public', 'suburban'], 15000],
-  ['Cardiff University', 'Cardiff', 'Wales', 'https://www.cardiff.ac.uk', 31000, 0.76, 1140, 1340, 'unknown', ['public', 'urban'], 32000],
-  ['Newcastle University', 'Newcastle', 'England', 'https://www.ncl.ac.uk', 34000, 0.72, 1160, 1360, 'unknown', ['public', 'urban'], 27000],
-  ['University of St Andrews', 'St Andrews', 'Scotland', 'https://www.st-andrews.ac.uk', 37000, 0.08, 1320, 1520, 'unknown', ['public', 'suburban'], 10000],
-  ['London School of Hygiene & Tropical Medicine', 'London', 'England', 'https://www.lshtm.ac.uk', 27000, 0.30, 1260, 1460, 'unknown', ['public', 'urban'], 5000],
-  ['University of Reading', 'Reading', 'England', 'https://www.reading.ac.uk', 29000, 0.78, 1120, 1320, 'unknown', ['public', 'suburban'], 20000],
-  ['University of East Anglia', 'Norwich', 'England', 'https://www.uea.ac.uk', 28000, 0.80, 1100, 1300, 'unknown', ['public', 'suburban'], 17000],
-  ['University of Leicester', 'Leicester', 'England', 'https://www.le.ac.uk', 29000, 0.78, 1120, 1320, 'unknown', ['public', 'urban'], 18000],
-  ['University of Sussex', 'Brighton', 'England', 'https://www.sussex.ac.uk', 29000, 0.79, 1100, 1300, 'unknown', ['public', 'urban'], 20000],
-  ['Loughborough University', 'Loughborough', 'England', 'https://www.lboro.ac.uk', 32000, 0.54, 1200, 1400, 'unknown', ['public', 'suburban'], 18000],
-  ['University of Aberdeen', 'Aberdeen', 'Scotland', 'https://www.abdn.ac.uk', 28000, 0.75, 1120, 1320, 'unknown', ['public', 'urban'], 15000],
-  ['University of Dundee', 'Dundee', 'Scotland', 'https://www.dundee.ac.uk', 28000, 0.76, 1120, 1320, 'unknown', ['public', 'urban'], 17000],
-  ['University of Strathclyde', 'Glasgow', 'Scotland', 'https://www.strath.ac.uk', 30000, 0.74, 1140, 1340, 'unknown', ['public', 'urban'], 23000],
-  ['Heriot-Watt University', 'Edinburgh', 'Scotland', 'https://www.hw.ac.uk', 25000, 0.80, 1100, 1300, 'unknown', ['public', 'urban'], 10000],
-  ['University of Stirling', 'Stirling', 'Scotland', 'https://www.stir.ac.uk', 24000, 0.85, 1060, 1260, 'unknown', ['public', 'suburban'], 13000],
-  ['Swansea University', 'Swansea', 'Wales', 'https://www.swansea.ac.uk', 26000, 0.82, 1080, 1280, 'unknown', ['public', 'urban'], 22000],
-  ['Bangor University', 'Bangor', 'Wales', 'https://www.bangor.ac.uk', 23000, 0.86, 1020, 1220, 'unknown', ['public', 'suburban'], 10000],
-  ['University of Surrey', 'Guildford', 'England', 'https://www.surrey.ac.uk', 30000, 0.72, 1160, 1360, 'unknown', ['public', 'suburban'], 16000],
-  ['University of Kent', 'Canterbury', 'England', 'https://www.kent.ac.uk', 27000, 0.80, 1080, 1280, 'unknown', ['public', 'suburban'], 20000],
-  ['University of Essex', 'Colchester', 'England', 'https://www.essex.ac.uk', 25000, 0.82, 1060, 1260, 'unknown', ['public', 'suburban'], 15000],
-  ['Brunel University London', 'London', 'England', 'https://www.brunel.ac.uk', 27000, 0.76, 1100, 1300, 'unknown', ['public', 'suburban'], 14000],
-  ['City, University of London', 'London', 'England', 'https://www.city.ac.uk', 29000, 0.74, 1120, 1320, 'unknown', ['public', 'urban'], 20000],
-  ['University of Hull', 'Hull', 'England', 'https://www.hull.ac.uk', 24000, 0.88, 1040, 1240, 'no', ['public', 'urban'], 16000],
-  ['Keele University', 'Keele', 'England', 'https://www.keele.ac.uk', 25000, 0.84, 1060, 1260, 'unknown', ['public', 'rural'], 10000],
-  ['University of Lincoln', 'Lincoln', 'England', 'https://www.lincoln.ac.uk', 23000, 0.88, 1020, 1220, 'unknown', ['public', 'urban'], 16000],
-  ['Coventry University', 'Coventry', 'England', 'https://www.coventry.ac.uk', 22000, 0.90, 1000, 1200, 'unknown', ['public', 'urban'], 30000],
-  ['Aston University', 'Birmingham', 'England', 'https://www.aston.ac.uk', 27000, 0.78, 1100, 1300, 'unknown', ['public', 'urban'], 14000],
-  ['University of Plymouth', 'Plymouth', 'England', 'https://www.plymouth.ac.uk', 23000, 0.84, 1040, 1240, 'unknown', ['public', 'urban'], 18000],
-  ['University of Portsmouth', 'Portsmouth', 'England', 'https://www.port.ac.uk', 23000, 0.86, 1020, 1220, 'unknown', ['public', 'urban'], 23000],
-  ['Oxford Brookes University', 'Oxford', 'England', 'https://www.brookes.ac.uk', 23000, 0.82, 1040, 1240, 'unknown', ['public', 'urban'], 17000],
-  ['University of the Arts London', 'London', 'England', 'https://www.arts.ac.uk', 37000, 0.55, 1100, 1300, 'unknown', ['public', 'urban'], 22000],
-  ['Goldsmiths, University of London', 'London', 'England', 'https://www.gold.ac.uk', 26000, 0.72, 1100, 1300, 'unknown', ['public', 'urban'], 10000],
-  ['Royal Holloway, University of London', 'Egham', 'England', 'https://www.royalholloway.ac.uk', 28000, 0.70, 1120, 1320, 'unknown', ['public', 'suburban'], 11000],
-  ['Birkbeck, University of London', 'London', 'England', 'https://www.bbk.ac.uk', 23000, 0.80, 1060, 1260, 'unknown', ['public', 'urban'], 18000],
-  ['SOAS University of London', 'London', 'England', 'https://www.soas.ac.uk', 30000, 0.62, 1160, 1360, 'unknown', ['public', 'urban'], 6000],
-  ['University of Salford', 'Salford', 'England', 'https://www.salford.ac.uk', 21000, 0.88, 1000, 1200, 'unknown', ['public', 'urban'], 21000],
-  ['Manchester Metropolitan University', 'Manchester', 'England', 'https://www.mmu.ac.uk', 21000, 0.88, 1000, 1200, 'unknown', ['public', 'urban'], 38000],
-  ['Leeds Beckett University', 'Leeds', 'England', 'https://www.leedsbeckett.ac.uk', 19000, 0.92, 960, 1160, 'unknown', ['public', 'urban'], 30000],
-  ['Sheffield Hallam University', 'Sheffield', 'England', 'https://www.shu.ac.uk', 20000, 0.90, 980, 1180, 'unknown', ['public', 'urban'], 35000],
-  ['University of Brighton', 'Brighton', 'England', 'https://www.brighton.ac.uk', 21000, 0.88, 1000, 1200, 'unknown', ['public', 'urban'], 22000],
-  ['University of Hertfordshire', 'Hatfield', 'England', 'https://www.herts.ac.uk', 20000, 0.90, 980, 1180, 'unknown', ['public', 'suburban'], 25000],
-  ['Nottingham Trent University', 'Nottingham', 'England', 'https://www.ntu.ac.uk', 21000, 0.88, 1000, 1200, 'unknown', ['public', 'urban'], 38000],
-  ['University of Huddersfield', 'Huddersfield', 'England', 'https://www.hud.ac.uk', 20000, 0.90, 960, 1160, 'unknown', ['public', 'urban'], 20000],
-  ['University of the West of England', 'Bristol', 'England', 'https://www.uwe.ac.uk', 21000, 0.88, 980, 1180, 'unknown', ['public', 'suburban'], 30000],
-  ['De Montfort University', 'Leicester', 'England', 'https://www.dmu.ac.uk', 20000, 0.91, 960, 1160, 'unknown', ['public', 'urban'], 26000],
-  ['University of Central Lancashire', 'Preston', 'England', 'https://www.uclan.ac.uk', 20000, 0.92, 940, 1140, 'unknown', ['public', 'urban'], 35000],
-  ['University of Sunderland', 'Sunderland', 'England', 'https://www.sunderland.ac.uk', 18000, 0.94, 920, 1120, 'unknown', ['public', 'urban'], 18000],
-  ['University of Northumbria', 'Newcastle', 'England', 'https://www.northumbria.ac.uk', 21000, 0.88, 980, 1180, 'unknown', ['public', 'urban'], 34000],
-  ['Robert Gordon University', 'Aberdeen', 'Scotland', 'https://www.rgu.ac.uk', 21000, 0.88, 1000, 1200, 'unknown', ['public', 'urban'], 16000],
-  ['Edinburgh Napier University', 'Edinburgh', 'Scotland', 'https://www.napier.ac.uk', 19000, 0.90, 960, 1160, 'unknown', ['public', 'urban'], 20000],
-  ['Glasgow Caledonian University', 'Glasgow', 'Scotland', 'https://www.gcu.ac.uk', 19000, 0.90, 960, 1160, 'unknown', ['public', 'urban'], 20000],
-  ['Queen\'s University Belfast', 'Belfast', 'Northern Ireland', 'https://www.qub.ac.uk', 28000, 0.74, 1160, 1360, 'unknown', ['public', 'urban'], 24000],
-  ['Ulster University', 'Coleraine', 'Northern Ireland', 'https://www.ulster.ac.uk', 21000, 0.90, 960, 1160, 'unknown', ['public', 'suburban'], 28000],
+  // [name, city, region, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size, majors]
+  ['University of Oxford',                    'Oxford',       'England',          'https://www.ox.ac.uk',           59000, 0.17, 1380, 1560, 'yes',     ['private','urban'],    24000, ['Humanities','Law','Medicine & Health','Social Sciences','Mathematics']],
+  ['University of Cambridge',                 'Cambridge',    'England',          'https://www.cam.ac.uk',          60000, 0.18, 1380, 1560, 'yes',     ['private','suburban'], 24000, ['Mathematics','Engineering','Computer Science','Medicine & Health','Humanities']],
+  ['Imperial College London',                 'London',       'England',          'https://www.imperial.ac.uk',     51000, 0.14, 1360, 1540, 'yes',     ['private','urban'],    19000, ['Engineering','Computer Science','Physics','Mathematics','Medicine & Health']],
+  ['University College London',               'London',       'England',          'https://www.ucl.ac.uk',          41000, 0.63, 1280, 1480, 'unknown', ['private','urban'],    44000, ['Medicine & Health','Engineering','Law','Social Sciences','Psychology']],
+  ["King's College London",                   'London',       'England',          'https://www.kcl.ac.uk',          40000, 0.55, 1240, 1440, 'unknown', ['private','urban'],    35000, ['Medicine & Health','Law','Humanities','Social Sciences','Business']],
+  ['London School of Economics',              'London',       'England',          'https://www.lse.ac.uk',          39000, 0.16, 1300, 1520, 'unknown', ['private','urban'],    12000, ['Business','Social Sciences','Law','Mathematics','Economics']],
+  ['University of Edinburgh',                 'Edinburgh',    'Scotland',         'https://www.ed.ac.uk',           37000, 0.44, 1260, 1460, 'unknown', ['public','urban'],     40000, ['Medicine & Health','Engineering','Business','Social Sciences','Humanities']],
+  ['University of Manchester',                'Manchester',   'England',          'https://www.manchester.ac.uk',   37000, 0.59, 1220, 1420, 'unknown', ['public','urban'],     45000, ['Engineering','Computer Science','Business','Medicine & Health','Social Sciences']],
+  ['University of Bristol',                   'Bristol',      'England',          'https://www.bristol.ac.uk',      36000, 0.54, 1240, 1440, 'unknown', ['public','urban'],     28000, ['Engineering','Social Sciences','Biology','Law','Mathematics']],
+  ['University of Warwick',                   'Coventry',     'England',          'https://warwick.ac.uk',          37000, 0.13, 1280, 1500, 'unknown', ['public','suburban'],  27000, ['Business','Mathematics','Computer Science','Engineering','Social Sciences']],
+  ['University of Glasgow',                   'Glasgow',      'Scotland',         'https://www.gla.ac.uk',          32000, 0.66, 1200, 1400, 'unknown', ['public','urban'],     36000, ['Medicine & Health','Engineering','Business','Law','Social Sciences']],
+  ['University of Leeds',                     'Leeds',        'England',          'https://www.leeds.ac.uk',        33000, 0.72, 1180, 1380, 'unknown', ['public','urban'],     38000, ['Business','Engineering','Social Sciences','Medicine & Health','Computer Science']],
+  ['University of Birmingham',                'Birmingham',   'England',          'https://www.birmingham.ac.uk',   34000, 0.69, 1180, 1380, 'unknown', ['public','urban'],     36000, ['Engineering','Medicine & Health','Business','Computer Science','Social Sciences']],
+  ['University of Southampton',               'Southampton',  'England',          'https://www.southampton.ac.uk',  32000, 0.72, 1180, 1380, 'unknown', ['public','urban'],     27000, ['Engineering','Computer Science','Medicine & Health','Physics','Mathematics']],
+  ['University of Sheffield',                 'Sheffield',    'England',          'https://www.sheffield.ac.uk',    32000, 0.75, 1160, 1360, 'unknown', ['public','urban'],     30000, ['Engineering','Medicine & Health','Computer Science','Business','Social Sciences']],
+  ['Durham University',                       'Durham',       'England',          'https://www.durham.ac.uk',       36000, 0.12, 1300, 1500, 'unknown', ['public','suburban'],  20000, ['Business','Social Sciences','Humanities','Law','Mathematics']],
+  ['University of Nottingham',                'Nottingham',   'England',          'https://www.nottingham.ac.uk',   32000, 0.68, 1180, 1380, 'unknown', ['public','suburban'],  34000, ['Medicine & Health','Engineering','Business','Computer Science','Biology']],
+  ['University of York',                      'York',         'England',          'https://www.york.ac.uk',         31000, 0.71, 1180, 1380, 'unknown', ['public','suburban'],  20000, ['Computer Science','Psychology','Social Sciences','Humanities','Biology']],
+  ['University of Bath',                      'Bath',         'England',          'https://www.bath.ac.uk',         33000, 0.17, 1280, 1480, 'unknown', ['public','urban'],     18000, ['Engineering','Business','Computer Science','Mathematics','Social Sciences']],
+  ['University of Exeter',                    'Exeter',       'England',          'https://www.exeter.ac.uk',       32000, 0.68, 1200, 1400, 'unknown', ['public','suburban'],  27000, ['Business','Social Sciences','Law','Humanities','Biology']],
+  ['University of Liverpool',                 'Liverpool',    'England',          'https://www.liverpool.ac.uk',    32000, 0.73, 1160, 1360, 'unknown', ['public','urban'],     26000, ['Medicine & Health','Engineering','Business','Law','Social Sciences']],
+  ['Queen Mary University of London',         'London',       'England',          'https://www.qmul.ac.uk',         32000, 0.62, 1180, 1380, 'unknown', ['public','urban'],     27000, ['Medicine & Health','Engineering','Law','Business','Computer Science']],
+  ['Lancaster University',                    'Lancaster',    'England',          'https://www.lancaster.ac.uk',    30000, 0.74, 1160, 1360, 'unknown', ['public','suburban'],  15000, ['Business','Computer Science','Social Sciences','Psychology','Mathematics']],
+  ['Cardiff University',                      'Cardiff',      'Wales',            'https://www.cardiff.ac.uk',      31000, 0.76, 1140, 1340, 'unknown', ['public','urban'],     32000, ['Engineering','Medicine & Health','Law','Business','Social Sciences']],
+  ['Newcastle University',                    'Newcastle',    'England',          'https://www.ncl.ac.uk',          34000, 0.72, 1160, 1360, 'unknown', ['public','urban'],     27000, ['Medicine & Health','Engineering','Computer Science','Business','Social Sciences']],
+  ['University of St Andrews',                'St Andrews',   'Scotland',         'https://www.st-andrews.ac.uk',   37000, 0.08, 1320, 1520, 'unknown', ['public','suburban'],  10000, ['Physics','Mathematics','Computer Science','Humanities','Social Sciences']],
+  ['London School of Hygiene & Tropical Medicine','London',   'England',          'https://www.lshtm.ac.uk',        27000, 0.30, 1260, 1460, 'unknown', ['public','urban'],      5000, ['Medicine & Health','Biology','Social Sciences']],
+  ['University of Reading',                   'Reading',      'England',          'https://www.reading.ac.uk',      29000, 0.78, 1120, 1320, 'unknown', ['public','suburban'],  20000, ['Business','Social Sciences','Engineering','Biology','Psychology']],
+  ['University of East Anglia',               'Norwich',      'England',          'https://www.uea.ac.uk',          28000, 0.80, 1100, 1300, 'unknown', ['public','suburban'],  17000, ['Social Sciences','Biology','Humanities','Medicine & Health','Business']],
+  ['University of Leicester',                 'Leicester',    'England',          'https://www.le.ac.uk',           29000, 0.78, 1120, 1320, 'unknown', ['public','urban'],     18000, ['Medicine & Health','Biology','Engineering','Social Sciences','Business']],
+  ['University of Sussex',                    'Brighton',     'England',          'https://www.sussex.ac.uk',       29000, 0.79, 1100, 1300, 'unknown', ['public','urban'],     20000, ['Social Sciences','Psychology','Business','Humanities','Computer Science']],
+  ['Loughborough University',                 'Loughborough', 'England',          'https://www.lboro.ac.uk',        32000, 0.54, 1200, 1400, 'unknown', ['public','suburban'],  18000, ['Engineering','Computer Science','Business','Mathematics','Social Sciences']],
+  ['University of Aberdeen',                  'Aberdeen',     'Scotland',         'https://www.abdn.ac.uk',         28000, 0.75, 1120, 1320, 'unknown', ['public','urban'],     15000, ['Medicine & Health','Engineering','Business','Law','Social Sciences']],
+  ['University of Dundee',                    'Dundee',       'Scotland',         'https://www.dundee.ac.uk',       28000, 0.76, 1120, 1320, 'unknown', ['public','urban'],     17000, ['Medicine & Health','Engineering','Computer Science','Social Sciences','Law']],
+  ['University of Strathclyde',               'Glasgow',      'Scotland',         'https://www.strath.ac.uk',       30000, 0.74, 1140, 1340, 'unknown', ['public','urban'],     23000, ['Engineering','Computer Science','Business','Medicine & Health','Social Sciences']],
+  ['Heriot-Watt University',                  'Edinburgh',    'Scotland',         'https://www.hw.ac.uk',           25000, 0.80, 1100, 1300, 'unknown', ['public','urban'],     10000, ['Engineering','Computer Science','Mathematics','Business','Physics']],
+  ['University of Stirling',                  'Stirling',     'Scotland',         'https://www.stir.ac.uk',         24000, 0.85, 1060, 1260, 'unknown', ['public','suburban'],  13000, ['Business','Psychology','Social Sciences','Medicine & Health','Humanities']],
+  ['Swansea University',                      'Swansea',      'Wales',            'https://www.swansea.ac.uk',      26000, 0.82, 1080, 1280, 'unknown', ['public','urban'],     22000, ['Engineering','Computer Science','Medicine & Health','Business','Social Sciences']],
+  ['Bangor University',                       'Bangor',       'Wales',            'https://www.bangor.ac.uk',       23000, 0.86, 1020, 1220, 'unknown', ['public','suburban'],  10000, ['Biology','Psychology','Social Sciences','Humanities','Business']],
+  ['University of Surrey',                    'Guildford',    'England',          'https://www.surrey.ac.uk',       30000, 0.72, 1160, 1360, 'unknown', ['public','suburban'],  16000, ['Engineering','Computer Science','Business','Mathematics','Social Sciences']],
+  ['University of Kent',                      'Canterbury',   'England',          'https://www.kent.ac.uk',         27000, 0.80, 1080, 1280, 'unknown', ['public','suburban'],  20000, ['Computer Science','Social Sciences','Law','Psychology','Business']],
+  ['University of Essex',                     'Colchester',   'England',          'https://www.essex.ac.uk',        25000, 0.82, 1060, 1260, 'unknown', ['public','suburban'],  15000, ['Social Sciences','Computer Science','Psychology','Business','Mathematics']],
+  ['Brunel University London',                'London',       'England',          'https://www.brunel.ac.uk',       27000, 0.76, 1100, 1300, 'unknown', ['public','suburban'],  14000, ['Engineering','Computer Science','Business','Social Sciences','Mathematics']],
+  ['City, University of London',              'London',       'England',          'https://www.city.ac.uk',         29000, 0.74, 1120, 1320, 'unknown', ['public','urban'],     20000, ['Business','Law','Computer Science','Engineering','Social Sciences']],
+  ['University of Hull',                      'Hull',         'England',          'https://www.hull.ac.uk',         24000, 0.88, 1040, 1240, 'no',      ['public','urban'],     16000, ['Business','Social Sciences','Humanities','Law','Computer Science']],
+  ['Keele University',                        'Keele',        'England',          'https://www.keele.ac.uk',        25000, 0.84, 1060, 1260, 'unknown', ['public','rural'],     10000, ['Medicine & Health','Social Sciences','Business','Humanities','Biology']],
+  ['University of Lincoln',                   'Lincoln',      'England',          'https://www.lincoln.ac.uk',      23000, 0.88, 1020, 1220, 'unknown', ['public','urban'],     16000, ['Business','Computer Science','Engineering','Social Sciences','Humanities']],
+  ['Coventry University',                     'Coventry',     'England',          'https://www.coventry.ac.uk',     22000, 0.90, 1000, 1200, 'unknown', ['public','urban'],     30000, ['Engineering','Business','Computer Science','Social Sciences','Humanities']],
+  ['Aston University',                        'Birmingham',   'England',          'https://www.aston.ac.uk',        27000, 0.78, 1100, 1300, 'unknown', ['public','urban'],     14000, ['Business','Engineering','Computer Science','Biology','Social Sciences']],
+  ['University of Plymouth',                  'Plymouth',     'England',          'https://www.plymouth.ac.uk',     23000, 0.84, 1040, 1240, 'unknown', ['public','urban'],     18000, ['Engineering','Biology','Business','Computer Science','Social Sciences']],
+  ['University of Portsmouth',                'Portsmouth',   'England',          'https://www.port.ac.uk',         23000, 0.86, 1020, 1220, 'unknown', ['public','urban'],     23000, ['Business','Computer Science','Engineering','Social Sciences','Humanities']],
+  ['Oxford Brookes University',               'Oxford',       'England',          'https://www.brookes.ac.uk',      23000, 0.82, 1040, 1240, 'unknown', ['public','urban'],     17000, ['Business','Engineering','Computer Science','Social Sciences','Humanities']],
+  ['University of the Arts London',           'London',       'England',          'https://www.arts.ac.uk',         37000, 0.55, 1100, 1300, 'unknown', ['public','urban'],     22000, ['Humanities','Liberal Arts']],
+  ['Goldsmiths, University of London',        'London',       'England',          'https://www.gold.ac.uk',         26000, 0.72, 1100, 1300, 'unknown', ['public','urban'],     10000, ['Humanities','Liberal Arts','Social Sciences','Computer Science','Psychology']],
+  ['Royal Holloway, University of London',    'Egham',        'England',          'https://www.royalholloway.ac.uk',28000, 0.70, 1120, 1320, 'unknown', ['public','suburban'],  11000, ['Computer Science','Humanities','Business','Psychology','Social Sciences']],
+  ['Birkbeck, University of London',          'London',       'England',          'https://www.bbk.ac.uk',          23000, 0.80, 1060, 1260, 'unknown', ['public','urban'],     18000, ['Business','Social Sciences','Humanities','Computer Science','Law']],
+  ['SOAS University of London',               'London',       'England',          'https://www.soas.ac.uk',         30000, 0.62, 1160, 1360, 'unknown', ['public','urban'],      6000, ['Social Sciences','Humanities','Law','Business','Psychology']],
+  ['University of Salford',                   'Salford',      'England',          'https://www.salford.ac.uk',      21000, 0.88, 1000, 1200, 'unknown', ['public','urban'],     21000, ['Engineering','Computer Science','Business','Social Sciences','Humanities']],
+  ['Manchester Metropolitan University',      'Manchester',   'England',          'https://www.mmu.ac.uk',          21000, 0.88, 1000, 1200, 'unknown', ['public','urban'],     38000, ['Business','Computer Science','Engineering','Social Sciences','Humanities']],
+  ['Leeds Beckett University',                'Leeds',        'England',          'https://www.leedsbeckett.ac.uk', 19000, 0.92,  960, 1160, 'unknown', ['public','urban'],     30000, ['Business','Social Sciences','Humanities','Computer Science','Engineering']],
+  ['Sheffield Hallam University',             'Sheffield',    'England',          'https://www.shu.ac.uk',          20000, 0.90,  980, 1180, 'unknown', ['public','urban'],     35000, ['Business','Engineering','Computer Science','Social Sciences','Humanities']],
+  ['University of Brighton',                  'Brighton',     'England',          'https://www.brighton.ac.uk',     21000, 0.88, 1000, 1200, 'unknown', ['public','urban'],     22000, ['Engineering','Computer Science','Business','Social Sciences','Humanities']],
+  ['University of Hertfordshire',             'Hatfield',     'England',          'https://www.herts.ac.uk',        20000, 0.90,  980, 1180, 'unknown', ['public','suburban'],  25000, ['Business','Computer Science','Engineering','Social Sciences','Mathematics']],
+  ['Nottingham Trent University',             'Nottingham',   'England',          'https://www.ntu.ac.uk',          21000, 0.88, 1000, 1200, 'unknown', ['public','urban'],     38000, ['Business','Computer Science','Engineering','Social Sciences','Humanities']],
+  ['University of Huddersfield',              'Huddersfield', 'England',          'https://www.hud.ac.uk',          20000, 0.90,  960, 1160, 'unknown', ['public','urban'],     20000, ['Engineering','Computer Science','Business','Social Sciences','Humanities']],
+  ['University of the West of England',       'Bristol',      'England',          'https://www.uwe.ac.uk',          21000, 0.88,  980, 1180, 'unknown', ['public','suburban'],  30000, ['Engineering','Computer Science','Business','Social Sciences','Humanities']],
+  ['De Montfort University',                  'Leicester',    'England',          'https://www.dmu.ac.uk',          20000, 0.91,  960, 1160, 'unknown', ['public','urban'],     26000, ['Computer Science','Engineering','Business','Humanities','Social Sciences']],
+  ['University of Central Lancashire',        'Preston',      'England',          'https://www.uclan.ac.uk',        20000, 0.92,  940, 1140, 'unknown', ['public','urban'],     35000, ['Business','Computer Science','Engineering','Social Sciences','Medicine & Health']],
+  ['University of Sunderland',                'Sunderland',   'England',          'https://www.sunderland.ac.uk',   18000, 0.94,  920, 1120, 'unknown', ['public','urban'],     18000, ['Business','Engineering','Computer Science','Social Sciences','Humanities']],
+  ['University of Northumbria',               'Newcastle',    'England',          'https://www.northumbria.ac.uk',  21000, 0.88,  980, 1180, 'unknown', ['public','urban'],     34000, ['Business','Computer Science','Engineering','Social Sciences','Humanities']],
+  ['Robert Gordon University',                'Aberdeen',     'Scotland',         'https://www.rgu.ac.uk',          21000, 0.88, 1000, 1200, 'unknown', ['public','urban'],     16000, ['Engineering','Computer Science','Business','Medicine & Health','Social Sciences']],
+  ['Edinburgh Napier University',             'Edinburgh',    'Scotland',         'https://www.napier.ac.uk',       19000, 0.90,  960, 1160, 'unknown', ['public','urban'],     20000, ['Computer Science','Business','Engineering','Social Sciences','Humanities']],
+  ['Glasgow Caledonian University',           'Glasgow',      'Scotland',         'https://www.gcu.ac.uk',          19000, 0.90,  960, 1160, 'unknown', ['public','urban'],     20000, ['Business','Engineering','Computer Science','Medicine & Health','Social Sciences']],
+  ["Queen's University Belfast",              'Belfast',      'Northern Ireland', 'https://www.qub.ac.uk',          28000, 0.74, 1160, 1360, 'unknown', ['public','urban'],     24000, ['Medicine & Health','Engineering','Business','Law','Computer Science']],
+  ['Ulster University',                       'Coleraine',    'Northern Ireland', 'https://www.ulster.ac.uk',       21000, 0.90,  960, 1160, 'unknown', ['public','suburban'],  28000, ['Business','Engineering','Computer Science','Medicine & Health','Social Sciences']],
 ];
 
 const UK_MAJOR_POOLS = [
@@ -361,14 +361,14 @@ const UK_MAJOR_POOLS = [
 async function seedUK() {
   console.log('\n── UK: Curated dataset ─────────────────────────');
 
-  const rows = UK_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size], i) => ({
+  const rows = UK_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors], i) => ({
     id: `uk-${i + 1}`,
     name,
     country: 'UK',
     city,
     state,
     website,
-    majors: UK_MAJOR_POOLS[i % UK_MAJOR_POOLS.length],
+    majors,
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -389,91 +389,81 @@ async function seedUK() {
 // SAT ranges are selectivity proxies (EU schools don't use SAT).
 
 const EU_UNIVERSITIES = [
-  // [name, city, country/region, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size]
+  // [name, city, country/region, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size, majors]
   // Germany
-  ['Technical University of Munich', 'Munich', 'Germany', 'https://www.tum.de', 7500, 0.08, 1340, 1520, 'yes', ['public', 'urban'], 50000],
-  ['Ludwig Maximilian University Munich', 'Munich', 'Germany', 'https://www.lmu.de', 3000, 0.15, 1260, 1460, 'unknown', ['public', 'urban'], 53000],
-  ['Heidelberg University', 'Heidelberg', 'Germany', 'https://www.uni-heidelberg.de', 3000, 0.20, 1240, 1440, 'unknown', ['public', 'suburban'], 31000],
-  ['RWTH Aachen University', 'Aachen', 'Germany', 'https://www.rwth-aachen.de', 3000, 0.12, 1300, 1480, 'unknown', ['public', 'urban'], 47000],
-  ['Humboldt University Berlin', 'Berlin', 'Germany', 'https://www.hu-berlin.de', 2500, 0.25, 1200, 1400, 'unknown', ['public', 'urban'], 39000],
-  ['Free University Berlin', 'Berlin', 'Germany', 'https://www.fu-berlin.de', 2500, 0.30, 1180, 1380, 'unknown', ['public', 'urban'], 38000],
-  ['TU Berlin', 'Berlin', 'Germany', 'https://www.tu-berlin.de', 3000, 0.18, 1280, 1460, 'unknown', ['public', 'urban'], 34000],
-  ['University of Hamburg', 'Hamburg', 'Germany', 'https://www.uni-hamburg.de', 2500, 0.35, 1160, 1360, 'unknown', ['public', 'urban'], 44000],
+  ['Technical University of Munich', 'Munich', 'Germany', 'https://www.tum.de', 7500, 0.08, 1340, 1520, 'yes', ['public', 'urban'], 50000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Business']],
+  ['Ludwig Maximilian University Munich', 'Munich', 'Germany', 'https://www.lmu.de', 3000, 0.15, 1260, 1460, 'unknown', ['public', 'urban'], 53000, ['Medicine & Health', 'Law', 'Humanities', 'Social Sciences', 'Biology']],
+  ['Heidelberg University', 'Heidelberg', 'Germany', 'https://www.uni-heidelberg.de', 3000, 0.20, 1240, 1440, 'unknown', ['public', 'suburban'], 31000, ['Medicine & Health', 'Biology', 'Chemistry', 'Humanities', 'Social Sciences']],
+  ['RWTH Aachen University', 'Aachen', 'Germany', 'https://www.rwth-aachen.de', 3000, 0.12, 1300, 1480, 'unknown', ['public', 'urban'], 47000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Business']],
+  ['Humboldt University Berlin', 'Berlin', 'Germany', 'https://www.hu-berlin.de', 2500, 0.25, 1200, 1400, 'unknown', ['public', 'urban'], 39000, ['Humanities', 'Social Sciences', 'Law', 'Medicine & Health', 'Biology']],
+  ['Free University Berlin', 'Berlin', 'Germany', 'https://www.fu-berlin.de', 2500, 0.30, 1180, 1380, 'unknown', ['public', 'urban'], 38000, ['Social Sciences', 'Humanities', 'Political Science', 'Biology', 'Psychology']],
+  ['TU Berlin', 'Berlin', 'Germany', 'https://www.tu-berlin.de', 3000, 0.18, 1280, 1460, 'unknown', ['public', 'urban'], 34000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Business']],
+  ['University of Hamburg', 'Hamburg', 'Germany', 'https://www.uni-hamburg.de', 2500, 0.35, 1160, 1360, 'unknown', ['public', 'urban'], 44000, ['Business', 'Law', 'Humanities', 'Social Sciences', 'Biology']],
   // France
-  ['École Polytechnique', 'Palaiseau', 'France', 'https://www.polytechnique.edu', 15000, 0.05, 1400, 1560, 'yes', ['public', 'suburban'], 9000],
-  ['Sciences Po Paris', 'Paris', 'France', 'https://www.sciencespo.fr', 18000, 0.10, 1320, 1520, 'yes', ['public', 'urban'], 14000],
-  ['HEC Paris', 'Jouy-en-Josas', 'France', 'https://www.hec.edu', 38000, 0.12, 1340, 1520, 'yes', ['private', 'suburban'], 4500],
-  ['Sorbonne University', 'Paris', 'France', 'https://www.sorbonne-universite.fr', 4000, 0.40, 1200, 1400, 'unknown', ['public', 'urban'], 55000],
-  ['University of Paris-Saclay', 'Paris', 'France', 'https://www.universite-paris-saclay.fr', 4500, 0.25, 1260, 1460, 'unknown', ['public', 'suburban'], 48000],
-  ['CentraleSupélec', 'Paris', 'France', 'https://www.centralesupelec.fr', 14000, 0.08, 1360, 1540, 'unknown', ['public', 'suburban'], 4700],
+  ['École Polytechnique', 'Palaiseau', 'France', 'https://www.polytechnique.edu', 15000, 0.05, 1400, 1560, 'yes', ['public', 'suburban'], 9000, ['Engineering', 'Mathematics', 'Physics', 'Computer Science', 'Economics']],
+  ['Sciences Po Paris', 'Paris', 'France', 'https://www.sciencespo.fr', 18000, 0.10, 1320, 1520, 'yes', ['public', 'urban'], 14000, ['Political Science', 'Social Sciences', 'Law', 'Economics', 'International Relations']],
+  ['HEC Paris', 'Jouy-en-Josas', 'France', 'https://www.hec.edu', 38000, 0.12, 1340, 1520, 'yes', ['private', 'suburban'], 4500, ['Business', 'Economics', 'Finance', 'Management', 'Marketing']],
+  ['Sorbonne University', 'Paris', 'France', 'https://www.sorbonne-universite.fr', 4000, 0.40, 1200, 1400, 'unknown', ['public', 'urban'], 55000, ['Humanities', 'Medicine & Health', 'Biology', 'Chemistry', 'Social Sciences']],
+  ['University of Paris-Saclay', 'Paris', 'France', 'https://www.universite-paris-saclay.fr', 4500, 0.25, 1260, 1460, 'unknown', ['public', 'suburban'], 48000, ['Engineering', 'Physics', 'Mathematics', 'Computer Science', 'Biology']],
+  ['CentraleSupélec', 'Paris', 'France', 'https://www.centralesupelec.fr', 14000, 0.08, 1360, 1540, 'unknown', ['public', 'suburban'], 4700, ['Engineering', 'Mathematics', 'Computer Science', 'Physics', 'Data Science']],
   // Netherlands
-  ['Delft University of Technology', 'Delft', 'Netherlands', 'https://www.tudelft.nl', 18000, 0.40, 1300, 1480, 'unknown', ['public', 'suburban'], 26000],
-  ['University of Amsterdam', 'Amsterdam', 'Netherlands', 'https://www.uva.nl', 15000, 0.55, 1240, 1440, 'unknown', ['public', 'urban'], 39000],
-  ['Leiden University', 'Leiden', 'Netherlands', 'https://www.universiteitleiden.nl', 16000, 0.50, 1220, 1420, 'unknown', ['public', 'suburban'], 33000],
-  ['Utrecht University', 'Utrecht', 'Netherlands', 'https://www.uu.nl', 15500, 0.55, 1220, 1420, 'unknown', ['public', 'urban'], 36000],
-  ['Eindhoven University of Technology', 'Eindhoven', 'Netherlands', 'https://www.tue.nl', 17000, 0.35, 1280, 1460, 'unknown', ['public', 'suburban'], 14000],
-  ['Erasmus University Rotterdam', 'Rotterdam', 'Netherlands', 'https://www.eur.nl', 14500, 0.58, 1200, 1400, 'unknown', ['public', 'urban'], 30000],
+  ['Delft University of Technology', 'Delft', 'Netherlands', 'https://www.tudelft.nl', 18000, 0.40, 1300, 1480, 'unknown', ['public', 'suburban'], 26000, ['Engineering', 'Computer Science', 'Architecture', 'Mathematics', 'Physics']],
+  ['University of Amsterdam', 'Amsterdam', 'Netherlands', 'https://www.uva.nl', 15000, 0.55, 1240, 1440, 'unknown', ['public', 'urban'], 39000, ['Business', 'Social Sciences', 'Law', 'Humanities', 'Psychology']],
+  ['Leiden University', 'Leiden', 'Netherlands', 'https://www.universiteitleiden.nl', 16000, 0.50, 1220, 1420, 'unknown', ['public', 'suburban'], 33000, ['Law', 'Social Sciences', 'Humanities', 'Medicine & Health', 'Biology']],
+  ['Utrecht University', 'Utrecht', 'Netherlands', 'https://www.uu.nl', 15500, 0.55, 1220, 1420, 'unknown', ['public', 'urban'], 36000, ['Medicine & Health', 'Biology', 'Social Sciences', 'Humanities', 'Law']],
+  ['Eindhoven University of Technology', 'Eindhoven', 'Netherlands', 'https://www.tue.nl', 17000, 0.35, 1280, 1460, 'unknown', ['public', 'suburban'], 14000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Data Science']],
+  ['Erasmus University Rotterdam', 'Rotterdam', 'Netherlands', 'https://www.eur.nl', 14500, 0.58, 1200, 1400, 'unknown', ['public', 'urban'], 30000, ['Economics', 'Business', 'Law', 'Medicine & Health', 'Social Sciences']],
   // Sweden
-  ['KTH Royal Institute of Technology', 'Stockholm', 'Sweden', 'https://www.kth.se', 19000, 0.30, 1300, 1480, 'yes', ['public', 'urban'], 19000],
-  ['Stockholm University', 'Stockholm', 'Sweden', 'https://www.su.se', 17000, 0.50, 1220, 1420, 'unknown', ['public', 'urban'], 33000],
-  ['Uppsala University', 'Uppsala', 'Sweden', 'https://www.uu.se', 18000, 0.45, 1240, 1440, 'unknown', ['public', 'urban'], 52000],
-  ['Lund University', 'Lund', 'Sweden', 'https://www.lu.se', 18500, 0.48, 1240, 1440, 'yes', ['public', 'suburban'], 47000],
-  ['Chalmers University of Technology', 'Gothenburg', 'Sweden', 'https://www.chalmers.se', 19000, 0.35, 1280, 1460, 'unknown', ['public', 'urban'], 13000],
+  ['KTH Royal Institute of Technology', 'Stockholm', 'Sweden', 'https://www.kth.se', 19000, 0.30, 1300, 1480, 'yes', ['public', 'urban'], 19000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Architecture']],
+  ['Stockholm University', 'Stockholm', 'Sweden', 'https://www.su.se', 17000, 0.50, 1220, 1420, 'unknown', ['public', 'urban'], 33000, ['Social Sciences', 'Humanities', 'Business', 'Law', 'Biology']],
+  ['Uppsala University', 'Uppsala', 'Sweden', 'https://www.uu.se', 18000, 0.45, 1240, 1440, 'unknown', ['public', 'urban'], 52000, ['Medicine & Health', 'Biology', 'Humanities', 'Social Sciences', 'Law']],
+  ['Lund University', 'Lund', 'Sweden', 'https://www.lu.se', 18500, 0.48, 1240, 1440, 'yes', ['public', 'suburban'], 47000, ['Engineering', 'Medicine & Health', 'Social Sciences', 'Law', 'Business']],
+  ['Chalmers University of Technology', 'Gothenburg', 'Sweden', 'https://www.chalmers.se', 19000, 0.35, 1280, 1460, 'unknown', ['public', 'urban'], 13000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Architecture']],
   // Denmark
-  ['Technical University of Denmark', 'Kongens Lyngby', 'Denmark', 'https://www.dtu.dk', 17000, 0.25, 1300, 1480, 'yes', ['public', 'suburban'], 12000],
-  ['University of Copenhagen', 'Copenhagen', 'Denmark', 'https://www.ku.dk', 16000, 0.55, 1240, 1440, 'unknown', ['public', 'urban'], 40000],
-  ['Aarhus University', 'Aarhus', 'Denmark', 'https://www.au.dk', 15000, 0.60, 1220, 1420, 'unknown', ['public', 'urban'], 45000],
+  ['Technical University of Denmark', 'Kongens Lyngby', 'Denmark', 'https://www.dtu.dk', 17000, 0.25, 1300, 1480, 'yes', ['public', 'suburban'], 12000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Data Science']],
+  ['University of Copenhagen', 'Copenhagen', 'Denmark', 'https://www.ku.dk', 16000, 0.55, 1240, 1440, 'unknown', ['public', 'urban'], 40000, ['Medicine & Health', 'Biology', 'Humanities', 'Social Sciences', 'Law']],
+  ['Aarhus University', 'Aarhus', 'Denmark', 'https://www.au.dk', 15000, 0.60, 1220, 1420, 'unknown', ['public', 'urban'], 45000, ['Business', 'Social Sciences', 'Humanities', 'Medicine & Health', 'Engineering']],
   // Belgium
-  ['KU Leuven', 'Leuven', 'Belgium', 'https://www.kuleuven.be', 10000, 0.45, 1240, 1440, 'unknown', ['public', 'suburban'], 61000],
-  ['Ghent University', 'Ghent', 'Belgium', 'https://www.ugent.be', 8000, 0.55, 1200, 1400, 'unknown', ['public', 'urban'], 49000],
+  ['KU Leuven', 'Leuven', 'Belgium', 'https://www.kuleuven.be', 10000, 0.45, 1240, 1440, 'unknown', ['public', 'suburban'], 61000, ['Engineering', 'Medicine & Health', 'Law', 'Social Sciences', 'Business']],
+  ['Ghent University', 'Ghent', 'Belgium', 'https://www.ugent.be', 8000, 0.55, 1200, 1400, 'unknown', ['public', 'urban'], 49000, ['Biology', 'Engineering', 'Medicine & Health', 'Social Sciences', 'Humanities']],
   // Switzerland (non-EU but commonly grouped)
-  ['ETH Zurich', 'Zurich', 'Switzerland', 'https://www.ethz.ch', 5000, 0.08, 1380, 1560, 'yes', ['public', 'urban'], 24000],
-  ['EPFL', 'Lausanne', 'Switzerland', 'https://www.epfl.ch', 5000, 0.12, 1360, 1540, 'yes', ['public', 'urban'], 12000],
+  ['ETH Zurich', 'Zurich', 'Switzerland', 'https://www.ethz.ch', 5000, 0.08, 1380, 1560, 'yes', ['public', 'urban'], 24000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Data Science']],
+  ['EPFL', 'Lausanne', 'Switzerland', 'https://www.epfl.ch', 5000, 0.12, 1360, 1540, 'yes', ['public', 'urban'], 12000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Architecture']],
   // Italy
-  ['Politecnico di Milano', 'Milan', 'Italy', 'https://www.polimi.it', 12000, 0.35, 1260, 1460, 'unknown', ['public', 'urban'], 45000],
-  ['Bocconi University', 'Milan', 'Italy', 'https://www.unibocconi.eu', 28000, 0.25, 1280, 1480, 'yes', ['private', 'urban'], 16000],
-  ['University of Bologna', 'Bologna', 'Italy', 'https://www.unibo.it', 4000, 0.55, 1180, 1380, 'unknown', ['public', 'urban'], 87000],
-  ['Sapienza University of Rome', 'Rome', 'Italy', 'https://www.uniroma1.it', 3500, 0.60, 1160, 1360, 'unknown', ['public', 'urban'], 110000],
+  ['Politecnico di Milano', 'Milan', 'Italy', 'https://www.polimi.it', 12000, 0.35, 1260, 1460, 'unknown', ['public', 'urban'], 45000, ['Engineering', 'Architecture', 'Design', 'Computer Science', 'Mathematics']],
+  ['Bocconi University', 'Milan', 'Italy', 'https://www.unibocconi.eu', 28000, 0.25, 1280, 1480, 'yes', ['private', 'urban'], 16000, ['Business', 'Economics', 'Finance', 'Law', 'Management']],
+  ['University of Bologna', 'Bologna', 'Italy', 'https://www.unibo.it', 4000, 0.55, 1180, 1380, 'unknown', ['public', 'urban'], 87000, ['Law', 'Humanities', 'Medicine & Health', 'Engineering', 'Social Sciences']],
+  ['Sapienza University of Rome', 'Rome', 'Italy', 'https://www.uniroma1.it', 3500, 0.60, 1160, 1360, 'unknown', ['public', 'urban'], 110000, ['Medicine & Health', 'Law', 'Humanities', 'Engineering', 'Social Sciences']],
   // Spain
-  ['University of Barcelona', 'Barcelona', 'Spain', 'https://www.ub.edu', 6000, 0.60, 1180, 1380, 'unknown', ['public', 'urban'], 60000],
-  ['Polytechnic University of Catalonia', 'Barcelona', 'Spain', 'https://www.upc.edu', 5000, 0.40, 1240, 1440, 'unknown', ['public', 'urban'], 30000],
-  ['Autonomous University of Madrid', 'Madrid', 'Spain', 'https://www.uam.es', 5500, 0.55, 1180, 1380, 'unknown', ['public', 'suburban'], 35000],
+  ['University of Barcelona', 'Barcelona', 'Spain', 'https://www.ub.edu', 6000, 0.60, 1180, 1380, 'unknown', ['public', 'urban'], 60000, ['Humanities', 'Social Sciences', 'Medicine & Health', 'Business', 'Law']],
+  ['Polytechnic University of Catalonia', 'Barcelona', 'Spain', 'https://www.upc.edu', 5000, 0.40, 1240, 1440, 'unknown', ['public', 'urban'], 30000, ['Engineering', 'Computer Science', 'Mathematics', 'Architecture', 'Physics']],
+  ['Autonomous University of Madrid', 'Madrid', 'Spain', 'https://www.uam.es', 5500, 0.55, 1180, 1380, 'unknown', ['public', 'suburban'], 35000, ['Social Sciences', 'Humanities', 'Law', 'Medicine & Health', 'Business']],
   // Finland
-  ['Aalto University', 'Espoo', 'Finland', 'https://www.aalto.fi', 16000, 0.18, 1280, 1460, 'yes', ['public', 'suburban'], 20000],
-  ['University of Helsinki', 'Helsinki', 'Finland', 'https://www.helsinki.fi', 15000, 0.40, 1220, 1420, 'unknown', ['public', 'urban'], 38000],
+  ['Aalto University', 'Espoo', 'Finland', 'https://www.aalto.fi', 16000, 0.18, 1280, 1460, 'yes', ['public', 'suburban'], 20000, ['Engineering', 'Business', 'Design', 'Computer Science', 'Mathematics']],
+  ['University of Helsinki', 'Helsinki', 'Finland', 'https://www.helsinki.fi', 15000, 0.40, 1220, 1420, 'unknown', ['public', 'urban'], 38000, ['Medicine & Health', 'Biology', 'Humanities', 'Social Sciences', 'Law']],
   // Austria
-  ['TU Wien', 'Vienna', 'Austria', 'https://www.tuwien.at', 8000, 0.30, 1240, 1440, 'unknown', ['public', 'urban'], 30000],
-  ['University of Vienna', 'Vienna', 'Austria', 'https://www.univie.ac.at', 7000, 0.50, 1180, 1380, 'unknown', ['public', 'urban'], 93000],
+  ['TU Wien', 'Vienna', 'Austria', 'https://www.tuwien.at', 8000, 0.30, 1240, 1440, 'unknown', ['public', 'urban'], 30000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Architecture']],
+  ['University of Vienna', 'Vienna', 'Austria', 'https://www.univie.ac.at', 7000, 0.50, 1180, 1380, 'unknown', ['public', 'urban'], 93000, ['Humanities', 'Social Sciences', 'Law', 'Medicine & Health', 'Biology']],
   // Norway (non-EU but Nordic)
-  ['University of Oslo', 'Oslo', 'Norway', 'https://www.uio.no', 1000, 0.55, 1200, 1400, 'yes', ['public', 'urban'], 28000],
+  ['University of Oslo', 'Oslo', 'Norway', 'https://www.uio.no', 1000, 0.55, 1200, 1400, 'yes', ['public', 'urban'], 28000, ['Humanities', 'Social Sciences', 'Medicine & Health', 'Law', 'Biology']],
   // Czech Republic
-  ['Charles University', 'Prague', 'Czech Republic', 'https://www.cuni.cz', 3000, 0.35, 1200, 1400, 'unknown', ['public', 'urban'], 51000],
+  ['Charles University', 'Prague', 'Czech Republic', 'https://www.cuni.cz', 3000, 0.35, 1200, 1400, 'unknown', ['public', 'urban'], 51000, ['Medicine & Health', 'Law', 'Humanities', 'Social Sciences', 'Biology']],
   // Portugal
-  ['University of Porto', 'Porto', 'Portugal', 'https://www.up.pt', 5000, 0.55, 1160, 1360, 'unknown', ['public', 'urban'], 34000],
-  ['University of Lisbon', 'Lisbon', 'Portugal', 'https://www.ulisboa.pt', 5000, 0.58, 1160, 1360, 'unknown', ['public', 'urban'], 49000],
-];
-
-const EU_MAJOR_POOLS = [
-  ['Engineering', 'Mathematics', 'Physics'],
-  ['Business', 'Economics', 'Finance'],
-  ['Computer Science', 'Data Science', 'Engineering'],
-  ['Biology', 'Medicine & Health', 'Chemistry'],
-  ['Social Sciences', 'Political Science', 'Law'],
-  ['Humanities', 'Languages', 'Psychology'],
-  ['Computer Science', 'Engineering', 'Business'],
+  ['University of Porto', 'Porto', 'Portugal', 'https://www.up.pt', 5000, 0.55, 1160, 1360, 'unknown', ['public', 'urban'], 34000, ['Engineering', 'Medicine & Health', 'Social Sciences', 'Business', 'Humanities']],
+  ['University of Lisbon', 'Lisbon', 'Portugal', 'https://www.ulisboa.pt', 5000, 0.58, 1160, 1360, 'unknown', ['public', 'urban'], 49000, ['Medicine & Health', 'Law', 'Engineering', 'Humanities', 'Social Sciences']],
 ];
 
 async function seedEU() {
   console.log('\n── EU: Curated dataset ─────────────────────────');
 
-  const rows = EU_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size], i) => ({
+  const rows = EU_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors], i) => ({
     id: `eu-${i + 1}`,
     name,
     country: 'EU',
     city,
     state,
     website,
-    majors: EU_MAJOR_POOLS[i % EU_MAJOR_POOLS.length],
+    majors,
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -560,8 +550,8 @@ async function seedChina() {
 
 // Curated stats for known UK universities keyed by name substring match
 const UK_STATS = {};
-UK_UNIVERSITIES.forEach(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size]) => {
-  UK_STATS[name.toLowerCase()] = { city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size };
+UK_UNIVERSITIES.forEach(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors]) => {
+  UK_STATS[name.toLowerCase()] = { city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors };
 });
 
 function findUKStats(name) {
@@ -592,7 +582,7 @@ function ucasProviderToRow(provider, idx) {
     city,
     state: region,
     website,
-    majors: UK_MAJOR_POOLS[idx % UK_MAJOR_POOLS.length],
+    majors: stats?.majors ?? UK_MAJOR_POOLS[idx % UK_MAJOR_POOLS.length],
     sat_min: stats?.sat_min ?? 1000,
     sat_max: stats?.sat_max ?? 1200,
     acceptance_rate: stats?.acceptance ?? 0.80,
@@ -666,6 +656,105 @@ async function seedUKFromUCAS() {
   console.log(`\n  Done: ${totalNew} additional UK universities from UCAS`);
 }
 
+// ─── Canadian universities ────────────────────────────────────────────────────
+// Tuition = approximate CAD/yr for international undergrads (converted to USD ~0.74).
+// SAT ranges are selectivity proxies.
+
+const CANADA_UNIVERSITIES = [
+  // [name, city, province, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size, majors]
+  ['University of Toronto', 'Toronto', 'Ontario', 'https://www.utoronto.ca', 45000, 0.43, 1340, 1520, 'yes', ['public', 'urban'], 97000, ['Engineering', 'Computer Science', 'Business', 'Medicine & Health', 'Social Sciences']],
+  ['University of British Columbia', 'Vancouver', 'British Columbia', 'https://www.ubc.ca', 40000, 0.52, 1300, 1480, 'yes', ['public', 'urban'], 65000, ['Engineering', 'Computer Science', 'Business', 'Medicine & Health', 'Humanities']],
+  ['McGill University', 'Montreal', 'Quebec', 'https://www.mcgill.ca', 38000, 0.46, 1320, 1500, 'yes', ['public', 'urban'], 40000, ['Medicine & Health', 'Law', 'Engineering', 'Business', 'Social Sciences']],
+  ['University of Waterloo', 'Waterloo', 'Ontario', 'https://uwaterloo.ca', 42000, 0.53, 1340, 1520, 'yes', ['public', 'suburban'], 42000, ['Computer Science', 'Engineering', 'Mathematics', 'Business', 'Data Science']],
+  ["Queen's University", 'Kingston', 'Ontario', 'https://www.queensu.ca', 36000, 0.44, 1280, 1460, 'yes', ['public', 'suburban'], 25000, ['Business', 'Engineering', 'Law', 'Social Sciences', 'Humanities']],
+  ['University of Alberta', 'Edmonton', 'Alberta', 'https://www.ualberta.ca', 30000, 0.58, 1240, 1420, 'yes', ['public', 'urban'], 40000, ['Engineering', 'Business', 'Medicine & Health', 'Social Sciences', 'Computer Science']],
+  ['University of Ottawa', 'Ottawa', 'Ontario', 'https://www.uottawa.ca', 32000, 0.62, 1220, 1400, 'unknown', ['public', 'urban'], 44000, ['Law', 'Social Sciences', 'Business', 'Engineering', 'Medicine & Health']],
+  ['Western University', 'London', 'Ontario', 'https://www.uwo.ca', 33000, 0.57, 1260, 1440, 'yes', ['public', 'suburban'], 33000, ['Business', 'Medicine & Health', 'Law', 'Social Sciences', 'Engineering']],
+  ['McMaster University', 'Hamilton', 'Ontario', 'https://www.mcmaster.ca', 31000, 0.60, 1260, 1440, 'unknown', ['public', 'suburban'], 35000, ['Medicine & Health', 'Engineering', 'Business', 'Social Sciences', 'Computer Science']],
+  ['University of Calgary', 'Calgary', 'Alberta', 'https://www.ucalgary.ca', 28000, 0.65, 1220, 1400, 'unknown', ['public', 'urban'], 33000, ['Engineering', 'Business', 'Medicine & Health', 'Law', 'Social Sciences']],
+  ['Simon Fraser University', 'Burnaby', 'British Columbia', 'https://www.sfu.ca', 27000, 0.68, 1200, 1380, 'unknown', ['public', 'suburban'], 35000, ['Computer Science', 'Business', 'Social Sciences', 'Engineering', 'Humanities']],
+  ['Dalhousie University', 'Halifax', 'Nova Scotia', 'https://www.dal.ca', 26000, 0.70, 1180, 1360, 'unknown', ['public', 'urban'], 19000, ['Medicine & Health', 'Engineering', 'Law', 'Business', 'Social Sciences']],
+  ['University of Victoria', 'Victoria', 'British Columbia', 'https://www.uvic.ca', 25000, 0.72, 1180, 1360, 'unknown', ['public', 'suburban'], 22000, ['Engineering', 'Computer Science', 'Business', 'Social Sciences', 'Humanities']],
+  ['York University', 'Toronto', 'Ontario', 'https://www.yorku.ca', 24000, 0.78, 1160, 1340, 'unknown', ['public', 'urban'], 53000, ['Business', 'Law', 'Social Sciences', 'Humanities', 'Computer Science']],
+  ['University of Manitoba', 'Winnipeg', 'Manitoba', 'https://www.umanitoba.ca', 20000, 0.80, 1140, 1320, 'unknown', ['public', 'urban'], 30000, ['Engineering', 'Medicine & Health', 'Business', 'Social Sciences', 'Agriculture']],
+  ['Concordia University', 'Montreal', 'Quebec', 'https://www.concordia.ca', 22000, 0.75, 1160, 1340, 'unknown', ['public', 'urban'], 51000, ['Business', 'Engineering', 'Computer Science', 'Humanities', 'Social Sciences']],
+];
+
+async function seedCanada() {
+  console.log('\n── Canada: Curated dataset ─────────────────────');
+
+  const rows = CANADA_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors], i) => ({
+    id: `ca-${i + 1}`,
+    name,
+    country: 'Canada',
+    city,
+    state,
+    website,
+    majors,
+    sat_min,
+    sat_max,
+    acceptance_rate: acceptance,
+    tuition_estimate: tuition,
+    intl_aid,
+    tags,
+    brief_description: `${name} is a leading ${tags.includes('public') ? 'public' : 'private'} university in ${city}, ${state}, Canada.`,
+    student_size: size,
+  }));
+
+  const { error } = await supabase.from('universities').upsert(rows, { onConflict: 'id' });
+  if (error) console.error('Canada insert error:', error.message);
+  else console.log(`  Done: ${rows.length} Canadian universities`);
+}
+
+// ─── Australian universities ──────────────────────────────────────────────────
+// Tuition = approximate AUD/yr for international undergrads (converted to USD ~0.65).
+// SAT ranges are selectivity proxies.
+
+const AUSTRALIA_UNIVERSITIES = [
+  // [name, city, state, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size, majors]
+  ['University of Melbourne', 'Melbourne', 'Victoria', 'https://www.unimelb.edu.au', 40000, 0.35, 1320, 1500, 'yes', ['public', 'urban'], 52000, ['Medicine & Health', 'Law', 'Engineering', 'Business', 'Humanities']],
+  ['Australian National University', 'Canberra', 'Australian Capital Territory', 'https://www.anu.edu.au', 38000, 0.35, 1300, 1480, 'yes', ['public', 'suburban'], 26000, ['Social Sciences', 'Engineering', 'Computer Science', 'Business', 'Humanities']],
+  ['University of Sydney', 'Sydney', 'New South Wales', 'https://www.sydney.edu.au', 42000, 0.38, 1300, 1480, 'yes', ['public', 'urban'], 73000, ['Medicine & Health', 'Law', 'Engineering', 'Business', 'Humanities']],
+  ['University of Queensland', 'Brisbane', 'Queensland', 'https://www.uq.edu.au', 36000, 0.40, 1280, 1460, 'yes', ['public', 'suburban'], 54000, ['Medicine & Health', 'Engineering', 'Business', 'Social Sciences', 'Biology']],
+  ['UNSW Sydney', 'Sydney', 'New South Wales', 'https://www.unsw.edu.au', 42000, 0.40, 1300, 1480, 'yes', ['public', 'urban'], 65000, ['Engineering', 'Computer Science', 'Business', 'Medicine & Health', 'Law']],
+  ['Monash University', 'Melbourne', 'Victoria', 'https://www.monash.edu', 38000, 0.42, 1280, 1460, 'yes', ['public', 'suburban'], 78000, ['Engineering', 'Medicine & Health', 'Business', 'Law', 'Computer Science']],
+  ['University of Adelaide', 'Adelaide', 'South Australia', 'https://www.adelaide.edu.au', 33000, 0.48, 1240, 1420, 'yes', ['public', 'urban'], 28000, ['Engineering', 'Medicine & Health', 'Business', 'Social Sciences', 'Biology']],
+  ['University of Western Australia', 'Perth', 'Western Australia', 'https://www.uwa.edu.au', 34000, 0.50, 1240, 1420, 'yes', ['public', 'suburban'], 24000, ['Engineering', 'Medicine & Health', 'Business', 'Law', 'Humanities']],
+  ['Macquarie University', 'Sydney', 'New South Wales', 'https://www.mq.edu.au', 30000, 0.55, 1200, 1380, 'unknown', ['public', 'suburban'], 44000, ['Business', 'Social Sciences', 'Computer Science', 'Humanities', 'Engineering']],
+  ['University of Technology Sydney', 'Sydney', 'New South Wales', 'https://www.uts.edu.au', 33000, 0.60, 1200, 1380, 'unknown', ['public', 'urban'], 47000, ['Engineering', 'Computer Science', 'Business', 'Design', 'Social Sciences']],
+  ['Queensland University of Technology', 'Brisbane', 'Queensland', 'https://www.qut.edu.au', 28000, 0.62, 1180, 1360, 'unknown', ['public', 'urban'], 51000, ['Business', 'Engineering', 'Computer Science', 'Design', 'Medicine & Health']],
+  ['University of Newcastle', 'Newcastle', 'New South Wales', 'https://www.newcastle.edu.au', 26000, 0.70, 1160, 1340, 'unknown', ['public', 'urban'], 38000, ['Engineering', 'Medicine & Health', 'Business', 'Social Sciences', 'Humanities']],
+  ['Griffith University', 'Brisbane', 'Queensland', 'https://www.griffith.edu.au', 25000, 0.72, 1140, 1320, 'unknown', ['public', 'urban'], 50000, ['Business', 'Law', 'Social Sciences', 'Engineering', 'Medicine & Health']],
+  ['La Trobe University', 'Melbourne', 'Victoria', 'https://www.latrobe.edu.au', 24000, 0.75, 1140, 1320, 'unknown', ['public', 'suburban'], 37000, ['Medicine & Health', 'Business', 'Social Sciences', 'Humanities', 'Engineering']],
+  ['Curtin University', 'Perth', 'Western Australia', 'https://www.curtin.edu.au', 26000, 0.68, 1160, 1340, 'unknown', ['public', 'suburban'], 61000, ['Engineering', 'Business', 'Computer Science', 'Social Sciences', 'Humanities']],
+];
+
+async function seedAustralia() {
+  console.log('\n── Australia: Curated dataset ──────────────────');
+
+  const rows = AUSTRALIA_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors], i) => ({
+    id: `au-${i + 1}`,
+    name,
+    country: 'Australia',
+    city,
+    state,
+    website,
+    majors,
+    sat_min,
+    sat_max,
+    acceptance_rate: acceptance,
+    tuition_estimate: tuition,
+    intl_aid,
+    tags,
+    brief_description: `${name} is a leading ${tags.includes('public') ? 'public' : 'private'} university in ${city}, ${state}, Australia.`,
+    student_size: size,
+  }));
+
+  const { error } = await supabase.from('universities').upsert(rows, { onConflict: 'id' });
+  if (error) console.error('Australia insert error:', error.message);
+  else console.log(`  Done: ${rows.length} Australian universities`);
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -675,6 +764,8 @@ async function main() {
   await seedUKFromUCAS();
   await seedEU();
   await seedChina();
+  await seedCanada();
+  await seedAustralia();
   console.log('\n✓ Seeding complete!');
   process.exit(0);
 }
