@@ -41,16 +41,17 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'GET')    return res.status(405).json({ error: 'Method not allowed' });
 
   // Rate limiting by IP
-  const ip = ((req.headers['x-forwarded-for'] as string) ?? '')
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded ?? '')
     .split(',')[0].trim() || 'unknown';
   if (isLimited(ip)) {
     return res.status(429).json({ error: 'Too many requests — please wait a moment.' });
   }
 
   // ── Input validation ────────────────────────────────────────────────────────
-  const { country, satTotal, budgetMin, budgetMax, degreeLevel } = req.query as Record<string, string>;
+  const { country, satTotal, budgetMin, budgetMax, degreeLevel } = req.query as Record<string, string | undefined>;
 
-  if (!VALID_COUNTRIES.has(country)) {
+  if (!country || !VALID_COUNTRIES.has(country)) {
     return res.status(400).json({ error: 'Invalid country' });
   }
 
@@ -77,7 +78,7 @@ export default async function handler(req: any, res: any) {
   let q = supabase
     .from('universities')
     .select('*')
-    .eq('country', country)
+    .eq('country', country as string)
     .limit(2000);
 
   if (bMin)        q = q.gte('tuition_estimate', bMin);

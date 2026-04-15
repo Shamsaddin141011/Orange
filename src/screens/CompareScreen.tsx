@@ -4,7 +4,7 @@ import { getPalette, getInitials } from '../components/CardBanner';
 import { supabase } from '../lib/supabase';
 import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
-import { University } from '../types';
+import { MatchResult, University } from '../types';
 
 const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 

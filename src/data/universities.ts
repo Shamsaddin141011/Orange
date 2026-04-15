@@ -238,13 +238,13 @@ const toUniversity = (
   const majors = majorBuckets[idx % majorBuckets.length] ?? majorBuckets[0];
   return {
     id: `${country.toLowerCase()}-${idx + 1}`,
-    idx,
     name,
     country,
     city,
     state,
     website: WEBSITES[name] ?? `https://www.${name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.edu`,
     majors: [...majors],
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_middle_50: { min: satMin, max: satMax },
     acceptance_rate: ACCEPTANCE[name] ?? Number((0.08 + (idx % 12) * 0.04).toFixed(2)),
     tuition_estimate: TUITION[name] ?? (country === 'USA' ? 35000 : 30000),

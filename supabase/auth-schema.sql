@@ -5,14 +5,32 @@ CREATE TABLE IF NOT EXISTS profiles (
   id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   country           TEXT    DEFAULT 'USA',
   interests         TEXT[]  DEFAULT '{}',
+  degree_level      TEXT,
+  budget_min        INTEGER,
   budget_max        INTEGER,
   preferred_location TEXT,
   sat_total         INTEGER,
   sat_math          INTEGER,
   sat_ebrw          INTEGER,
+  ib_score          REAL,
+  act               INTEGER,
+  ielts             REAL,
+  toefl             INTEGER,
   gpa               REAL,
+  gre_verbal        INTEGER,
+  gre_quant         INTEGER,
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add new profile columns if upgrading from an older schema
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS degree_level      TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS budget_min        INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ib_score          REAL;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS act               INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ielts             REAL;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS toefl             INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gre_verbal        INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS gre_quant         INTEGER;
 
 -- ── Shortlist ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS shortlist (

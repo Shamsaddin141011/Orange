@@ -17,7 +17,8 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   not_started: { bg: '#f3f4f6', text: '#6b7280' },
   in_progress: { bg: '#fff7ed', text: '#f97316' },
   submitted:   { bg: '#f0fdf4', text: '#16a34a' },
-};
+} as const;
+const DEFAULT_STATUS_COLOR = STATUS_COLORS['not_started'] as { bg: string; text: string };
 
 const CHECKLIST_ITEMS = [
   { key: 'essays',          label: 'Essays',          icon: 'document-text-outline' },
@@ -79,7 +80,7 @@ export function TrackerScreen() {
         const t = tracker[item.id] ?? base;
         const toggle = (key: keyof typeof base) => setTracker(item.id, { ...t, [key]: !t[key as keyof typeof t] });
         const doneCount = CHECKLIST_ITEMS.filter((c) => t[c.key]).length;
-        const statusColors = STATUS_COLORS[t.status] ?? STATUS_COLORS['not_started'];
+        const statusColors = (STATUS_COLORS[t.status] ?? DEFAULT_STATUS_COLOR) as { bg: string; text: string };
 
         return (
           <View style={styles.card}>
@@ -120,7 +121,7 @@ export function TrackerScreen() {
               {/* Status selector */}
               <View style={styles.statusRow}>
                 {STATUS_OPTIONS.map((s) => {
-                  const colors = STATUS_COLORS[s];
+                  const colors = (STATUS_COLORS[s] ?? DEFAULT_STATUS_COLOR) as { bg: string; text: string };
                   return (
                     <Pressable
                       key={s}
