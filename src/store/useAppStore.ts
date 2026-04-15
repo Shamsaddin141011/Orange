@@ -51,11 +51,19 @@ export const useAppStore = create<AppState>()(
       fetchAndScore: async (profile) => {
         set({ loading: true, error: null });
         try {
+          // Map display label → DB key
+          const degreeLevelMap: Record<string, string> = {
+            "Bachelor's": 'Bachelor',
+            "Master's":   'Master',
+            'PhD':        'PhD',
+            "Associate's":'Associate',
+          };
           const rows = await fetchUniversities({
             country: profile.country,
             satTotal: profile.satTotal,
             budgetMin: profile.budgetMin,
             budgetMax: profile.budgetMax,
+            degreeLevel: profile.degreeLevel ? degreeLevelMap[profile.degreeLevel] : undefined,
             limit: 2000,
           });
           const universities = rows.map(rowToUniversity);

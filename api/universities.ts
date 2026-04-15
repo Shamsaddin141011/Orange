@@ -24,7 +24,8 @@ const ALLOWED_ORIGINS = new Set([
   'https://orangeuni.org',
 ]);
 
-const VALID_COUNTRIES = new Set(['USA', 'UK', 'EU', 'China']);
+const VALID_COUNTRIES  = new Set(['USA', 'UK', 'EU', 'China', 'Canada', 'Australia']);
+const VALID_DEGREES    = new Set(['Bachelor', 'Master', 'PhD', 'Associate']);
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
@@ -47,7 +48,7 @@ export default async function handler(req: any, res: any) {
   }
 
   // ── Input validation ────────────────────────────────────────────────────────
-  const { country, satTotal, budgetMin, budgetMax } = req.query as Record<string, string>;
+  const { country, satTotal, budgetMin, budgetMax, degreeLevel } = req.query as Record<string, string>;
 
   if (!VALID_COUNTRIES.has(country)) {
     return res.status(400).json({ error: 'Invalid country' });
@@ -63,6 +64,8 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'Invalid budgetMin' });
   if (bMax !== undefined && (isNaN(bMax) || bMax < 0))
     return res.status(400).json({ error: 'Invalid budgetMax' });
+  if (degreeLevel !== undefined && !VALID_DEGREES.has(degreeLevel))
+    return res.status(400).json({ error: 'Invalid degreeLevel' });
 
   // ── Query DB using service key (never exposed to the browser) ────────────────
   const supabase = createClient(
@@ -77,8 +80,9 @@ export default async function handler(req: any, res: any) {
     .eq('country', country)
     .limit(2000);
 
-  if (bMin) q = q.gte('tuition_estimate', bMin);
-  if (bMax) q = q.lte('tuition_estimate', bMax);
+  if (bMin)        q = q.gte('tuition_estimate', bMin);
+  if (bMax)        q = q.lte('tuition_estimate', bMax);
+  if (degreeLevel) q = q.contains('degrees', [degreeLevel]);
   if (sat) {
     q = q
       .or(`sat_min.is.null,sat_min.lte.${sat + 300}`)

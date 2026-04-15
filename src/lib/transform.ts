@@ -11,6 +11,7 @@ export function rowToUniversity(row: UniversityRow): University {
     state: row.state ?? '',
     website: row.website ?? '',
     majors: row.majors ?? [],
+    degrees: row.degrees ?? ['Bachelor', 'Master', 'PhD'],
     sat_middle_50: {
       min: row.sat_min ?? 1000,
       max: row.sat_max ?? 1400,

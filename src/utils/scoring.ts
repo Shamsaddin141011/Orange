@@ -226,6 +226,15 @@ function toeflToSatEquiv(toefl: number): number {
   return Math.round(400 + t * (500 / 60));
 }
 
+/**
+ * GRE combined (Verbal 130–170 + Quant 130–170, total 260–340) → SAT equivalent.
+ * GRE 340 ≈ SAT 1600, GRE 260 ≈ SAT 800.
+ */
+export function greToSatEquiv(verbal: number, quant: number): number {
+  const combined = Math.max(260, Math.min(340, verbal + quant));
+  return Math.round(800 + (combined - 260) / 80 * 800);
+}
+
 // ── Component scorers ────────────────────────────────────────────────────────
 
 /**
@@ -280,11 +289,13 @@ export const scoreUniversity = (profile: StudentProfile, university: University)
   // ── Academic ──────────────────────────────────────────────────────────────────
   // Pick the best available test score (SAT, IB, ACT, IELTS, TOEFL)
   const candidates: number[] = [];
-  if (profile.satTotal !== undefined) candidates.push(profile.satTotal);
-  if (profile.ibScore  !== undefined) candidates.push(ibToSatEquiv(profile.ibScore));
-  if (profile.act      !== undefined) candidates.push(actToSatEquiv(profile.act));
-  if (profile.ielts    !== undefined) candidates.push(ieltsToSatEquiv(profile.ielts));
-  if (profile.toefl    !== undefined) candidates.push(toeflToSatEquiv(profile.toefl));
+  if (profile.satTotal  !== undefined) candidates.push(profile.satTotal);
+  if (profile.ibScore   !== undefined) candidates.push(ibToSatEquiv(profile.ibScore));
+  if (profile.act       !== undefined) candidates.push(actToSatEquiv(profile.act));
+  if (profile.ielts     !== undefined) candidates.push(ieltsToSatEquiv(profile.ielts));
+  if (profile.toefl     !== undefined) candidates.push(toeflToSatEquiv(profile.toefl));
+  if (profile.greVerbal !== undefined && profile.greQuant !== undefined)
+    candidates.push(greToSatEquiv(profile.greVerbal, profile.greQuant));
   const effectiveSat = candidates.length > 0 ? Math.max(...candidates) : undefined;
 
   const testScore = effectiveSat !== undefined ? calcTestScore(effectiveSat, university) : undefined;
@@ -385,3 +396,4 @@ export const validateSectionSat  = (v?: number) => v === undefined || (v >= 200 
 export const validateAct         = (v?: number) => v === undefined || (v >= 1    && v <= 36);
 export const validateIelts       = (v?: number) => v === undefined || (v >= 0    && v <= 9);
 export const validateToefl       = (v?: number) => v === undefined || (v >= 0    && v <= 120);
+export const validateGre         = (v?: number) => v === undefined || (v >= 130  && v <= 170);

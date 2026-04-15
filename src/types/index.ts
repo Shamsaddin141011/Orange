@@ -1,4 +1,4 @@
-export type Country = 'USA' | 'UK' | 'EU' | 'China';
+export type Country = 'USA' | 'UK' | 'EU' | 'China' | 'Canada' | 'Australia';
 export type AidStatus = 'yes' | 'no' | 'unknown';
 export type ShortlistTag = 'reach' | 'match' | 'safety';
 
@@ -15,6 +15,7 @@ export interface University {
   state: string;
   website: string;
   majors: string[];
+  degrees: string[];
   sat_middle_50: { min: number; max: number };
   acceptance_rate?: number;
   tuition_estimate: number;
@@ -28,6 +29,7 @@ export interface University {
 export interface StudentProfile {
   country: Country;
   interests: string[];
+  degreeLevel?: string;
   budgetMin?: number;
   budgetMax?: number;
   preferredLocation?: string;
@@ -39,6 +41,8 @@ export interface StudentProfile {
   ielts?: number;
   toefl?: number;
   gpa?: number;
+  greVerbal?: number;
+  greQuant?: number;
 }
 
 export interface MatchResult {

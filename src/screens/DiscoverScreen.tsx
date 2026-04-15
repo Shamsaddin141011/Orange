@@ -11,15 +11,15 @@ import { useAppStore } from '../store/useAppStore';
 import { Country } from '../types';
 import { LOCATIONS, LocationGroup, STATE_ABBREV } from '../utils/locations';
 import { MAJOR_CATEGORIES } from '../utils/majors';
-import { validateAct, validateIelts, validateSat, validateToefl } from '../utils/scoring';
+import { validateAct, validateGre, validateIelts, validateSat, validateToefl } from '../utils/scoring';
 
 type StudyLevel = "Bachelor's" | "Master's" | 'PhD' | "Associate's";
 
-const STUDY_LEVELS: { label: StudyLevel; icon: string; available: boolean }[] = [
-  { label: "Bachelor's", icon: '🎓', available: true },
-  { label: "Master's",   icon: '📚', available: false },
-  { label: 'PhD',        icon: '🔬', available: false },
-  { label: "Associate's",icon: '📖', available: false },
+const STUDY_LEVELS: { label: StudyLevel; icon: string }[] = [
+  { label: "Bachelor's", icon: '🎓' },
+  { label: "Master's",   icon: '📚' },
+  { label: 'PhD',        icon: '🔬' },
+  { label: "Associate's",icon: '📖' },
 ];
 
 const TRENDING_MAJORS = [
@@ -44,6 +44,8 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
   const [gpa, setGpa]             = useState('');
   const [ielts, setIelts]         = useState('');
   const [toefl, setToefl]         = useState('');
+  const [greVerbal, setGreVerbal] = useState('');
+  const [greQuant, setGreQuant]   = useState('');
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [search, setSearch]       = useState('');
@@ -57,6 +59,8 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
   const [error, setError] = useState('');
 
   const selectedLevel = STUDY_LEVELS.find(l => l.label === studyLevel)!;
+  const isGrad = studyLevel === "Master's" || studyLevel === 'PhD';
+  const isAssociate = studyLevel === "Associate's";;
 
   const toggleMajor = (major: string) =>
     setSelectedMajors(prev =>
@@ -90,6 +94,8 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
     const gpaN = gpa      ? Number(gpa)      : undefined;
     const ieltsN = ielts  ? Number(ielts)    : undefined;
     const toeflN = toefl  ? Number(toefl)    : undefined;
+    const greV   = greVerbal ? Number(greVerbal) : undefined;
+    const greQ   = greQuant  ? Number(greQuant)  : undefined;
     const bMin = budgetMin ? Number(budgetMin) : undefined;
     const bMax = budgetMax ? Number(budgetMax) : undefined;
 
@@ -99,6 +105,8 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
     if (!validateIelts(ieltsN))     { setError('IELTS must be 0–9.'); return; }
     if (!validateToefl(toeflN))     { setError('TOEFL must be 0–120.'); return; }
     if (gpaN !== undefined && (gpaN < 0 || gpaN > 4.0)) { setError('GPA must be 0–4.0.'); return; }
+    if (!validateGre(greV))         { setError('GRE Verbal must be 130–170.'); return; }
+    if (!validateGre(greQ))         { setError('GRE Quant must be 130–170.'); return; }
     if (bMin !== undefined && bMax !== undefined && bMin >= bMax) {
       setError('Min budget must be less than max budget.'); return;
     }
@@ -110,6 +118,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
     await fetchAndScore({
       country,
       interests: selectedMajors,
+      degreeLevel: studyLevel,
       budgetMin: bMin,
       budgetMax: bMax,
       preferredLocation: resolvedLocation,
@@ -119,17 +128,18 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
       gpa: gpaN,
       ielts: ieltsN,
       toefl: toeflN,
+      greVerbal: greV,
+      greQuant: greQ,
     });
   };
 
   const filtered = useMemo(() => {
-    if (!selectedLevel.available) return [];
     return matches.filter(m => {
       if (search && !m.university.name.toLowerCase().includes(search.toLowerCase()) &&
           !m.university.majors.join(' ').toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [matches, selectedLevel, search]);
+  }, [matches, search]);
 
   return (
     <>
@@ -151,25 +161,19 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
               return (
                 <Pressable
                   key={l.label}
-                  style={[styles.levelChip, active && styles.levelChipActive, !l.available && styles.levelChipDim]}
+                  style={[styles.levelChip, active && styles.levelChipActive]}
                   onPress={() => setStudyLevel(l.label)}
                 >
                   <Text style={styles.levelIcon}>{l.icon}</Text>
                   <Text style={[styles.levelText, active && styles.levelTextActive]}>{l.label}</Text>
-                  {!l.available && <Text style={styles.soonBadge}>Soon</Text>}
                 </Pressable>
               );
             })}
           </ScrollView>
         </View>
 
-        {!selectedLevel.available ? (
-          <View style={styles.comingSoon}>
-            <Text style={styles.comingSoonIcon}>{selectedLevel.icon}</Text>
-            <Text style={styles.comingSoonTitle}>{studyLevel} coming soon</Text>
-            <Text style={styles.comingSoonText}>We're expanding to {studyLevel} programs. Check back soon!</Text>
-          </View>
-        ) : (
+        <>
+          {/* ── (nothing replacing the coming-soon wrapper) ──── */}
           <>
             {/* ── Destination ────────────────────────── */}
             <View style={styles.section}>
@@ -178,14 +182,14 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
                 <Text style={styles.sectionTitle}>Where do you want to study?</Text>
               </View>
               <View style={styles.chipRow}>
-                {(['USA', 'UK', 'EU', 'China'] as Country[]).map(c => (
+                {(['USA', 'UK', 'EU', 'China', 'Canada', 'Australia'] as Country[]).map(c => (
                   <Pressable
                     key={c}
                     onPress={() => { setCountry(c); setLocation(''); }}
                     style={[styles.chip, country === c && styles.chipActive]}
                   >
                     <Text style={[styles.chipText, country === c && styles.chipTextActive]}>
-                      {c === 'USA' ? '🇺🇸 USA' : c === 'UK' ? '🇬🇧 UK' : c === 'EU' ? '🇪🇺 Europe' : '🇨🇳 China'}
+                      {c === 'USA' ? '🇺🇸 USA' : c === 'UK' ? '🇬🇧 UK' : c === 'EU' ? '🇪🇺 Europe' : c === 'China' ? '🇨🇳 China' : c === 'Canada' ? '🇨🇦 Canada' : '🇦🇺 Australia'}
                     </Text>
                   </Pressable>
                 ))}
@@ -248,38 +252,84 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
                 <Text style={styles.sectionTitle}>Academic profile <Text style={styles.optional}>(optional)</Text></Text>
               </View>
 
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>SAT</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
+              {/* Bachelor's — SAT/ACT, IB/GPA, IELTS/TOEFL */}
+              {!isGrad && !isAssociate && (<>
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>SAT</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>ACT</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" placeholderTextColor="#9ca3af" />
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>ACT</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" placeholderTextColor="#9ca3af" />
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>IB Score</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>GPA</Text>
+                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
+                  </View>
                 </View>
-              </View>
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>IELTS</Text>
+                    <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>TOEFL</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
+                  </View>
+                </View>
+              </>)}
 
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>IB Score</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" placeholderTextColor="#9ca3af" />
+              {/* Master's / PhD — GPA/GRE Verbal, GRE Quant/IELTS, TOEFL */}
+              {isGrad && (<>
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>GPA</Text>
+                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>GRE Verbal</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" placeholderTextColor="#9ca3af" />
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>GPA</Text>
-                  <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>GRE Quant</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>IELTS</Text>
+                    <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
+                  </View>
                 </View>
-              </View>
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>TOEFL</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }} />
+                </View>
+              </>)}
 
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>IELTS</Text>
-                  <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
+              {/* Associate's — SAT/GPA only */}
+              {isAssociate && (
+                <View style={styles.twoCol}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>SAT</Text>
+                    <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>GPA</Text>
+                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>TOEFL</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
-                </View>
-              </View>
+              )}
             </View>
 
             {/* ── Budget ─────────────────────────────── */}
@@ -360,7 +410,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 
             <View style={{ height: 48 }} />
           </>
-        )}
+        </>
       </ScrollView>
 
       {/* ── Majors Modal ──────────────────────────────── */}
@@ -505,21 +555,9 @@ const styles = StyleSheet.create({
     borderRadius: 14, borderWidth: 1.5, borderColor: '#e5e7eb', backgroundColor: '#fff',
   },
   levelChipActive: { backgroundColor: '#fff7ed', borderColor: '#f97316' },
-  levelChipDim: { opacity: 0.55 },
   levelIcon: { fontSize: 16 },
   levelText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
   levelTextActive: { color: '#f97316' },
-  soonBadge: {
-    fontSize: 9, fontWeight: '800', color: '#f97316',
-    backgroundColor: '#ffedd5', paddingHorizontal: 5, paddingVertical: 1,
-    borderRadius: 4, overflow: 'hidden',
-  },
-
-  // Coming soon
-  comingSoon: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 80, paddingHorizontal: 32 },
-  comingSoonIcon: { fontSize: 52 },
-  comingSoonTitle: { fontSize: 20, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  comingSoonText: { fontSize: 14, color: '#6b7280', textAlign: 'center', lineHeight: 21 },
 
   // Sections
   section: {

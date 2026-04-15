@@ -23,6 +23,7 @@ export interface UniversityRow {
   state: string;
   website: string;
   majors: string[];
+  degrees: string[];
   sat_min: number | null;
   sat_max: number | null;
   acceptance_rate: number | null;
@@ -42,9 +43,10 @@ export async function fetchUniversities(params: {
   satTotal?: number;
   budgetMin?: number;
   budgetMax?: number;
+  degreeLevel?: string;
   limit?: number;
 }): Promise<UniversityRow[]> {
-  const { country, satTotal, budgetMin, budgetMax } = params;
+  const { country, satTotal, budgetMin, budgetMax, degreeLevel } = params;
 
   // Use the secure proxy on web (not localhost — that's local dev without a Vercel server)
   const isProductionWeb =
@@ -55,9 +57,10 @@ export async function fetchUniversities(params: {
   if (isProductionWeb) {
     const url = new URL('/api/universities', window.location.origin);
     url.searchParams.set('country', country);
-    if (satTotal  != null) url.searchParams.set('satTotal',  String(satTotal));
-    if (budgetMin != null) url.searchParams.set('budgetMin', String(budgetMin));
-    if (budgetMax != null) url.searchParams.set('budgetMax', String(budgetMax));
+    if (satTotal    != null) url.searchParams.set('satTotal',    String(satTotal));
+    if (budgetMin   != null) url.searchParams.set('budgetMin',   String(budgetMin));
+    if (budgetMax   != null) url.searchParams.set('budgetMax',   String(budgetMax));
+    if (degreeLevel != null) url.searchParams.set('degreeLevel', degreeLevel);
 
     const res = await fetch(url.toString());
     if (!res.ok) {
@@ -74,8 +77,9 @@ export async function fetchUniversities(params: {
     .eq('country', country)
     .limit(2000);
 
-  if (budgetMin) query = query.gte('tuition_estimate', budgetMin);
-  if (budgetMax) query = query.lte('tuition_estimate', budgetMax);
+  if (budgetMin)   query = query.gte('tuition_estimate', budgetMin);
+  if (budgetMax)   query = query.lte('tuition_estimate', budgetMax);
+  if (degreeLevel) query = query.contains('degrees', [degreeLevel]);
   if (satTotal) {
     query = query
       .or(`sat_min.is.null,sat_min.lte.${satTotal + 300}`)

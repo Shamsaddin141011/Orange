@@ -57,6 +57,9 @@ CREATE POLICY "Users manage own shortlist"    ON shortlist    FOR ALL USING (aut
 CREATE POLICY "Users manage own tracker"      ON tracker      FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users manage own compare list" ON compare_list FOR ALL USING (auth.uid() = user_id);
 
+-- ── Add degrees column to universities (run once) ────────────────────────────
+ALTER TABLE universities ADD COLUMN IF NOT EXISTS degrees TEXT[] DEFAULT '{"Bachelor","Master","PhD"}';
+
 -- ── Universities table: read-only for everyone, no writes via anon key ────────
 ALTER TABLE universities ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read universities" ON universities FOR SELECT USING (true);

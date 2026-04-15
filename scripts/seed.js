@@ -105,6 +105,9 @@ function transformUS(s) {
   const state = s['school.state'] ?? '';
   const ownership = tags.includes('public') ? 'public' : 'private';
 
+  const ar = s['latest.admissions.admission_rate.overall'];
+  const degrees = ar !== null && ar <= 0.5 ? ['Bachelor', 'Master', 'PhD'] : ['Bachelor', 'Master'];
+
   return {
     id: `usa-${s.id}`,
     name: s['school.name'],
@@ -115,9 +118,10 @@ function transformUS(s) {
       ? (s['school.school_url'].startsWith('http') ? s['school.school_url'] : `https://${s['school.school_url']}`)
       : null,
     majors: majors.length ? majors : ['Liberal Arts'],
+    degrees,
     sat_min,
     sat_max,
-    acceptance_rate: s['latest.admissions.admission_rate.overall'] ?? null,
+    acceptance_rate: ar ?? null,
     tuition_estimate: s['latest.cost.tuition.out_of_state'] ?? 30000,
     intl_aid: 'unknown',
     tags,
@@ -203,6 +207,7 @@ async function seedTopUS() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -369,6 +374,7 @@ async function seedUK() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -464,6 +470,7 @@ async function seedEU() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -518,6 +525,7 @@ async function seedChina() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -573,6 +581,7 @@ function ucasProviderToRow(provider, idx) {
     state: region,
     website,
     majors: stats?.majors ?? UK_MAJOR_POOLS[idx % UK_MAJOR_POOLS.length],
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min: stats?.sat_min ?? 1000,
     sat_max: stats?.sat_max ?? 1200,
     acceptance_rate: stats?.acceptance ?? 0.80,
@@ -681,6 +690,7 @@ async function seedCanada() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -730,6 +740,7 @@ async function seedAustralia() {
     state,
     website,
     majors,
+    degrees: ['Bachelor', 'Master', 'PhD'],
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
@@ -745,12 +756,92 @@ async function seedAustralia() {
   else console.log(`  Done: ${rows.length} Australian universities`);
 }
 
+// ─── US community colleges (Associate's) ─────────────────────────────────────
+// Fetches associate's-predominant schools from College Scorecard.
+
+function transformCommunityCollege(s) {
+  const majors = getMajors(s);
+  const tags = getTags(s);
+  const city = s['school.city'] ?? '';
+  const state = s['school.state'] ?? '';
+  const ownership = tags.includes('public') ? 'public' : 'private';
+
+  return {
+    id: `usa-${s.id}`,
+    name: s['school.name'],
+    country: 'USA',
+    city,
+    state,
+    website: s['school.school_url']
+      ? (s['school.school_url'].startsWith('http') ? s['school.school_url'] : `https://${s['school.school_url']}`)
+      : null,
+    majors: majors.length ? majors : ['Liberal Arts'],
+    degrees: ['Associate', 'Bachelor'],
+    sat_min: null,
+    sat_max: null,
+    acceptance_rate: s['latest.admissions.admission_rate.overall'] ?? 0.85,
+    tuition_estimate: s['latest.cost.tuition.out_of_state'] ?? 8000,
+    intl_aid: 'unknown',
+    tags,
+    brief_description: `${s['school.name']} is a ${ownership} community college in ${city}, ${state}.`,
+    student_size: s['latest.student.size'] ?? null,
+  };
+}
+
+async function seedCommunityColleges() {
+  console.log('\n── US Community Colleges: College Scorecard ────');
+  let page = 0;
+  let totalInserted = 0;
+
+  while (true) {
+    const url =
+      `https://api.data.gov/ed/collegescorecard/v1/schools.json` +
+      `?api_key=${SCORECARD_API_KEY}` +
+      `&fields=${SC_FIELDS}` +
+      `&per_page=100&page=${page}` +
+      `&school.degrees_awarded.predominant=2` +  // associate's-predominant
+      `&school.operating=1`;
+
+    let data;
+    try {
+      const res = await fetch(url);
+      data = await res.json();
+    } catch (e) {
+      console.error('Fetch error:', e.message);
+      break;
+    }
+
+    const results = data.results ?? [];
+    if (results.length === 0) break;
+
+    const rows = results
+      .filter(s => s['school.name'] && s['school.city'])
+      .map(transformCommunityCollege);
+
+    if (rows.length) {
+      const { error } = await supabase.from('universities').upsert(rows, { onConflict: 'id' });
+      if (error) console.error(`  Page ${page} error:`, error.message);
+      else {
+        totalInserted += rows.length;
+        process.stdout.write(`\r  Inserted ${totalInserted} community colleges…`);
+      }
+    }
+
+    page++;
+    if (page > 20) break; // ~2,000 community colleges
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  console.log(`\n  Done: ${totalInserted} US community colleges`);
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('OrangeUni seed script starting…');
   await seedTopUS();
   await seedUS();
+  await seedCommunityColleges();
   await seedUKFromUCAS();
   await seedEU();
   await seedChina();
