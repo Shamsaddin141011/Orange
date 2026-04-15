@@ -93,7 +93,7 @@ export default async function handler(req: any, res: any) {
   const { data, error } = await q;
   if (error) {
     console.error('[/api/universities]', error.message);
-    return res.status(500).json({ error: 'Failed to load data' });
+    return res.status(500).json({ error: 'Failed to load data', detail: error.message });
   }
 
   // Cache for 5 minutes at the CDN edge

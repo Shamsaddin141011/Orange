@@ -65,7 +65,7 @@ export async function fetchUniversities(params: {
     const res = await fetch(url.toString());
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error ?? 'Failed to fetch universities');
+      throw new Error(body.detail ?? body.error ?? 'Failed to fetch universities');
     }
     return res.json();
   }
