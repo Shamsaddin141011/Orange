@@ -189,19 +189,83 @@ function expandInterest(interest: string): string[] {
   return [key];
 }
 
-/** Convert IB predicted score (0–45) to SAT-equivalent for scoring purposes */
-function ibToSatEquiv(ibScore: number): number {
-  // IB 24 ≈ SAT 950, IB 45 ≈ SAT 1580 (linear)
-  return Math.round(950 + ((ibScore - 24) / 21) * 630);
+// ── Score conversion helpers ─────────────────────────────────────────────────
+
+/** IB predicted score (0–45) → SAT equivalent. IB 24 ≈ SAT 950, IB 45 ≈ SAT 1580. */
+function ibToSatEquiv(ib: number): number {
+  return Math.round(950 + ((ib - 24) / 21) * 630);
+}
+
+/** ACT → SAT (College Board official concordance table). */
+const ACT_TO_SAT: Record<number, number> = {
+  36:1600, 35:1560, 34:1500, 33:1460, 32:1420, 31:1380, 30:1340,
+  29:1290, 28:1250, 27:1210, 26:1170, 25:1130, 24:1090, 23:1060,
+  22:1020, 21:980,  20:950,  19:920,  18:880,  17:840,  16:800,
+  15:760,  14:730,  13:700,  12:670,  11:630,  10:590,
+};
+function actToSatEquiv(act: number): number {
+  const n = Math.round(Math.max(10, Math.min(36, act)));
+  return ACT_TO_SAT[n] ?? 590;
 }
 
 /**
- * Final score = 0.40 interest + 0.35 SAT/IB + 0.15 prestige + 0.10 preference
- * Location match applies a 25% post-score boost (capped at 100) so preferred
- * location universities always surface to the top.
+ * IELTS (4.0–9.0) → SAT equivalent used as an academic proxy when no SAT/ACT/IB provided.
+ * IELTS 4.0 ≈ SAT 760, IELTS 9.0 ≈ SAT 1600.
+ */
+function ieltsToSatEquiv(ielts: number): number {
+  return Math.round(760 + (Math.max(4.0, Math.min(9.0, ielts)) - 4.0) / 5.0 * 840);
+}
+
+/**
+ * TOEFL (0–120) → SAT equivalent used as an academic proxy.
+ * TOEFL 60 ≈ SAT 900, TOEFL 120 ≈ SAT 1600.
+ */
+function toeflToSatEquiv(toefl: number): number {
+  const t = Math.max(0, Math.min(120, toefl));
+  if (t >= 60) return Math.round(900 + (t - 60) * (700 / 60));
+  return Math.round(400 + t * (500 / 60));
+}
+
+// ── Component scorers ────────────────────────────────────────────────────────
+
+/**
+ * Uses the full middle-50 range (25th → 75th percentile) rather than just the min.
+ *   Above 75th pct  → 1.0
+ *   In range        → 0.68–1.0 (linear)
+ *   Below 25th pct  → decays from 0.68 toward 0
+ */
+function calcTestScore(sat: number, uni: University): number {
+  const lo = uni.sat_middle_50.min;
+  const hi = Math.max(uni.sat_middle_50.max, lo + 1);
+  if (sat >= hi) return 1.0;
+  if (sat >= lo) return 0.68 + 0.32 * (sat - lo) / (hi - lo);
+  return clamp(0.68 - (lo - sat) / 420);
+}
+
+/**
+ * GPA score — infers expected GPA from the university's acceptance rate.
+ * Highly selective schools (low AR) expect ~3.9+; open-admission schools ~2.7+.
+ */
+function calcGpaScore(gpa: number, uni: University): number {
+  const ar = uni.acceptance_rate;
+  // acceptance 0% → expected 3.95, acceptance 80%+ → expected 2.75
+  const expected = ar !== undefined ? Math.max(2.75, 3.95 - ar * 1.5) : 3.3;
+  if (gpa >= expected) return 1.0;
+  const ratio = gpa / expected;
+  return clamp(ratio * ratio * 1.1); // quadratic decay below expected
+}
+
+/**
+ * Scoring weights:
+ *   0.40 interest  (major / field alignment)
+ *   0.30 academic  (test scores + GPA blended)
+ *   0.15 prestige  (acceptance rate proxy)
+ *   0.15 preference (location + budget)
+ *
+ * Location match applies a ×1.20 post-score boost (capped at 1.0).
  */
 export const scoreUniversity = (profile: StudentProfile, university: University): MatchResult => {
-  // ── Interest ────────────────────────────────────────────────────────────────
+  // ── Interest ─────────────────────────────────────────────────────────────────
   const majorList = university.majors.map((m) => m.toLowerCase());
   const matchedInterests = profile.interests.filter((interest) => {
     const expanded = expandInterest(interest);
@@ -213,67 +277,95 @@ export const scoreUniversity = (profile: StudentProfile, university: University)
     ? matchedInterests.length / profile.interests.length
     : 0.5;
 
-  // ── SAT / IB ─────────────────────────────────────────────────────────────────
-  // Use whichever signal the student provided; if both, take the higher result.
-  const ibEquiv = profile.ibScore !== undefined ? ibToSatEquiv(profile.ibScore) : undefined;
-  const effectiveSat = profile.satTotal !== undefined
-    ? (ibEquiv !== undefined ? Math.max(profile.satTotal, ibEquiv) : profile.satTotal)
-    : ibEquiv;
+  // ── Academic ──────────────────────────────────────────────────────────────────
+  // Pick the best available test score (SAT, IB, ACT, IELTS, TOEFL)
+  const candidates: number[] = [];
+  if (profile.satTotal !== undefined) candidates.push(profile.satTotal);
+  if (profile.ibScore  !== undefined) candidates.push(ibToSatEquiv(profile.ibScore));
+  if (profile.act      !== undefined) candidates.push(actToSatEquiv(profile.act));
+  if (profile.ielts    !== undefined) candidates.push(ieltsToSatEquiv(profile.ielts));
+  if (profile.toefl    !== undefined) candidates.push(toeflToSatEquiv(profile.toefl));
+  const effectiveSat = candidates.length > 0 ? Math.max(...candidates) : undefined;
 
-  let satScore = 0.5;
-  if (effectiveSat !== undefined) {
-    const sat = effectiveSat;
-    const min = university.sat_middle_50.min;
-    if (sat >= min) {
-      satScore = 1;
-    } else {
-      satScore = clamp(1 - (min - sat) / 400);
-    }
+  const testScore = effectiveSat !== undefined ? calcTestScore(effectiveSat, university) : undefined;
+  const gpaScore  = profile.gpa  !== undefined ? calcGpaScore(profile.gpa, university)  : undefined;
+
+  let academicScore: number;
+  if (testScore !== undefined && gpaScore !== undefined) {
+    academicScore = 0.65 * testScore + 0.35 * gpaScore;
+  } else if (testScore !== undefined) {
+    academicScore = testScore;
+  } else if (gpaScore !== undefined) {
+    academicScore = gpaScore;
+  } else {
+    academicScore = 0.5;
   }
 
-  // ── Prestige ─────────────────────────────────────────────────────────────────
+  // ── Prestige ──────────────────────────────────────────────────────────────────
   let prestigeScore = 0.4;
   if (university.acceptance_rate !== undefined && university.acceptance_rate !== null) {
     prestigeScore = clamp(1 - university.acceptance_rate);
   }
 
-  // ── Preference ───────────────────────────────────────────────────────────────
-  let prefScore = 0;
+  // ── Preference ────────────────────────────────────────────────────────────────
   let locationMatch = false;
+  let locationScore = 0;
+  let budgetScore   = 0.5; // neutral when no budget provided
 
   if (profile.preferredLocation) {
-    const loc = profile.preferredLocation.toLowerCase().trim();
-    const city = university.city.toLowerCase().trim();
-    const state = university.state.toLowerCase().trim();
-    // Convert full state name (e.g. "California") → abbreviation ("ca") for DB matching
+    const loc    = profile.preferredLocation.toLowerCase().trim();
+    const city   = university.city.toLowerCase().trim();
+    const state  = university.state.toLowerCase().trim();
     const abbrev = (STATE_ABBREV[profile.preferredLocation] ?? '').toLowerCase();
-
     locationMatch =
-      city === loc ||
-      city.includes(loc) ||
-      loc.includes(city) ||
-      state === loc ||
-      (abbrev.length > 0 && state === abbrev);
-
-    if (locationMatch) prefScore += 0.5;
+      city === loc || city.includes(loc) || loc.includes(city) ||
+      state === loc || (abbrev.length > 0 && state === abbrev);
+    locationScore = locationMatch ? 1.0 : 0;
   }
 
-  if (profile.budgetMax && university.tuition_estimate <= profile.budgetMax) {
-    prefScore += 0.5;
+  if (profile.budgetMax) {
+    const tuition = university.tuition_estimate;
+    if (tuition <= profile.budgetMax) {
+      // Reward how comfortably within budget (0.70 → 1.0)
+      budgetScore = 0.70 + 0.30 * Math.min(1, (profile.budgetMax - tuition) / profile.budgetMax);
+    } else {
+      // Penalise proportionally for going over
+      const overage = (tuition - profile.budgetMax) / profile.budgetMax;
+      budgetScore = Math.max(0, 0.50 - overage);
+    }
   }
 
-  const rawTotal = 0.40 * interestScore + 0.35 * satScore + 0.15 * prestigeScore + 0.10 * prefScore;
+  const hasLocation = !!profile.preferredLocation;
+  const hasBudget   = !!profile.budgetMax;
+  const prefScore =
+    hasLocation && hasBudget ? 0.5 * locationScore + 0.5 * budgetScore :
+    hasLocation              ? locationScore :
+    hasBudget                ? budgetScore   : 0.5;
 
-  // Location boost: matching unis rank significantly higher (×1.25, capped at 1)
-  const finalTotal = locationMatch ? Math.min(1, rawTotal * 1.25) : rawTotal;
+  // ── Final ─────────────────────────────────────────────────────────────────────
+  const rawTotal  = 0.40 * interestScore + 0.30 * academicScore + 0.15 * prestigeScore + 0.15 * prefScore;
+  const finalTotal = locationMatch ? Math.min(1, rawTotal * 1.20) : rawTotal;
 
-  // ── Reasons ──────────────────────────────────────────────────────────────────
+  // ── Reasons ───────────────────────────────────────────────────────────────────
   const reasons: string[] = [];
-  if (effectiveSat && satScore >= 0.9) reasons.push('Your test score is highly competitive here');
-  if (matchedInterests.length > 0) reasons.push(`Offers your interest${matchedInterests.length > 1 ? 's' : ''}: ${matchedInterests.slice(0, 2).join(', ')}`);
-  if (university.acceptance_rate !== undefined && university.acceptance_rate < 0.15) reasons.push('Highly selective — strong match for your profile');
-  if (locationMatch) reasons.push('Location preference alignment');
-  if (profile.budgetMax && university.tuition_estimate <= profile.budgetMax) reasons.push('Within your budget preference');
+  if (testScore !== undefined && testScore >= 0.90) {
+    reasons.push('Your test score is highly competitive here');
+  } else if (testScore !== undefined && testScore >= 0.68) {
+    reasons.push('Your test score falls within the typical range');
+  }
+  if (gpaScore !== undefined && gpaScore >= 0.85) {
+    reasons.push('Your GPA is competitive for this school');
+  }
+  if (matchedInterests.length > 0) {
+    reasons.push(`Matches your interest${matchedInterests.length > 1 ? 's' : ''}: ${matchedInterests.slice(0, 2).join(', ')}`);
+  }
+  if (university.acceptance_rate !== undefined && university.acceptance_rate < 0.15) {
+    reasons.push('Highly selective — strong profile match');
+  }
+  if (locationMatch) reasons.push('Matches your location preference');
+  if (profile.budgetMax && university.tuition_estimate <= profile.budgetMax) {
+    reasons.push('Within your budget');
+  }
   if (!reasons.length) reasons.push('Good overall profile compatibility');
 
   return {
@@ -281,12 +373,15 @@ export const scoreUniversity = (profile: StudentProfile, university: University)
     score: Math.round(finalTotal * 100),
     reasons: reasons.slice(0, 3),
     breakdown: {
-      interest: Math.round(interestScore * 100),
-      sat: Math.round(satScore * 100),
-      preference: Math.round(prefScore * 100),
+      interest:   Math.round(interestScore  * 100),
+      sat:        Math.round(academicScore  * 100),
+      preference: Math.round(prefScore      * 100),
     },
   };
 };
 
-export const validateSat = (sat?: number) => sat === undefined || (sat >= 400 && sat <= 1600);
-export const validateSectionSat = (score?: number) => score === undefined || (score >= 200 && score <= 800);
+export const validateSat         = (v?: number) => v === undefined || (v >= 400  && v <= 1600);
+export const validateSectionSat  = (v?: number) => v === undefined || (v >= 200  && v <= 800);
+export const validateAct         = (v?: number) => v === undefined || (v >= 1    && v <= 36);
+export const validateIelts       = (v?: number) => v === undefined || (v >= 0    && v <= 9);
+export const validateToefl       = (v?: number) => v === undefined || (v >= 0    && v <= 120);

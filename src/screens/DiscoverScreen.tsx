@@ -11,7 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { Country } from '../types';
 import { LOCATIONS, LocationGroup, STATE_ABBREV } from '../utils/locations';
 import { MAJOR_CATEGORIES } from '../utils/majors';
-import { validateSat, validateSectionSat } from '../utils/scoring';
+import { validateAct, validateIelts, validateSat, validateToefl } from '../utils/scoring';
 
 type StudyLevel = "Bachelor's" | "Master's" | 'PhD' | "Associate's";
 
@@ -39,7 +39,12 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
   const [selectedMajors, setSelectedMajors] = useState<string[]>([]);
   const [location, setLocation]   = useState('');
   const [satTotal, setSatTotal]   = useState('');
+  const [act, setAct]             = useState('');
   const [ibScore, setIbScore]     = useState('');
+  const [gpa, setGpa]             = useState('');
+  const [ielts, setIelts]         = useState('');
+  const [toefl, setToefl]         = useState('');
+  const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [search, setSearch]       = useState('');
 
@@ -79,14 +84,25 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 
   const handleSearch = async () => {
     setError('');
-    const sat = satTotal ? Number(satTotal) : undefined;
-    const ib  = ibScore  ? Number(ibScore)  : undefined;
+    const sat  = satTotal ? Number(satTotal) : undefined;
+    const actN = act      ? Number(act)      : undefined;
+    const ib   = ibScore  ? Number(ibScore)  : undefined;
+    const gpaN = gpa      ? Number(gpa)      : undefined;
+    const ieltsN = ielts  ? Number(ielts)    : undefined;
+    const toeflN = toefl  ? Number(toefl)    : undefined;
+    const bMin = budgetMin ? Number(budgetMin) : undefined;
     const bMax = budgetMax ? Number(budgetMax) : undefined;
 
-    if (!validateSat(sat)) { setError('SAT total must be 400–1600.'); return; }
+    if (!validateSat(sat))          { setError('SAT total must be 400–1600.'); return; }
+    if (!validateAct(actN))         { setError('ACT must be 1–36.'); return; }
     if (ib !== undefined && (ib < 0 || ib > 45)) { setError('IB score must be 0–45.'); return; }
+    if (!validateIelts(ieltsN))     { setError('IELTS must be 0–9.'); return; }
+    if (!validateToefl(toeflN))     { setError('TOEFL must be 0–120.'); return; }
+    if (gpaN !== undefined && (gpaN < 0 || gpaN > 4.0)) { setError('GPA must be 0–4.0.'); return; }
+    if (bMin !== undefined && bMax !== undefined && bMin >= bMax) {
+      setError('Min budget must be less than max budget.'); return;
+    }
 
-    // Resolve location: for USA map state name → abbreviation
     const resolvedLocation = country === 'USA' && location
       ? (STATE_ABBREV[location] ?? location)
       : location || undefined;
@@ -94,10 +110,15 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
     await fetchAndScore({
       country,
       interests: selectedMajors,
+      budgetMin: bMin,
       budgetMax: bMax,
       preferredLocation: resolvedLocation,
       satTotal: sat,
+      act: actN,
       ibScore: ib,
+      gpa: gpaN,
+      ielts: ieltsN,
+      toefl: toeflN,
     });
   };
 
@@ -229,26 +250,34 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 
               <View style={styles.twoCol}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>SAT Score</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="number-pad"
-                    value={satTotal}
-                    onChangeText={setSatTotal}
-                    placeholder="400–1600"
-                    placeholderTextColor="#9ca3af"
-                  />
+                  <Text style={styles.fieldLabel}>SAT</Text>
+                  <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
                 </View>
                 <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>ACT</Text>
+                  <TextInput style={styles.input} keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" placeholderTextColor="#9ca3af" />
+                </View>
+              </View>
+
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>IB Score</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="number-pad"
-                    value={ibScore}
-                    onChangeText={setIbScore}
-                    placeholder="0–45"
-                    placeholderTextColor="#9ca3af"
-                  />
+                  <TextInput style={styles.input} keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" placeholderTextColor="#9ca3af" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>GPA</Text>
+                  <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
+                </View>
+              </View>
+
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>IELTS</Text>
+                  <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>TOEFL</Text>
+                  <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
                 </View>
               </View>
             </View>
@@ -257,16 +286,18 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="cash-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>Max budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
+                <Text style={styles.sectionTitle}>Budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
               </View>
-              <TextInput
-                style={styles.input}
-                keyboardType="number-pad"
-                value={budgetMax}
-                onChangeText={setBudgetMax}
-                placeholder="e.g. 50,000"
-                placeholderTextColor="#9ca3af"
-              />
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Min</Text>
+                  <TextInput style={styles.input} keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 10,000" placeholderTextColor="#9ca3af" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Max</Text>
+                  <TextInput style={styles.input} keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50,000" placeholderTextColor="#9ca3af" />
+                </View>
+              </View>
             </View>
 
             {!!error      && <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View>}
@@ -522,7 +553,7 @@ const styles = StyleSheet.create({
   selectText: { flex: 1, fontSize: 14, color: '#111827', fontWeight: '500' },
   selectPlaceholder: { flex: 1, fontSize: 14, color: '#9ca3af' },
 
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginTop: 10, marginBottom: 6 },
   twoCol: { flexDirection: 'row', gap: 12 },
   input: {
     backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb',

@@ -35,6 +35,9 @@ export interface StudentProfile {
   satMath?: number;
   satEbrw?: number;
   ibScore?: number;
+  act?: number;
+  ielts?: number;
+  toefl?: number;
   gpa?: number;
 }
 
