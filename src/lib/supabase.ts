@@ -33,7 +33,10 @@ export interface UniversityRow {
   student_size: number | null;
 }
 
-/** Fetch universities filtered server-side, scored client-side */
+/** Fetch universities filtered server-side, scored client-side.
+ *  On production web: routes through /api/universities (rate-limited, service key).
+ *  On native or local dev: calls Supabase directly via anon key + RLS.
+ */
 export async function fetchUniversities(params: {
   country: string;
   satTotal?: number;
@@ -41,23 +44,38 @@ export async function fetchUniversities(params: {
   budgetMax?: number;
   limit?: number;
 }): Promise<UniversityRow[]> {
-  const { country, satTotal, budgetMin, budgetMax, limit = 2000 } = params;
+  const { country, satTotal, budgetMin, budgetMax } = params;
 
+  // Use the secure proxy on web (not localhost — that's local dev without a Vercel server)
+  const isProductionWeb =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    !window.location.hostname.includes('localhost');
+
+  if (isProductionWeb) {
+    const url = new URL('/api/universities', window.location.origin);
+    url.searchParams.set('country', country);
+    if (satTotal  != null) url.searchParams.set('satTotal',  String(satTotal));
+    if (budgetMin != null) url.searchParams.set('budgetMin', String(budgetMin));
+    if (budgetMax != null) url.searchParams.set('budgetMax', String(budgetMax));
+
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? 'Failed to fetch universities');
+    }
+    return res.json();
+  }
+
+  // Native or local dev — direct Supabase with anon key (protected by RLS)
   let query = supabase
     .from('universities')
     .select('*')
     .eq('country', country)
-    .limit(limit);
+    .limit(2000);
 
-  if (budgetMin) {
-    query = query.gte('tuition_estimate', budgetMin);
-  }
-
-  if (budgetMax) {
-    query = query.lte('tuition_estimate', budgetMax);
-  }
-
-  // Pre-filter SAT: only fetch schools where the range overlaps with user's score ±300
+  if (budgetMin) query = query.gte('tuition_estimate', budgetMin);
+  if (budgetMax) query = query.lte('tuition_estimate', budgetMax);
   if (satTotal) {
     query = query
       .or(`sat_min.is.null,sat_min.lte.${satTotal + 300}`)

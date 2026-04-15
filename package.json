@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.2",
     "@expo/metro-runtime": "~3.2.3",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
@@ -29,7 +30,6 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.99.2",
     "@types/react": "~18.2.79",
     "dotenv": "^17.3.1",
     "typescript": "^5.4.5"
