@@ -484,50 +484,40 @@ async function seedEU() {
 // SAT ranges are selectivity proxies.
 
 const CHINA_UNIVERSITIES = [
-  // [name, city, province, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size]
-  ['Peking University', 'Beijing', 'Beijing', 'https://www.pku.edu.cn', 5500, 0.05, 1380, 1560, 'yes', ['public', 'urban'], 46000],
-  ['Tsinghua University', 'Beijing', 'Beijing', 'https://www.tsinghua.edu.cn', 5500, 0.05, 1400, 1580, 'yes', ['public', 'suburban'], 47000],
-  ['Fudan University', 'Shanghai', 'Shanghai', 'https://www.fudan.edu.cn', 5000, 0.08, 1340, 1520, 'yes', ['public', 'urban'], 34000],
-  ['Shanghai Jiao Tong University', 'Shanghai', 'Shanghai', 'https://www.sjtu.edu.cn', 4500, 0.10, 1320, 1500, 'yes', ['public', 'suburban'], 41000],
-  ['Zhejiang University', 'Hangzhou', 'Zhejiang', 'https://www.zju.edu.cn', 4000, 0.10, 1300, 1480, 'yes', ['public', 'suburban'], 66000],
-  ['University of Science and Technology of China', 'Hefei', 'Anhui', 'https://www.ustc.edu.cn', 4000, 0.12, 1300, 1480, 'yes', ['public', 'suburban'], 16000],
-  ['Nanjing University', 'Nanjing', 'Jiangsu', 'https://www.nju.edu.cn', 3800, 0.15, 1280, 1460, 'unknown', ['public', 'urban'], 36000],
-  ['Wuhan University', 'Wuhan', 'Hubei', 'https://www.whu.edu.cn', 3500, 0.25, 1240, 1440, 'unknown', ['public', 'urban'], 59000],
-  ['Sun Yat-sen University', 'Guangzhou', 'Guangdong', 'https://www.sysu.edu.cn', 3500, 0.25, 1240, 1440, 'unknown', ['public', 'suburban'], 58000],
-  ['Tongji University', 'Shanghai', 'Shanghai', 'https://www.tongji.edu.cn', 4000, 0.30, 1220, 1420, 'unknown', ['public', 'urban'], 36000],
-  ['Renmin University of China', 'Beijing', 'Beijing', 'https://www.ruc.edu.cn', 4000, 0.20, 1260, 1460, 'unknown', ['public', 'urban'], 28000],
-  ['Harbin Institute of Technology', 'Harbin', 'Heilongjiang', 'https://www.hit.edu.cn', 3500, 0.18, 1260, 1460, 'unknown', ['public', 'urban'], 47000],
-  ['Beijing Normal University', 'Beijing', 'Beijing', 'https://www.bnu.edu.cn', 3500, 0.22, 1240, 1440, 'unknown', ['public', 'urban'], 25000],
-  ["Xi'an Jiaotong University", "Xi'an", 'Shaanxi', 'https://www.xjtu.edu.cn', 3200, 0.25, 1220, 1420, 'unknown', ['public', 'urban'], 41000],
-  ['South China University of Technology', 'Guangzhou', 'Guangdong', 'https://www.scut.edu.cn', 3000, 0.35, 1200, 1400, 'unknown', ['public', 'urban'], 51000],
-  ['Tianjin University', 'Tianjin', 'Tianjin', 'https://www.tju.edu.cn', 3000, 0.30, 1200, 1400, 'unknown', ['public', 'urban'], 29000],
-  ['Shandong University', 'Jinan', 'Shandong', 'https://www.sdu.edu.cn', 2800, 0.40, 1180, 1380, 'unknown', ['public', 'suburban'], 68000],
-  ['Dalian University of Technology', 'Dalian', 'Liaoning', 'https://www.dlut.edu.cn', 2800, 0.35, 1180, 1380, 'unknown', ['public', 'urban'], 34000],
-  ['Beijing Institute of Technology', 'Beijing', 'Beijing', 'https://www.bit.edu.cn', 3200, 0.28, 1200, 1400, 'unknown', ['public', 'urban'], 32000],
-  ['Huazhong University of Science and Technology', 'Wuhan', 'Hubei', 'https://www.hust.edu.cn', 3500, 0.22, 1240, 1440, 'unknown', ['public', 'urban'], 57000],
-];
-
-const CHINA_MAJOR_POOLS = [
-  ['Engineering', 'Computer Science', 'Mathematics'],
-  ['Business', 'Economics', 'Finance'],
-  ['Computer Science', 'Data Science', 'Engineering'],
-  ['Biology', 'Medicine & Health', 'Chemistry'],
-  ['Social Sciences', 'Humanities', 'Political Science'],
-  ['Physics', 'Mathematics', 'Engineering'],
-  ['Computer Science', 'Engineering', 'Business'],
+  // [name, city, province, website, tuition_usd, acceptance_rate, sat_min, sat_max, intl_aid, tags, size, majors]
+  ['Peking University', 'Beijing', 'Beijing', 'https://www.pku.edu.cn', 5500, 0.05, 1380, 1560, 'yes', ['public', 'urban'], 46000, ['Humanities', 'Law', 'Economics', 'Social Sciences', 'Biology']],
+  ['Tsinghua University', 'Beijing', 'Beijing', 'https://www.tsinghua.edu.cn', 5500, 0.05, 1400, 1580, 'yes', ['public', 'suburban'], 47000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Architecture']],
+  ['Fudan University', 'Shanghai', 'Shanghai', 'https://www.fudan.edu.cn', 5000, 0.08, 1340, 1520, 'yes', ['public', 'urban'], 34000, ['Medicine & Health', 'Economics', 'Humanities', 'Social Sciences', 'Biology']],
+  ['Shanghai Jiao Tong University', 'Shanghai', 'Shanghai', 'https://www.sjtu.edu.cn', 4500, 0.10, 1320, 1500, 'yes', ['public', 'suburban'], 41000, ['Engineering', 'Computer Science', 'Medicine & Health', 'Physics', 'Mathematics']],
+  ['Zhejiang University', 'Hangzhou', 'Zhejiang', 'https://www.zju.edu.cn', 4000, 0.10, 1300, 1480, 'yes', ['public', 'suburban'], 66000, ['Engineering', 'Computer Science', 'Medicine & Health', 'Agriculture', 'Business']],
+  ['University of Science and Technology of China', 'Hefei', 'Anhui', 'https://www.ustc.edu.cn', 4000, 0.12, 1300, 1480, 'yes', ['public', 'suburban'], 16000, ['Physics', 'Mathematics', 'Computer Science', 'Engineering', 'Chemistry']],
+  ['Nanjing University', 'Nanjing', 'Jiangsu', 'https://www.nju.edu.cn', 3800, 0.15, 1280, 1460, 'unknown', ['public', 'urban'], 36000, ['Humanities', 'Physics', 'Chemistry', 'Biology', 'Social Sciences']],
+  ['Wuhan University', 'Wuhan', 'Hubei', 'https://www.whu.edu.cn', 3500, 0.25, 1240, 1440, 'unknown', ['public', 'urban'], 59000, ['Law', 'Business', 'Humanities', 'Engineering', 'Social Sciences']],
+  ['Sun Yat-sen University', 'Guangzhou', 'Guangdong', 'https://www.sysu.edu.cn', 3500, 0.25, 1240, 1440, 'unknown', ['public', 'suburban'], 58000, ['Medicine & Health', 'Business', 'Law', 'Engineering', 'Social Sciences']],
+  ['Tongji University', 'Shanghai', 'Shanghai', 'https://www.tongji.edu.cn', 4000, 0.30, 1220, 1420, 'unknown', ['public', 'urban'], 36000, ['Engineering', 'Architecture', 'Computer Science', 'Mathematics', 'Business']],
+  ['Renmin University of China', 'Beijing', 'Beijing', 'https://www.ruc.edu.cn', 4000, 0.20, 1260, 1460, 'unknown', ['public', 'urban'], 28000, ['Economics', 'Business', 'Law', 'Social Sciences', 'Humanities']],
+  ['Harbin Institute of Technology', 'Harbin', 'Heilongjiang', 'https://www.hit.edu.cn', 3500, 0.18, 1260, 1460, 'unknown', ['public', 'urban'], 47000, ['Engineering', 'Computer Science', 'Mathematics', 'Physics', 'Aerospace']],
+  ['Beijing Normal University', 'Beijing', 'Beijing', 'https://www.bnu.edu.cn', 3500, 0.22, 1240, 1440, 'unknown', ['public', 'urban'], 25000, ['Education', 'Humanities', 'Psychology', 'Social Sciences', 'Biology']],
+  ["Xi'an Jiaotong University", "Xi'an", 'Shaanxi', 'https://www.xjtu.edu.cn', 3200, 0.25, 1220, 1420, 'unknown', ['public', 'urban'], 41000, ['Engineering', 'Medicine & Health', 'Economics', 'Computer Science', 'Physics']],
+  ['South China University of Technology', 'Guangzhou', 'Guangdong', 'https://www.scut.edu.cn', 3000, 0.35, 1200, 1400, 'unknown', ['public', 'urban'], 51000, ['Engineering', 'Computer Science', 'Business', 'Architecture', 'Mathematics']],
+  ['Tianjin University', 'Tianjin', 'Tianjin', 'https://www.tju.edu.cn', 3000, 0.30, 1200, 1400, 'unknown', ['public', 'urban'], 29000, ['Engineering', 'Chemistry', 'Computer Science', 'Mathematics', 'Architecture']],
+  ['Shandong University', 'Jinan', 'Shandong', 'https://www.sdu.edu.cn', 2800, 0.40, 1180, 1380, 'unknown', ['public', 'suburban'], 68000, ['Humanities', 'Medicine & Health', 'Engineering', 'Social Sciences', 'Law']],
+  ['Dalian University of Technology', 'Dalian', 'Liaoning', 'https://www.dlut.edu.cn', 2800, 0.35, 1180, 1380, 'unknown', ['public', 'urban'], 34000, ['Engineering', 'Computer Science', 'Mathematics', 'Chemistry', 'Physics']],
+  ['Beijing Institute of Technology', 'Beijing', 'Beijing', 'https://www.bit.edu.cn', 3200, 0.28, 1200, 1400, 'unknown', ['public', 'urban'], 32000, ['Engineering', 'Computer Science', 'Physics', 'Mathematics', 'Business']],
+  ['Huazhong University of Science and Technology', 'Wuhan', 'Hubei', 'https://www.hust.edu.cn', 3500, 0.22, 1240, 1440, 'unknown', ['public', 'urban'], 57000, ['Engineering', 'Medicine & Health', 'Computer Science', 'Physics', 'Mathematics']],
 ];
 
 async function seedChina() {
   console.log('\n── China: Curated dataset ──────────────────────');
 
-  const rows = CHINA_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size], i) => ({
+  const rows = CHINA_UNIVERSITIES.map(([name, city, state, website, tuition, acceptance, sat_min, sat_max, intl_aid, tags, size, majors], i) => ({
     id: `cn-${i + 1}`,
     name,
     country: 'China',
     city,
     state,
     website,
-    majors: CHINA_MAJOR_POOLS[i % CHINA_MAJOR_POOLS.length],
+    majors,
     sat_min,
     sat_max,
     acceptance_rate: acceptance,
