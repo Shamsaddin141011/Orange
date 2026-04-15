@@ -34,6 +34,7 @@ export interface StudentProfile {
   satTotal?: number;
   satMath?: number;
   satEbrw?: number;
+  ibScore?: number;
   gpa?: number;
 }
 

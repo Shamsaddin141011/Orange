@@ -11,14 +11,12 @@ import { AuthScreen } from '../screens/AuthScreen';
 import { CompareScreen } from '../screens/CompareScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { HomeScreen } from '../screens/HomeScreen';
-import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ShortlistScreen } from '../screens/ShortlistScreen';
 import { TrackerScreen } from '../screens/TrackerScreen';
 import { UniversityDetailScreen } from '../screens/UniversityDetailScreen';
 
 export type DiscoverStackParamList = {
-  Onboarding: undefined;
   DiscoverResults: undefined;
   UniversityDetail: { id: string };
 };
@@ -58,8 +56,7 @@ function DiscoverStack() {
         headerTintColor: '#f97316',
       }}
     >
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ title: 'Find Your Match' }} />
-      <Stack.Screen name="DiscoverResults" component={DiscoverScreen} options={{ title: 'Results' }} />
+      <Stack.Screen name="DiscoverResults" component={DiscoverScreen} options={{ title: 'Discover' }} />
       <Stack.Screen name="UniversityDetail" component={UniversityDetailScreen} options={{ title: '' }} />
     </Stack.Navigator>
   );

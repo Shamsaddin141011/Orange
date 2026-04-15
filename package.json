@@ -16,7 +16,6 @@
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
-    "@supabase/supabase-js": "^2.98.0",
     "expo": "~51.0.28",
     "expo-auth-session": "~5.5.2",
     "expo-status-bar": "~1.12.1",
@@ -30,6 +29,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.99.2",
     "@types/react": "~18.2.79",
     "dotenv": "^17.3.1",
     "typescript": "^5.4.5"
