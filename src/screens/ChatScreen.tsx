@@ -20,13 +20,19 @@ export function ChatScreen({ route }: any) {
   const [sending, setSending] = useState(false);
   const flatRef = useRef<FlatList>(null);
 
-  // Load messages + subscribe to realtime
+  // Load messages + subscribe to realtime with polling fallback
   useEffect(() => {
     let mounted = true;
+    let realtimeWorking = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
-    getMessages(conversationId).then((msgs) => {
+    const fetchLatest = async () => {
+      if (!mounted) return;
+      const msgs = await getMessages(conversationId);
       if (mounted) setMessages(msgs);
-    });
+    };
+
+    fetchLatest();
 
     const channel = supabase
       .channel(`chat:${conversationId}`)
@@ -34,15 +40,29 @@ export function ChatScreen({ route }: any) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
+          realtimeWorking = true;
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
           const incoming = payload.new as Message;
-          // Avoid duplicates from our own optimistic update
           setMessages((prev) => prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          if (!pollInterval) pollInterval = setInterval(fetchLatest, 4000);
+        }
+      });
+
+    // If no realtime event in 5s, start polling as fallback
+    const fallbackTimer = setTimeout(() => {
+      if (!realtimeWorking && mounted && !pollInterval) {
+        pollInterval = setInterval(fetchLatest, 4000);
+      }
+    }, 5000);
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
+      if (pollInterval) clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [conversationId]);
