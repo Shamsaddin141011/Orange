@@ -142,7 +142,10 @@ const MAJOR_SYNONYMS: Record<string, string[]> = {
   'speech therapy':              ['Medicine & Health'],
   'midwifery':                   ['Medicine & Health'],
   // Law
-  'law':                         ['Law'],
+  // In the US, law is a graduate degree — undergrads study pre-law via Political Science /
+  // Social Sciences. Including 'Social Sciences' here ensures US universities surface when
+  // the user selects "Law" (non-US curated data already has 'Law' directly in majors).
+  'law':                         ['Law', 'Social Sciences'],
   'international law':           ['Law', 'Social Sciences'],
   'criminal justice':            ['Law', 'Social Sciences'],
   'paralegal studies':           ['Law'],

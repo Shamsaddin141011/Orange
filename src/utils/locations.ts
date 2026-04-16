@@ -71,6 +71,29 @@ export const LOCATIONS: Record<string, LocationGroup[]> = {
       ],
     },
   ],
+  Canada: [
+    {
+      label: 'Popular',
+      items: ['Ontario', 'British Columbia', 'Quebec', 'Alberta', 'Nova Scotia'],
+    },
+    {
+      label: 'All Provinces',
+      items: [
+        'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick',
+        'Newfoundland and Labrador', 'Nova Scotia', 'Ontario', 'Prince Edward Island',
+        'Quebec', 'Saskatchewan',
+      ],
+    },
+  ],
+  Australia: [
+    {
+      label: 'States & Territories',
+      items: [
+        'New South Wales', 'Victoria', 'Queensland', 'Western Australia',
+        'South Australia', 'Australian Capital Territory', 'Tasmania', 'Northern Territory',
+      ],
+    },
+  ],
 };
 
 // Maps full US state name → 2-letter abbreviation (matching College Scorecard data)
