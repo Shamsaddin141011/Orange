@@ -1,19 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
-import { supabase } from '../lib/supabase';
+import { supabase, saveUserSocialProfile } from '../lib/supabase';
 import { useEffect, useState } from 'react';
 import { Country } from '../types';
 
 const COUNTRIES: Country[] = ['USA', 'UK', 'EU', 'China'];
 
 export function ProfileScreen() {
-  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore } = useAppStore();
+  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore, username, setUsername } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [bio, setBio] = useState('');
+  const [editingBio, setEditingBio] = useState(false);
+  const [savingBio, setSavingBio] = useState(false);
 
   // Edit form state
   const [country, setCountry] = useState<Country>(profile.country);
@@ -29,7 +32,28 @@ export function ProfileScreen() {
         setDisplayName(user.user_metadata?.full_name ?? user.email ?? 'Student');
       }
     });
+    // Load bio from profiles
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      supabase.from('profiles').select('bio').eq('id', session.user.id).single().then(({ data }) => {
+        if (data?.bio) setBio(data.bio);
+      });
+    });
   }, []);
+
+  const saveBio = async () => {
+    setSavingBio(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await saveUserSocialProfile(session.user.id, { bio, display_name: displayName });
+    } catch (e) {
+      console.error('Failed to save bio', e);
+    } finally {
+      setSavingBio(false);
+      setEditingBio(false);
+    }
+  };
 
   const startEditing = () => {
     setCountry(profile.country);
@@ -64,7 +88,36 @@ export function ProfileScreen() {
           <Text style={styles.avatarText}>🎓</Text>
         </View>
         <Text style={styles.name}>{displayName}</Text>
+        {username && <Text style={styles.usernameLabel}>@{username}</Text>}
         <Text style={styles.subtitle}>{email}</Text>
+
+        {/* Bio */}
+        {editingBio ? (
+          <View style={styles.bioEditWrap}>
+            <TextInput
+              style={styles.bioInput}
+              value={bio}
+              onChangeText={setBio}
+              placeholder="Write a short bio..."
+              placeholderTextColor="#9ca3af"
+              multiline
+              maxLength={160}
+            />
+            <View style={styles.bioActions}>
+              <Pressable onPress={() => setEditingBio(false)} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={saveBio} style={styles.saveBtn} disabled={savingBio}>
+                {savingBio ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Save Bio</Text>}
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => setEditingBio(true)} style={styles.bioRow}>
+            <Text style={styles.bioText}>{bio || 'Add a bio...'}</Text>
+            <Ionicons name="pencil-outline" size={14} color="#9ca3af" />
+          </Pressable>
+        )}
       </View>
 
       {/* Stats */}
@@ -178,8 +231,17 @@ const styles = StyleSheet.create({
     shadowColor: '#f97316', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 },
   },
   avatarText: { fontSize: 36 },
-  name: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 4 },
+  name: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 2 },
+  usernameLabel: { fontSize: 14, color: '#f97316', fontWeight: '600', marginBottom: 2 },
   subtitle: { fontSize: 14, color: '#6b7280' },
+  bioRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: 16 },
+  bioText: { fontSize: 14, color: '#6b7280', textAlign: 'center', fontStyle: 'italic' },
+  bioEditWrap: { width: '100%', marginTop: 12, gap: 8 },
+  bioInput: {
+    backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb',
+    borderRadius: 10, padding: 10, fontSize: 14, color: '#111827', minHeight: 60,
+  },
+  bioActions: { flexDirection: 'row', gap: 10 },
   statsRow: { flexDirection: 'row', gap: 12 },
   statCard: {
     flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 16, alignItems: 'center',

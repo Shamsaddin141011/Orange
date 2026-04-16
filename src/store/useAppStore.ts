@@ -10,6 +10,7 @@ import { MatchResult, ShortlistTag, StudentProfile, TrackerItemState } from '../
 interface AppState {
   session: Session | null;
   profile: StudentProfile;
+  username: string | null;
   shortlist: Record<string, { tag: ShortlistTag; note: string }>;
   compareIds: string[];
   tracker: Record<string, TrackerItemState>;
@@ -19,6 +20,7 @@ interface AppState {
 
   setSession: (session: Session | null) => void;
   setProfile: (profile: StudentProfile) => void;
+  setUsername: (username: string | null) => void;
   setMatches: (matches: MatchResult[]) => void;
   fetchAndScore: (profile: StudentProfile) => Promise<void>;
   loadUserData: () => Promise<void>;
@@ -37,6 +39,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       session: null,
       profile: defaultProfile,
+      username: null,
       shortlist: {},
       compareIds: [],
       tracker: {},
@@ -46,6 +49,7 @@ export const useAppStore = create<AppState>()(
 
       setSession: (session) => set({ session }),
       setProfile: (profile) => set({ profile }),
+      setUsername: (username) => set({ username }),
       setMatches: (matches) => set({ matches }),
 
       fetchAndScore: async (profile) => {
@@ -93,6 +97,7 @@ export const useAppStore = create<AppState>()(
 
         if (profileRes.data) {
           const p = profileRes.data;
+          set({ username: p.username ?? null });
           set({
             profile: {
               country: p.country ?? 'USA',
@@ -260,6 +265,7 @@ export const useAppStore = create<AppState>()(
         set({
           session: null,
           profile: defaultProfile,
+          username: null,
           shortlist: {},
           compareIds: [],
           tracker: {},

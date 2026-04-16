@@ -65,3 +65,31 @@ export interface TrackerItemState {
   status: 'not_started' | 'in_progress' | 'submitted';
   reminder?: string;
 }
+
+export interface UserPublicProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  bio: string;
+  country?: Country;
+  interests?: string[];
+  degree_level?: string;
+  is_public: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  participant_ids: string[];
+  last_message_at: string;
+  last_message_content: string | null;
+  other_user?: UserPublicProfile;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read_at?: string | null;
+}
