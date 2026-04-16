@@ -20,11 +20,9 @@ export function ChatScreen({ route }: any) {
   const [sending, setSending] = useState(false);
   const flatRef = useRef<FlatList>(null);
 
-  // Load messages + subscribe to realtime with polling fallback
+  // Load messages + poll every 3s + realtime for instant delivery
   useEffect(() => {
     let mounted = true;
-    let realtimeWorking = false;
-    let pollInterval: ReturnType<typeof setInterval> | null = null;
 
     const fetchLatest = async () => {
       if (!mounted) return;
@@ -34,35 +32,25 @@ export function ChatScreen({ route }: any) {
 
     fetchLatest();
 
+    // Always poll — guarantees messages appear even if realtime fails
+    const pollInterval = setInterval(fetchLatest, 3000);
+
+    // Realtime on top for instant delivery when it works
     const channel = supabase
       .channel(`chat:${conversationId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
-          realtimeWorking = true;
-          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
           const incoming = payload.new as Message;
           setMessages((prev) => prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]);
         }
       )
-      .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          if (!pollInterval) pollInterval = setInterval(fetchLatest, 4000);
-        }
-      });
-
-    // If no realtime event in 5s, start polling as fallback
-    const fallbackTimer = setTimeout(() => {
-      if (!realtimeWorking && mounted && !pollInterval) {
-        pollInterval = setInterval(fetchLatest, 4000);
-      }
-    }, 5000);
+      .subscribe();
 
     return () => {
       mounted = false;
-      clearTimeout(fallbackTimer);
-      if (pollInterval) clearInterval(pollInterval);
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [conversationId]);
