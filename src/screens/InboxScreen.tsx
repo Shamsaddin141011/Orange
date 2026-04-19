@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getConversations } from '../lib/supabase';
 import { Conversation } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { GlassBackground } from '../components/GlassBackground';
+import { GlassCard } from '../components/GlassCard';
+import { colors, radius } from '../theme';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -38,108 +42,114 @@ export function InboxScreen() {
   };
 
   useFocusEffect(useCallback(() => { load(); }, [myId]));
-
   const handleRefresh = () => { setRefreshing(true); load(); };
 
   return (
-    <View style={styles.container}>
+    <GlassBackground>
+      {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.title}>Messages</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color="#f97316" size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color={colors.orange} size="large" /></View>
       ) : (
         <ScrollView
           style={styles.list}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#f97316" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.orange} />}
         >
           {conversations.length === 0 && (
             <View style={styles.center}>
-              <Ionicons name="chatbubbles-outline" size={52} color="#d1d5db" />
+              <Ionicons name="chatbubbles-outline" size={52} color={colors.textTertiary} />
               <Text style={styles.emptyTitle}>No messages yet</Text>
               <Text style={styles.emptyHint}>Find a student in People and start a conversation</Text>
             </View>
           )}
 
-          {conversations.map((conv) => {
+          {conversations.map((conv, i) => {
             const other = conv.other_user;
             const initials = other ? (other.display_name || other.username).charAt(0).toUpperCase() : '?';
             return (
-              <Pressable
-                key={conv.id}
-                style={styles.convRow}
-                onPress={() => navigation.navigate('Chat', {
-                  conversationId: conv.id,
-                  otherUsername: other?.username ?? 'Unknown',
-                })}
-              >
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{initials}</Text>
-                </View>
-                <View style={styles.convInfo}>
-                  <View style={styles.convTop}>
-                    <Text style={styles.convName}>{other?.display_name || other?.username || 'Unknown'}</Text>
-                    <Text style={styles.convTime}>{timeAgo(conv.last_message_at)}</Text>
-                  </View>
-                  <Text style={styles.convPreview} numberOfLines={1}>
-                    {conv.last_message_content ?? 'Start a conversation'}
-                  </Text>
-                </View>
-              </Pressable>
+              <Animated.View key={conv.id} entering={FadeInDown.duration(350).delay(i * 50)}>
+                <Pressable
+                  onPress={() => navigation.navigate('Chat', {
+                    conversationId: conv.id,
+                    otherUsername: other?.username ?? 'Unknown',
+                  })}
+                >
+                  <GlassCard padding={14} style={styles.convRow} borderRadius={radius.lg}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{initials}</Text>
+                    </View>
+                    <View style={styles.convInfo}>
+                      <View style={styles.convTop}>
+                        <Text style={styles.convName}>{other?.display_name || other?.username || 'Unknown'}</Text>
+                        <Text style={styles.convTime}>{timeAgo(conv.last_message_at)}</Text>
+                      </View>
+                      <Text style={styles.convPreview} numberOfLines={1}>
+                        {conv.last_message_content ?? 'Start a conversation'}
+                      </Text>
+                    </View>
+                  </GlassCard>
+                </Pressable>
+              </Animated.View>
             );
           })}
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: 100 }} />
         </ScrollView>
       )}
-    </View>
+    </GlassBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 56,
+    paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
   },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  center: { alignItems: 'center', paddingTop: 80, gap: 12, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
-  emptyHint: { fontSize: 14, color: '#9ca3af', textAlign: 'center', lineHeight: 20 },
-  list: { flex: 1 },
-  convRow: {
-    flexDirection: 'row',
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.glassCard,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    justifyContent: 'center',
   },
+  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  center: { alignItems: 'center', paddingTop: 80, gap: 12, paddingHorizontal: 32 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textSecondary },
+  emptyHint: { fontSize: 14, color: colors.textTertiary, textAlign: 'center', lineHeight: 20 },
+  list: { flex: 1 },
+  listContent: { padding: 16, gap: 10 },
+  convRow: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#fff7ed',
-    alignItems: 'center', justifyContent: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.orangeDim,
+    borderWidth: 1.5,
+    borderColor: colors.orangeBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 14,
   },
-  avatarText: { fontSize: 22, fontWeight: '700', color: '#f97316' },
+  avatarText: { fontSize: 22, fontWeight: '700', color: colors.orange },
   convInfo: { flex: 1 },
   convTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
-  convName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  convTime: { fontSize: 12, color: '#9ca3af' },
-  convPreview: { fontSize: 14, color: '#6b7280' },
+  convName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  convTime: { fontSize: 11, color: colors.textTertiary },
+  convPreview: { fontSize: 13, color: colors.textSecondary },
 });

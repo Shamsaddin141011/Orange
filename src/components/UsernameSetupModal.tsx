@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { checkUsernameAvailable, saveUserSocialProfile } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
+import { GlassCard } from './GlassCard';
+import { GlassButton } from './GlassButton';
+import { colors, radius } from '../theme';
 
 export function UsernameSetupModal({ visible }: { visible: boolean }) {
   const { setUsername } = useAppStore();
@@ -48,7 +51,7 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <GlassCard glow intensity={30} padding={28} borderRadius={radius.xl} style={styles.card}>
           <Text style={styles.emoji}>🎓</Text>
           <Text style={styles.title}>Pick a username</Text>
           <Text style={styles.sub}>This is how other students find and message you on OrangeUni.</Text>
@@ -60,7 +63,7 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
               value={value}
               onChangeText={(t) => { setValue(sanitize(t)); setError(''); }}
               placeholder="your_username"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textTertiary}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={20}
@@ -70,16 +73,14 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.hint}>3–20 chars · lowercase letters, numbers, underscores</Text>
 
-          <Pressable
-            style={[styles.btn, (saving || value.length < 3) && styles.btnDisabled]}
-            onPress={handleClaim}
+          <GlassButton
+            label="Claim Username →"
+            loading={saving}
             disabled={saving || value.length < 3}
-          >
-            {saving
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.btnText}>Claim Username →</Text>}
-          </Pressable>
-        </View>
+            onPress={handleClaim}
+            style={styles.btn}
+          />
+        </GlassCard>
       </View>
     </Modal>
   );
@@ -88,47 +89,29 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 28,
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-  },
+  card: { width: '100%', maxWidth: 400, alignItems: 'center' },
   emoji: { fontSize: 48, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827', marginBottom: 8, textAlign: 'center' },
-  sub: { fontSize: 14, color: '#6b7280', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+  sub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#f97316',
-    borderRadius: 12,
+    borderColor: colors.orangeBorder,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     width: '100%',
     marginBottom: 8,
+    backgroundColor: colors.glassInput,
   },
-  at: { fontSize: 18, fontWeight: '700', color: '#f97316', marginRight: 4 },
-  input: { flex: 1, fontSize: 18, color: '#111827', paddingVertical: 12 },
-  error: { fontSize: 13, color: '#dc2626', marginBottom: 4, alignSelf: 'flex-start' },
-  hint: { fontSize: 12, color: '#9ca3af', alignSelf: 'flex-start', marginBottom: 24 },
-  btn: {
-    backgroundColor: '#f97316',
-    borderRadius: 14,
-    paddingVertical: 14,
-    width: '100%',
-    alignItems: 'center',
-  },
-  btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  at: { fontSize: 18, fontWeight: '700', color: colors.orange, marginRight: 4 },
+  input: { flex: 1, fontSize: 18, color: colors.textPrimary, paddingVertical: 12 },
+  error: { fontSize: 13, color: colors.danger, marginBottom: 4, alignSelf: 'flex-start' },
+  hint: { fontSize: 12, color: colors.textTertiary, alignSelf: 'flex-start', marginBottom: 24 },
+  btn: { width: '100%' },
 });

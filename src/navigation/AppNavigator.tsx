@@ -3,7 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
@@ -20,6 +21,7 @@ import { PublicProfileScreen } from '../screens/PublicProfileScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { UsernameSetupModal } from '../components/UsernameSetupModal';
+import { colors } from '../theme';
 
 export type DiscoverStackParamList = {
   DiscoverResults: undefined;
@@ -43,34 +45,24 @@ const Stack = createNativeStackNavigator<DiscoverStackParamList>();
 const ShortlistNav = createNativeStackNavigator<ShortlistStackParamList>();
 const PeopleNav = createNativeStackNavigator<PeopleStackParamList>();
 
+const stackScreenOptions = {
+  headerShown: false,
+};
+
 function ShortlistStack() {
   return (
-    <ShortlistNav.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: '#fff' },
-        headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: '700', color: '#111827' },
-        headerTintColor: '#f97316',
-      }}
-    >
-      <ShortlistNav.Screen name="ShortlistMain" component={ShortlistScreen} options={{ title: 'Shortlist' }} />
-      <ShortlistNav.Screen name="UniversityDetail" component={UniversityDetailScreen} options={{ title: '' }} />
+    <ShortlistNav.Navigator screenOptions={stackScreenOptions}>
+      <ShortlistNav.Screen name="ShortlistMain" component={ShortlistScreen} />
+      <ShortlistNav.Screen name="UniversityDetail" component={UniversityDetailScreen} />
     </ShortlistNav.Navigator>
   );
 }
 
 function DiscoverStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: '#fff' },
-        headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: '700', color: '#111827' },
-        headerTintColor: '#f97316',
-      }}
-    >
-      <Stack.Screen name="DiscoverResults" component={DiscoverScreen} options={{ title: 'Discover' }} />
-      <Stack.Screen name="UniversityDetail" component={UniversityDetailScreen} options={{ title: '' }} />
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="DiscoverResults" component={DiscoverScreen} />
+      <Stack.Screen name="UniversityDetail" component={UniversityDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -98,6 +90,40 @@ const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }
   Profile:   { active: 'person',           inactive: 'person-outline' },
 };
 
+function TabBarBackground() {
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: colors.tabBarBg,
+          borderRadius: 32,
+          borderWidth: 1,
+          borderColor: colors.tabBarBorder,
+          // @ts-ignore
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+        }}
+      />
+    );
+  }
+  return (
+    <BlurView
+      intensity={30}
+      tint="dark"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 32,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.tabBarBorder,
+      }}
+    />
+  );
+}
+
 function MainTabs() {
   const { username } = useAppStore();
 
@@ -106,21 +132,40 @@ function MainTabs() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#f97316',
-          tabBarInactiveTintColor: '#9ca3af',
+          tabBarActiveTintColor: colors.tabActive,
+          tabBarInactiveTintColor: colors.tabInactive,
           tabBarStyle: {
-            backgroundColor: '#fff',
-            borderTopColor: '#f3f4f6',
-            borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 6,
+            position: 'absolute',
+            bottom: 16,
+            left: 12,
+            right: 12,
+            height: 62,
+            borderRadius: 32,
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+            shadowOpacity: 0,
           },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+          tabBarBackground: () => <TabBarBackground />,
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginBottom: 4 },
+          tabBarItemStyle: { paddingTop: 6 },
           tabBarIcon: ({ focused, color, size }) => {
             const icons = TAB_ICONS[route.name];
             if (!icons) return null;
-            return <Ionicons name={focused ? icons.active : icons.inactive} size={size} color={color} />;
+            return (
+              <View style={focused ? {
+                shadowColor: colors.orange,
+                shadowOpacity: 0.6,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 0 },
+              } : undefined}>
+                <Ionicons
+                  name={focused ? icons.active : icons.inactive}
+                  size={focused ? size + 1 : size}
+                  color={color}
+                />
+              </View>
+            );
           },
         })}
       >
@@ -133,7 +178,6 @@ function MainTabs() {
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
 
-      {/* Username setup blocks interaction until user picks a username */}
       <UsernameSetupModal visible={username === null} />
     </>
   );
@@ -159,8 +203,8 @@ export function AppNavigator() {
 
   if (initialising) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a' }}>
-        <ActivityIndicator size="large" color="#f97316" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDeep }}>
+        <ActivityIndicator size="large" color={colors.orange} />
       </View>
     );
   }

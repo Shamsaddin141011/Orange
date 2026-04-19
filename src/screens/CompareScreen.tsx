@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getPalette, getInitials } from '../components/CardBanner';
+import { GlassBackground } from '../components/GlassBackground';
+import { GlassCard } from '../components/GlassCard';
 import { supabase } from '../lib/supabase';
 import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
 import { MatchResult, University } from '../types';
+import { colors, radius } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const COUNTRY_FLAG: Record<string, string> = { USA: '🇺🇸', UK: '🇬🇧', EU: '🇪🇺', China: '🇨🇳' };
 
@@ -19,49 +24,13 @@ type MetricDef = {
 };
 
 const METRICS: MetricDef[] = [
-  {
-    label: 'Location',
-    icon: '📍',
-    getValue: (u) => `${u.city}${u.state ? `, ${u.state}` : ''}`,
-  },
-  {
-    label: 'Tuition / Year',
-    icon: '💰',
-    getValue: (u) => `$${u.tuition_estimate.toLocaleString()}`,
-    getNumeric: (u) => u.tuition_estimate,
-    lowerIsBetter: true,
-    winLabel: 'Best value',
-  },
-  {
-    label: 'Acceptance Rate',
-    icon: '🎯',
-    getValue: (u) => u.acceptance_rate != null ? `${Math.round(u.acceptance_rate * 100)}%` : 'N/A',
-    getNumeric: (u) => u.acceptance_rate ?? Infinity,
-    lowerIsBetter: true,
-    winLabel: 'More selective',
-  },
-  {
-    label: 'SAT Mid-50',
-    icon: '📝',
-    getValue: (u) => `${u.sat_middle_50.min} – ${u.sat_middle_50.max}`,
-  },
-  {
-    label: 'Intl. Financial Aid',
-    icon: '🎓',
-    getValue: (u) =>
-      u.intl_aid === 'yes' ? 'Available' : u.intl_aid === 'no' ? 'Not available' : 'Unknown',
-  },
-  {
-    label: 'Student Size',
-    icon: '👥',
-    getValue: (u) => u.student_size ? `${u.student_size.toLocaleString()} students` : 'N/A',
-  },
-  {
-    label: 'Programs',
-    icon: '📚',
-    getValue: () => '',
-    chipValues: true,
-  },
+  { label: 'Location', icon: '📍', getValue: (u) => `${u.city}${u.state ? `, ${u.state}` : ''}` },
+  { label: 'Tuition / Year', icon: '💰', getValue: (u) => `$${u.tuition_estimate.toLocaleString()}`, getNumeric: (u) => u.tuition_estimate, lowerIsBetter: true, winLabel: 'Best value' },
+  { label: 'Acceptance Rate', icon: '🎯', getValue: (u) => u.acceptance_rate != null ? `${Math.round(u.acceptance_rate * 100)}%` : 'N/A', getNumeric: (u) => u.acceptance_rate ?? Infinity, lowerIsBetter: true, winLabel: 'More selective' },
+  { label: 'SAT Mid-50', icon: '📝', getValue: (u) => `${u.sat_middle_50.min} – ${u.sat_middle_50.max}` },
+  { label: 'Intl. Financial Aid', icon: '🎓', getValue: (u) => u.intl_aid === 'yes' ? 'Available' : u.intl_aid === 'no' ? 'Not available' : 'Unknown' },
+  { label: 'Student Size', icon: '👥', getValue: (u) => u.student_size ? `${u.student_size.toLocaleString()} students` : 'N/A' },
+  { label: 'Programs', icon: '📚', getValue: () => '', chipValues: true },
 ];
 
 function getWinnerIndices(unis: University[], metric: MetricDef): boolean[] {
@@ -70,7 +39,6 @@ function getWinnerIndices(unis: University[], metric: MetricDef): boolean[] {
   const validVals = vals.filter((v) => v !== Infinity && v > 0);
   if (!validVals.length) return unis.map(() => false);
   const target = metric.lowerIsBetter ? Math.min(...validVals) : Math.max(...validVals);
-  // Only show winner if there's actually a difference
   const allSame = vals.every((v) => v === vals[0]);
   if (allSame) return unis.map(() => false);
   return vals.map((v) => v === target);
@@ -80,29 +48,22 @@ export function CompareScreen() {
   const { compareIds, matches, toggleCompare } = useAppStore();
   const [fetchedUnis, setFetchedUnis] = useState<Record<string, University>>({});
 
-  // Build a map of unis already in matches
   const matchedUnis: Record<string, { uni: University; match: MatchResult }> = {};
   for (const m of matches) matchedUnis[m.university.id] = { uni: m.university, match: m };
 
-  // Fetch any compareIds not covered by matches
   useEffect(() => {
     const missingIds = compareIds.filter((id) => !matchedUnis[id] && !fetchedUnis[id]);
     if (!missingIds.length) return;
-    supabase
-      .from('universities')
-      .select('*')
-      .in('id', missingIds)
-      .then(({ data }) => {
-        if (!data) return;
-        setFetchedUnis((prev) => {
-          const next = { ...prev };
-          for (const row of data) next[row.id] = rowToUniversity(row as any);
-          return next;
-        });
+    supabase.from('universities').select('*').in('id', missingIds).then(({ data }) => {
+      if (!data) return;
+      setFetchedUnis((prev) => {
+        const next = { ...prev };
+        for (const row of data) next[row.id] = rowToUniversity(row as any);
+        return next;
       });
+    });
   }, [compareIds.join(',')]);
 
-  // Build compareItems — prefer match data, fall back to fetched uni
   const compareItems: Array<{ university: University; score?: number }> = compareIds
     .map((id) => {
       if (matchedUnis[id]) return matchedUnis[id].match;
@@ -115,290 +76,152 @@ export function CompareScreen() {
 
   if (!unis.length) {
     return (
-      <View style={styles.empty}>
+      <GlassBackground style={styles.empty}>
         <Text style={styles.emptyIcon}>⚖️</Text>
         <Text style={styles.emptyTitle}>Nothing to compare</Text>
         <Text style={styles.emptyText}>
-          Add up to 3 schools from Discover or Shortlist to compare them side by side.
+          Add up to 3 schools from Discover or Shortlist.
         </Text>
-      </View>
+      </GlassBackground>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── School header cards ── */}
-      <View style={styles.headerRow}>
-        {compareItems.map((item) => {
-          const u = item.university;
-          const [bgA, bgB] = getPalette(colorIdx(u.id));
-          const initials = getInitials(u.name);
-          const scoreColor =
-            item.score != null
-              ? item.score >= 80 ? '#16a34a' : item.score >= 60 ? '#f97316' : '#6b7280'
-              : '#9ca3af';
+    <GlassBackground>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.pageTitle}>Compare</Text>
 
-          return (
-            <View key={u.id} style={styles.headerCard}>
-              {/* Coloured banner */}
-              <View style={[styles.headerBanner, { backgroundColor: bgA }]}>
-                <View style={[styles.headerAccent, { backgroundColor: bgB }]} />
-                <Text style={styles.headerBgText}>{initials}</Text>
-                <Text style={styles.headerFlag}>{COUNTRY_FLAG[u.country] ?? '🏫'}</Text>
-              </View>
+        {/* School header cards */}
+        <View style={styles.headerRow}>
+          {compareItems.map((item, idx) => {
+            const u = item.university;
+            const [bgA, bgB] = getPalette(colorIdx(u.id));
+            const initials = getInitials(u.name);
+            const scoreColor = item.score != null
+              ? item.score >= 80 ? colors.success : item.score >= 60 ? colors.orange : colors.textTertiary
+              : colors.textTertiary;
 
-              {/* Info below banner */}
-              <View style={styles.headerInfo}>
-                <View style={styles.headerNameRow}>
-                  <Text style={[styles.headerName, { flex: 1 }]} numberOfLines={2}>{u.name}</Text>
-                  <Pressable onPress={() => toggleCompare(u.id)} style={styles.removeBtn} hitSlop={8}>
-                    <Text style={styles.removeBtnText}>✕</Text>
-                  </Pressable>
-                </View>
-                <Text style={styles.headerCity}>
-                  {u.city}{u.state ? `, ${u.state}` : ''}
-                </Text>
-                {item.score != null && (
-                  <View style={[styles.scorePill, { borderColor: scoreColor }]}>
-                    <Text style={[styles.scorePillText, { color: scoreColor }]}>
-                      {item.score}% match
-                    </Text>
+            return (
+              <Animated.View key={u.id} entering={FadeInDown.duration(400).delay(idx * 80)} style={styles.headerCardWrap}>
+                <GlassCard padding={0} style={styles.headerCard} borderRadius={radius.lg}>
+                  <View style={[styles.headerBanner, { backgroundColor: bgA }]}>
+                    <LinearGradient colors={[bgB, bgA]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+                    <Text style={styles.headerBgText}>{initials}</Text>
+                    <View style={styles.headerTopRow}>
+                      <Text style={styles.headerFlag}>{COUNTRY_FLAG[u.country] ?? '🏫'}</Text>
+                      <Pressable onPress={() => toggleCompare(u.id)} style={styles.removeBtn} hitSlop={8}>
+                        <Text style={styles.removeBtnText}>✕</Text>
+                      </Pressable>
+                    </View>
                   </View>
-                )}
-              </View>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* ── Metric cards ── */}
-      {METRICS.map((metric) => {
-        const winners = getWinnerIndices(unis, metric);
-
-        return (
-          <View key={metric.label} style={styles.metricCard}>
-            <Text style={styles.metricLabel}>
-              {metric.icon}{'  '}{metric.label}
-            </Text>
-
-            <View style={styles.metricRow}>
-              {unis.map((u, i) => {
-                const isWinner = winners[i];
-                const isLast = i === unis.length - 1;
-
-                return (
-                  <View
-                    key={u.id}
-                    style={[
-                      styles.metricCell,
-                      !isLast && styles.metricCellDivider,
-                      isWinner && styles.metricCellWinner,
-                    ]}
-                  >
-                    {metric.chipValues ? (
-                      <View style={styles.chipWrap}>
-                        {u.majors.map((m) => (
-                          <View key={m} style={styles.chip}>
-                            <Text style={styles.chipText}>{m}</Text>
-                          </View>
-                        ))}
+                  <View style={styles.headerInfo}>
+                    <Text style={styles.headerName} numberOfLines={2}>{u.name}</Text>
+                    <Text style={styles.headerCity}>{u.city}{u.state ? `, ${u.state}` : ''}</Text>
+                    {item.score != null && (
+                      <View style={[styles.scorePill, { borderColor: scoreColor + '88' }]}>
+                        <Text style={[styles.scorePillText, { color: scoreColor }]}>{item.score}% match</Text>
                       </View>
-                    ) : (
-                      <Text
+                    )}
+                  </View>
+                </GlassCard>
+              </Animated.View>
+            );
+          })}
+        </View>
+
+        {/* Metric cards */}
+        {METRICS.map((metric, mi) => {
+          const winners = getWinnerIndices(unis, metric);
+          return (
+            <Animated.View key={metric.label} entering={FadeInDown.duration(400).delay(300 + mi * 50)}>
+              <GlassCard padding={0} style={styles.metricCard}>
+                <View style={styles.metricLabelRow}>
+                  <Text style={styles.metricLabelText}>{metric.icon}{'  '}{metric.label}</Text>
+                </View>
+                <View style={styles.metricRow}>
+                  {unis.map((u, i) => {
+                    const isWinner = winners[i];
+                    const isLast = i === unis.length - 1;
+                    return (
+                      <View
+                        key={u.id}
                         style={[
-                          styles.metricValue,
-                          isWinner && styles.metricValueWinner,
+                          styles.metricCell,
+                          !isLast && styles.metricCellDivider,
+                          isWinner && styles.metricCellWinner,
                         ]}
                       >
-                        {metric.getValue(u)}
-                      </Text>
-                    )}
-
-                    {isWinner && metric.winLabel && (
-                      <View style={styles.winBadge}>
-                        <Text style={styles.winBadgeText}>✓ {metric.winLabel}</Text>
+                        {metric.chipValues ? (
+                          <View style={styles.chipWrap}>
+                            {u.majors.map((m) => (
+                              <View key={m} style={styles.chip}>
+                                <Text style={styles.chipText}>{m}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : (
+                          <Text style={[styles.metricValue, isWinner && styles.metricValueWinner]}>
+                            {metric.getValue(u)}
+                          </Text>
+                        )}
+                        {isWinner && metric.winLabel && (
+                          <View style={styles.winBadge}>
+                            <Text style={styles.winBadgeText}>✓ {metric.winLabel}</Text>
+                          </View>
+                        )}
                       </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        );
-      })}
+                    );
+                  })}
+                </View>
+              </GlassCard>
+            </Animated.View>
+          );
+        })}
 
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </GlassBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#f3f4f6' },
-  content: { padding: 16, gap: 12 },
+  scroll: { flex: 1 },
+  content: { padding: 16, paddingTop: 56, gap: 12 },
+  pageTitle: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, letterSpacing: -0.5 },
 
-  // ── Empty state ──
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#f3f4f6',
-    padding: 32,
-  },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 32 },
   emptyIcon: { fontSize: 52 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  emptyText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
 
-  // ── School headers ──
-  headerRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  headerCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  headerBanner: {
-    height: 90,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    padding: 10,
-  },
-  headerAccent: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    top: -50,
-    right: -30,
-    opacity: 0.55,
-  },
-  headerBgText: {
-    position: 'absolute',
-    bottom: -10,
-    left: 10,
-    fontSize: 72,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.07)',
-    letterSpacing: -2,
-  },
-  headerFlag: { fontSize: 24 },
-  headerInfo: { padding: 12, gap: 3 },
-  headerNameRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginBottom: 2 },
+  headerRow: { flexDirection: 'row', gap: 10 },
+  headerCardWrap: { flex: 1 },
+  headerCard: { overflow: 'hidden' },
+  headerBanner: { height: 90, overflow: 'hidden', justifyContent: 'flex-end' },
+  headerBgText: { position: 'absolute', bottom: -14, left: 8, fontSize: 72, fontWeight: '900', color: 'rgba(255,255,255,0.06)', letterSpacing: -2 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 10 },
+  headerFlag: { fontSize: 20 },
   removeBtn: { padding: 2 },
-  removeBtnText: { fontSize: 12, color: '#9ca3af', fontWeight: '700' },
-  headerName: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#111827',
-    lineHeight: 18,
-  },
-  headerCity: {
-    fontSize: 11,
-    color: '#6b7280',
-    marginBottom: 6,
-  },
-  scorePill: {
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  scorePillText: { fontSize: 11, fontWeight: '700' },
+  removeBtnText: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '700' },
+  headerInfo: { padding: 10, gap: 3 },
+  headerName: { fontSize: 12, fontWeight: '700', color: colors.textPrimary, lineHeight: 17 },
+  headerCity: { fontSize: 10, color: colors.textTertiary },
+  scorePill: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 2 },
+  scorePillText: { fontSize: 10, fontWeight: '700' },
 
-  // ── Metric cards ──
-  metricCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  metricLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  metricRow: {
-    flexDirection: 'row',
-  },
-  metricCell: {
-    flex: 1,
-    padding: 14,
-    gap: 6,
-  },
-  metricCellDivider: {
-    borderRightWidth: 1,
-    borderRightColor: '#f3f4f6',
-  },
-  metricCellWinner: {
-    backgroundColor: '#f0fdf4',
-  },
-  metricValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-    lineHeight: 22,
-  },
-  metricValueWinner: {
-    color: '#15803d',
-  },
-  winBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#dcfce7',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  winBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#15803d',
-  },
+  metricCard: { overflow: 'hidden' },
+  metricLabelRow: { borderBottomWidth: 1, borderBottomColor: colors.glassBorder, paddingHorizontal: 14, paddingVertical: 12 },
+  metricLabelText: { fontSize: 12, fontWeight: '700', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.8 },
+  metricRow: { flexDirection: 'row' },
+  metricCell: { flex: 1, padding: 12, gap: 6 },
+  metricCellDivider: { borderRightWidth: 1, borderRightColor: colors.glassBorder },
+  metricCellWinner: { backgroundColor: colors.successDim },
+  metricValue: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, lineHeight: 20 },
+  metricValueWinner: { color: colors.success },
+  winBadge: { alignSelf: 'flex-start', backgroundColor: colors.successDim, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 3 },
+  winBadgeText: { fontSize: 10, fontWeight: '700', color: colors.success },
 
-  // ── Program chips ──
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 5,
-  },
-  chip: {
-    backgroundColor: '#fff7ed',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  chipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#ea580c',
-  },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  chip: { backgroundColor: colors.orangeDim, borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 3 },
+  chipText: { fontSize: 10, fontWeight: '600', color: colors.orange },
 });

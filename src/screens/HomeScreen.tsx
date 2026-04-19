@@ -1,10 +1,23 @@
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CardBanner } from '../components/CardBanner';
+import { GlassBackground } from '../components/GlassBackground';
+import { GlassCard } from '../components/GlassCard';
+import { GlassButton } from '../components/GlassButton';
 import { colorIdx } from '../lib/transform';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
+import { colors, gradients, radius, shadow } from '../theme';
+
+const FEATURES = [
+  { icon: '🔍', label: 'Discover', desc: 'Matched by SAT, interests & budget', tab: 'Discover' },
+  { icon: '❤️', label: 'Shortlist', desc: 'Tag schools as reach, match or safety', tab: 'Shortlist' },
+  { icon: '⚖️', label: 'Compare', desc: 'Side-by-side stats for up to 3 schools', tab: 'Compare' },
+  { icon: '📋', label: 'Tracker', desc: 'Track essays, deadlines & status', tab: 'Tracker' },
+];
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -21,139 +34,171 @@ export function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero */}
-      <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>Welcome to</Text>
-        <Text style={styles.heroTitle}>OrangeUni</Text>
-        <Text style={styles.heroSub}>Find universities that fit you — transparently.</Text>
-        <Pressable style={styles.heroCta} onPress={() => navigation.navigate('Discover')}>
-          <Text style={styles.heroCtaText}>Start Discovering →</Text>
-        </Pressable>
-      </View>
+    <GlassBackground>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Hero */}
+        <Animated.View entering={FadeInUp.duration(600)}>
+          <View style={styles.hero}>
+            <LinearGradient
+              colors={['rgba(255,122,47,0.18)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.heroBlobTR} />
+            <Text style={styles.heroEyebrow}>Welcome to</Text>
+            <Text style={styles.heroTitle}>OrangeUni</Text>
+            <Text style={styles.heroSub}>Find universities that fit you — transparently.</Text>
+            <GlassButton
+              label="Start Discovering →"
+              onPress={() => navigation.navigate('Discover')}
+              size="md"
+              style={styles.heroCta}
+            />
+          </View>
+        </Animated.View>
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{matchCount || '—'}</Text>
-          <Text style={styles.statLabel}>Matches</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{savedCount || '—'}</Text>
-          <Text style={styles.statLabel}>Saved</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{totalSchools ?? '—'}</Text>
-          <Text style={styles.statLabel}>Schools</Text>
-        </View>
-      </View>
+        {/* Stats */}
+        <Animated.View entering={FadeInDown.duration(500).delay(100)} style={styles.statsRow}>
+          <GlassCard padding={16} glow style={styles.statCard}>
+            <Text style={styles.statNum}>{matchCount || '—'}</Text>
+            <Text style={styles.statLabel}>Matches</Text>
+          </GlassCard>
+          <GlassCard padding={16} style={styles.statCard}>
+            <Text style={styles.statNum}>{savedCount || '—'}</Text>
+            <Text style={styles.statLabel}>Saved</Text>
+          </GlassCard>
+          <GlassCard padding={16} style={styles.statCard}>
+            <Text style={styles.statNum}>{totalSchools ?? '—'}</Text>
+            <Text style={styles.statLabel}>Schools</Text>
+          </GlassCard>
+        </Animated.View>
 
-      {/* Feature cards */}
-      <Text style={styles.sectionTitle}>What you can do</Text>
-      <View style={styles.featureGrid}>
-        {FEATURES.map((f) => (
-          <Pressable key={f.label} style={styles.featureCard} onPress={() => navigation.navigate(f.tab)}>
-            <Text style={styles.featureIcon}>{f.icon}</Text>
-            <Text style={styles.featureLabel}>{f.label}</Text>
-            <Text style={styles.featureDesc}>{f.desc}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Featured schools — only shown after a search */}
-      {featured.length > 0 && (
-        <>
-          <Text style={styles.sectionTitle}>Top Matches</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
-            {featured.map((m) => (
-              <Pressable key={m.university.id} style={styles.featuredCard} onPress={() => navigation.navigate('Discover')}>
-                <CardBanner name={m.university.name} city={m.university.city} state={m.university.state} country={m.university.country} idx={colorIdx(m.university.id)} height={110} />
-                <View style={styles.featuredInfo}>
-                  <Text style={styles.featuredName} numberOfLines={1}>{m.university.name}</Text>
-                  <Text style={styles.featuredMeta}>{m.university.city} · {m.score}% match</Text>
-                </View>
+        {/* Features */}
+        <Text style={styles.sectionTitle}>What you can do</Text>
+        <Animated.View entering={FadeInDown.duration(500).delay(200)} style={styles.featureGrid}>
+          {FEATURES.map((f, i) => (
+            <Animated.View key={f.label} entering={FadeInDown.duration(400).delay(200 + i * 60)} style={styles.featureCardWrap}>
+              <Pressable
+                style={styles.featureCardPress}
+                onPress={() => navigation.navigate(f.tab)}
+              >
+                <GlassCard padding={16} style={styles.featureCard}>
+                  <Text style={styles.featureIcon}>{f.icon}</Text>
+                  <Text style={styles.featureLabel}>{f.label}</Text>
+                  <Text style={styles.featureDesc}>{f.desc}</Text>
+                </GlassCard>
               </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      )}
+            </Animated.View>
+          ))}
+        </Animated.View>
 
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        {/* Top Matches */}
+        {featured.length > 0 && (
+          <Animated.View entering={FadeInDown.duration(500).delay(400)}>
+            <Text style={styles.sectionTitle}>Top Matches</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
+              {featured.map((m) => (
+                <Pressable key={m.university.id} onPress={() => navigation.navigate('Discover')}>
+                  <GlassCard padding={0} style={styles.featuredCard} borderRadius={radius.lg}>
+                    <CardBanner
+                      name={m.university.name}
+                      city={m.university.city}
+                      state={m.university.state}
+                      country={m.university.country}
+                      idx={colorIdx(m.university.id)}
+                      height={110}
+                    />
+                    <View style={styles.featuredInfo}>
+                      <Text style={styles.featuredName} numberOfLines={1}>{m.university.name}</Text>
+                      <Text style={styles.featuredMeta}>{m.university.city} · {m.score}% match</Text>
+                    </View>
+                  </GlassCard>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        )}
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </GlassBackground>
   );
 }
 
-const FEATURES = [
-  { icon: '🔍', label: 'Discover', desc: 'Get matched by SAT, interests & budget', tab: 'Discover' },
-  { icon: '❤️', label: 'Shortlist', desc: 'Tag schools as reach, match or safety', tab: 'Shortlist' },
-  { icon: '⚖️', label: 'Compare', desc: 'Side-by-side stats for up to 3 schools', tab: 'Compare' },
-  { icon: '📋', label: 'Tracker', desc: 'Track essays, deadlines & status', tab: 'Tracker' },
-];
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  scroll: { flex: 1 },
+
   hero: {
-    backgroundColor: '#111827',
     paddingHorizontal: 24,
-    paddingTop: 56,
-    paddingBottom: 40,
-  },
-  heroEyebrow: { color: '#f97316', fontWeight: '600', fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6 },
-  heroTitle: { color: '#fff', fontSize: 40, fontWeight: '800', letterSpacing: -1, marginBottom: 8 },
-  heroSub: { color: '#9ca3af', fontSize: 16, lineHeight: 24, marginBottom: 24 },
-  heroCta: {
-    backgroundColor: '#f97316',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignSelf: 'flex-start',
-  },
-  heroCtaText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  statsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, marginTop: 20 },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  statNum: { fontSize: 28, fontWeight: '800', color: '#f97316' },
-  statLabel: { fontSize: 12, color: '#6b7280', marginTop: 2, fontWeight: '500' },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#111827', paddingHorizontal: 20, marginTop: 28, marginBottom: 12 },
-  featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20 },
-  featureCard: {
-    width: '47%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  featureIcon: { fontSize: 28, marginBottom: 8 },
-  featureLabel: { fontWeight: '700', fontSize: 15, color: '#111827', marginBottom: 4 },
-  featureDesc: { fontSize: 12, color: '#6b7280', lineHeight: 18 },
-  featuredList: { paddingHorizontal: 20, gap: 14 },
-  featuredCard: {
-    width: 220,
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    paddingTop: 64,
+    paddingBottom: 36,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
   },
-  featuredImage: { width: 220, height: 120 },
-  featuredInfo: { padding: 12 },
-  featuredName: { fontWeight: '700', fontSize: 14, color: '#111827', marginBottom: 2 },
-  featuredMeta: { fontSize: 12, color: '#6b7280' },
+  heroBlobTR: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.orange,
+    opacity: 0.08,
+  },
+  heroEyebrow: {
+    color: colors.orange,
+    fontWeight: '600',
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  heroTitle: {
+    color: colors.textPrimary,
+    fontSize: 44,
+    fontWeight: '800',
+    letterSpacing: -1.5,
+    marginBottom: 10,
+  },
+  heroSub: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 24,
+    maxWidth: 280,
+  },
+  heroCta: { alignSelf: 'flex-start' },
+
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 24,
+  },
+  statCard: { flex: 1, alignItems: 'center' },
+  statNum: { fontSize: 26, fontWeight: '800', color: colors.orange },
+  statLabel: { fontSize: 11, color: colors.textTertiary, marginTop: 2, fontWeight: '500' },
+
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+
+  featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginBottom: 24 },
+  featureCardWrap: { width: '47%' },
+  featureCardPress: { flex: 1 },
+  featureCard: {},
+  featureIcon: { fontSize: 26, marginBottom: 8 },
+  featureLabel: { fontWeight: '700', fontSize: 14, color: colors.textPrimary, marginBottom: 4 },
+  featureDesc: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
+
+  featuredList: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
+  featuredCard: { width: 200, overflow: 'hidden' },
+  featuredInfo: { padding: 10 },
+  featuredName: { fontWeight: '700', fontSize: 13, color: colors.textPrimary, marginBottom: 2 },
+  featuredMeta: { fontSize: 11, color: colors.textTertiary },
 });

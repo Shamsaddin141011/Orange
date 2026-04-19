@@ -6,12 +6,18 @@ import {
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { UniversityCard } from '../components/UniversityCard';
+import { GlassBackground } from '../components/GlassBackground';
+import { GlassCard } from '../components/GlassCard';
+import { GlassChip } from '../components/GlassChip';
+import { GlassInput } from '../components/GlassInput';
+import { GlassButton } from '../components/GlassButton';
 import { DiscoverStackParamList } from '../navigation/AppNavigator';
 import { useAppStore } from '../store/useAppStore';
 import { Country } from '../types';
 import { LOCATIONS, LocationGroup, STATE_ABBREV } from '../utils/locations';
 import { MAJOR_CATEGORIES } from '../utils/majors';
 import { validateAct, validateGre, validateIelts, validateSat, validateToefl } from '../utils/scoring';
+import { colors, radius } from '../theme';
 
 type StudyLevel = "Bachelor's" | "Master's" | 'PhD' | "Associate's";
 
@@ -28,13 +34,19 @@ const TRENDING_MAJORS = [
   'Psychology', 'Law', 'Architecture', 'Economics',
 ];
 
+const COUNTRIES: { value: Country; flag: string; label: string }[] = [
+  { value: 'USA',       flag: '🇺🇸', label: 'USA' },
+  { value: 'UK',        flag: '🇬🇧', label: 'UK' },
+  { value: 'EU',        flag: '🇪🇺', label: 'Europe' },
+  { value: 'China',     flag: '🇨🇳', label: 'China' },
+  { value: 'Canada',    flag: '🇨🇦', label: 'Canada' },
+  { value: 'Australia', flag: '🇦🇺', label: 'Australia' },
+];
+
 export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverStackParamList, 'DiscoverResults'>) {
   const { matches, toggleShortlist, toggleCompare, fetchAndScore, loading, error: fetchError } = useAppStore();
 
-  // Study level
   const [studyLevel, setStudyLevel] = useState<StudyLevel>("Bachelor's");
-
-  // Filters
   const [country, setCountry] = useState<Country>('USA');
   const [selectedMajors, setSelectedMajors] = useState<string[]>([]);
   const [location, setLocation]   = useState('');
@@ -49,18 +61,14 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
   const [search, setSearch]       = useState('');
-
-  // Modals
   const [majorsModal,   setMajorsModal]   = useState(false);
   const [locationModal, setLocationModal] = useState(false);
   const [majorSearch,   setMajorSearch]   = useState('');
   const [locationSearch,setLocationSearch]= useState('');
-
   const [error, setError] = useState('');
 
-  const selectedLevel = STUDY_LEVELS.find(l => l.label === studyLevel)!;
   const isGrad = studyLevel === "Master's" || studyLevel === 'PhD';
-  const isAssociate = studyLevel === "Associate's";;
+  const isAssociate = studyLevel === "Associate's";
 
   const toggleMajor = (major: string) =>
     setSelectedMajors(prev =>
@@ -143,299 +151,247 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 
   return (
     <>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* ── Study Level ─────────────────────────────── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="school-outline" size={18} color="#f97316" />
-            <Text style={styles.sectionTitle}>What level are you looking for?</Text>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelRow}>
-            {STUDY_LEVELS.map(l => {
-              const active = studyLevel === l.label;
-              return (
-                <Pressable
-                  key={l.label}
-                  style={[styles.levelChip, active && styles.levelChipActive]}
-                  onPress={() => setStudyLevel(l.label)}
-                >
-                  <Text style={styles.levelIcon}>{l.icon}</Text>
-                  <Text style={[styles.levelText, active && styles.levelTextActive]}>{l.label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+      <GlassBackground>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Page title */}
+          <Text style={styles.pageTitle}>Discover</Text>
 
-        <>
-          {/* ── (nothing replacing the coming-soon wrapper) ──── */}
-          <>
-            {/* ── Destination ────────────────────────── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="globe-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>Where do you want to study?</Text>
-              </View>
-              <View style={styles.chipRow}>
-                {(['USA', 'UK', 'EU', 'China', 'Canada', 'Australia'] as Country[]).map(c => (
-                  <Pressable
-                    key={c}
-                    onPress={() => { setCountry(c); setLocation(''); }}
-                    style={[styles.chip, country === c && styles.chipActive]}
-                  >
-                    <Text style={[styles.chipText, country === c && styles.chipTextActive]}>
-                      {c === 'USA' ? '🇺🇸 USA' : c === 'UK' ? '🇬🇧 UK' : c === 'EU' ? '🇪🇺 Europe' : c === 'China' ? '🇨🇳 China' : c === 'Canada' ? '🇨🇦 Canada' : '🇦🇺 Australia'}
-                    </Text>
-                  </Pressable>
+          {/* Study Level */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="school-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>Study level</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {STUDY_LEVELS.map(l => (
+                <GlassChip
+                  key={l.label}
+                  label={l.label}
+                  icon={l.icon}
+                  active={studyLevel === l.label}
+                  onPress={() => setStudyLevel(l.label)}
+                />
+              ))}
+            </ScrollView>
+          </GlassCard>
+
+          {/* Country */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="globe-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>Where to study?</Text>
+            </View>
+            <View style={styles.chipWrap}>
+              {COUNTRIES.map(c => (
+                <GlassChip
+                  key={c.value}
+                  label={`${c.flag} ${c.label}`}
+                  active={country === c.value}
+                  onPress={() => { setCountry(c.value); setLocation(''); }}
+                />
+              ))}
+            </View>
+          </GlassCard>
+
+          {/* Majors */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="book-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>What to study?</Text>
+            </View>
+            <Pressable style={styles.selectField} onPress={() => setMajorsModal(true)}>
+              <Ionicons name="search-outline" size={14} color={colors.textTertiary} />
+              <Text style={selectedMajors.length ? styles.selectText : styles.selectPlaceholder}>
+                {selectedMajors.length
+                  ? `${selectedMajors.length} major${selectedMajors.length > 1 ? 's' : ''} selected`
+                  : 'Search subject / specialisation…'}
+              </Text>
+              <Ionicons name="chevron-down-outline" size={14} color={colors.textTertiary} />
+            </Pressable>
+            {selectedMajors.length > 0 && (
+              <View style={[styles.chipWrap, { marginTop: 10 }]}>
+                {selectedMajors.map(m => (
+                  <GlassChip key={m} label={`${m} ×`} active onPress={() => toggleMajor(m)} />
                 ))}
               </View>
-            </View>
+            )}
+          </GlassCard>
 
-            {/* ── Majors ─────────────────────────────── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="book-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>What do you want to study?</Text>
-              </View>
-              <Pressable style={styles.selectField} onPress={() => setMajorsModal(true)}>
-                <Ionicons name="search-outline" size={15} color="#9ca3af" />
-                <Text style={selectedMajors.length ? styles.selectText : styles.selectPlaceholder}>
-                  {selectedMajors.length
-                    ? `${selectedMajors.length} major${selectedMajors.length > 1 ? 's' : ''} selected`
-                    : 'Search your subject / specialisation…'}
-                </Text>
-                <Ionicons name="chevron-down-outline" size={15} color="#9ca3af" />
-              </Pressable>
-              {selectedMajors.length > 0 && (
-                <View style={[styles.chipRow, { marginTop: 10 }]}>
-                  {selectedMajors.map(m => (
-                    <Pressable key={m} onPress={() => toggleMajor(m)} style={styles.chipActive}>
-                      <Text style={styles.chipTextActive}>{m} ×</Text>
-                    </Pressable>
-                  ))}
-                </View>
+          {/* Location */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="location-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>
+                Preferred {locationLabel} <Text style={styles.optional}>(optional)</Text>
+              </Text>
+            </View>
+            <Pressable style={styles.selectField} onPress={() => setLocationModal(true)}>
+              <Ionicons name="search-outline" size={14} color={colors.textTertiary} />
+              <Text style={location ? styles.selectText : styles.selectPlaceholder}>
+                {location || `Select a ${locationLabel}…`}
+              </Text>
+              {location ? (
+                <Pressable onPress={() => setLocation('')}>
+                  <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
+                </Pressable>
+              ) : (
+                <Ionicons name="chevron-down-outline" size={14} color={colors.textTertiary} />
               )}
-            </View>
-
-            {/* ── Location ───────────────────────────── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="location-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>
-                  Preferred {locationLabel} <Text style={styles.optional}>(optional)</Text>
-                </Text>
-              </View>
-              <Pressable style={styles.selectField} onPress={() => setLocationModal(true)}>
-                <Ionicons name="search-outline" size={15} color="#9ca3af" />
-                <Text style={location ? styles.selectText : styles.selectPlaceholder}>
-                  {location || `Select a ${locationLabel}…`}
-                </Text>
-                {location ? (
-                  <Pressable onPress={() => setLocation('')}>
-                    <Ionicons name="close-circle" size={16} color="#9ca3af" />
-                  </Pressable>
-                ) : (
-                  <Ionicons name="chevron-down-outline" size={15} color="#9ca3af" />
-                )}
-              </Pressable>
-            </View>
-
-            {/* ── Academic Profile ───────────────────── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="ribbon-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>Academic profile <Text style={styles.optional}>(optional)</Text></Text>
-              </View>
-
-              {/* Bachelor's — SAT/ACT, IB/GPA, IELTS/TOEFL */}
-              {!isGrad && !isAssociate && (<>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>SAT</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>ACT</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>IB Score</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>GPA</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>IELTS</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>TOEFL</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-              </>)}
-
-              {/* Master's / PhD — GPA/GRE Verbal, GRE Quant/IELTS, TOEFL */}
-              {isGrad && (<>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>GPA</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>GRE Verbal</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>GRE Quant</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>IELTS</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>TOEFL</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }} />
-                </View>
-              </>)}
-
-              {/* Associate's — SAT/GPA only */}
-              {isAssociate && (
-                <View style={styles.twoCol}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>SAT</Text>
-                    <TextInput style={styles.input} keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" placeholderTextColor="#9ca3af" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>GPA</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" placeholderTextColor="#9ca3af" />
-                  </View>
-                </View>
-              )}
-            </View>
-
-            {/* ── Budget ─────────────────────────────── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="cash-outline" size={18} color="#f97316" />
-                <Text style={styles.sectionTitle}>Budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
-              </View>
-              <View style={styles.twoCol}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Min</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 10,000" placeholderTextColor="#9ca3af" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Max</Text>
-                  <TextInput style={styles.input} keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50,000" placeholderTextColor="#9ca3af" />
-                </View>
-              </View>
-            </View>
-
-            {!!error      && <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View>}
-            {!!fetchError && <View style={styles.errorBox}><Text style={styles.errorText}>{fetchError}</Text></View>}
-
-            {/* ── Search button ──────────────────────── */}
-            <Pressable
-              style={[styles.button, (selectedMajors.length === 0 || loading) && styles.buttonDisabled]}
-              disabled={selectedMajors.length === 0 || loading}
-              onPress={handleSearch}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.buttonText}>Find My Matches →</Text>}
             </Pressable>
+          </GlassCard>
 
-            {/* ── Results ────────────────────────────── */}
-            {matches.length > 0 && (
-              <View style={styles.resultsSection}>
-                {/* Search within results */}
-                <View style={styles.searchBar}>
-                  <Ionicons name="search-outline" size={16} color="#9ca3af" style={{ marginRight: 8 }} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search within results…"
-                    placeholderTextColor="#9ca3af"
-                    value={search}
-                    onChangeText={setSearch}
-                  />
-                  {!!search && (
-                    <Pressable onPress={() => setSearch('')}>
-                      <Ionicons name="close-circle" size={16} color="#9ca3af" />
-                    </Pressable>
-                  )}
+          {/* Academic Profile */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="ribbon-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>Academic profile <Text style={styles.optional}>(optional)</Text></Text>
+            </View>
+
+            {!isGrad && !isAssociate && (
+              <>
+                <View style={styles.twoCol}>
+                  <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
+                  <GlassInput label="ACT" keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" style={styles.flex1} />
                 </View>
-
-                <Text style={styles.resultCount}>
-                  {filtered.length} school{filtered.length !== 1 ? 's' : ''}
-                </Text>
-
-                {filtered.length === 0 ? (
-                  <View style={styles.empty}>
-                    <Text style={styles.emptyIcon}>🔍</Text>
-                    <Text style={styles.emptyTitle}>No results</Text>
-                    <Text style={styles.emptyText}>Try adjusting your search.</Text>
-                  </View>
-                ) : (
-                  filtered.map(item => (
-                    <UniversityCard
-                      key={item.university.id}
-                      item={item}
-                      onSave={() => toggleShortlist(item.university.id)}
-                      onCompare={() => toggleCompare(item.university.id)}
-                      onPress={() => navigation.navigate('UniversityDetail', { id: item.university.id })}
-                    />
-                  ))
-                )}
-              </View>
+                <View style={styles.twoCol}>
+                  <GlassInput label="IB Score" keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" style={styles.flex1} />
+                  <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+                </View>
+                <View style={styles.twoCol}>
+                  <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
+                  <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
+                </View>
+              </>
             )}
 
-            <View style={{ height: 48 }} />
-          </>
-        </>
-      </ScrollView>
+            {isGrad && (
+              <>
+                <View style={styles.twoCol}>
+                  <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+                  <GlassInput label="GRE Verbal" keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" style={styles.flex1} />
+                </View>
+                <View style={styles.twoCol}>
+                  <GlassInput label="GRE Quant" keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" style={styles.flex1} />
+                  <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
+                </View>
+                <View style={styles.twoCol}>
+                  <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
+                  <View style={styles.flex1} />
+                </View>
+              </>
+            )}
 
-      {/* ── Majors Modal ──────────────────────────────── */}
+            {isAssociate && (
+              <View style={styles.twoCol}>
+                <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
+                <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+              </View>
+            )}
+          </GlassCard>
+
+          {/* Budget */}
+          <GlassCard padding={16} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="cash-outline" size={16} color={colors.orange} />
+              <Text style={styles.sectionTitle}>Budget (USD/yr) <Text style={styles.optional}>(optional)</Text></Text>
+            </View>
+            <View style={styles.twoCol}>
+              <GlassInput label="Min" keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 10,000" style={styles.flex1} />
+              <GlassInput label="Max" keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50,000" style={styles.flex1} />
+            </View>
+          </GlassCard>
+
+          {(!!error || !!fetchError) && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error || fetchError}</Text>
+            </View>
+          )}
+
+          <GlassButton
+            label={loading ? '' : 'Find My Matches →'}
+            loading={loading}
+            disabled={selectedMajors.length === 0 || loading}
+            onPress={handleSearch}
+            style={styles.searchBtn}
+          />
+
+          {/* Results */}
+          {matches.length > 0 && (
+            <View style={styles.resultsSection}>
+              {/* Search within results */}
+              <View style={styles.searchBar}>
+                <Ionicons name="search-outline" size={16} color={colors.textTertiary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search within results…"
+                  placeholderTextColor={colors.textTertiary}
+                  value={search}
+                  onChangeText={setSearch}
+                />
+                {!!search && (
+                  <Pressable onPress={() => setSearch('')}>
+                    <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
+                  </Pressable>
+                )}
+              </View>
+
+              <Text style={styles.resultCount}>
+                {filtered.length} school{filtered.length !== 1 ? 's' : ''}
+              </Text>
+
+              {filtered.length === 0 ? (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyIcon}>🔍</Text>
+                  <Text style={styles.emptyTitle}>No results</Text>
+                  <Text style={styles.emptyText}>Try adjusting your search.</Text>
+                </View>
+              ) : (
+                filtered.map((item, i) => (
+                  <UniversityCard
+                    key={item.university.id}
+                    item={item}
+                    index={i}
+                    onSave={() => toggleShortlist(item.university.id)}
+                    onCompare={() => toggleCompare(item.university.id)}
+                    onPress={() => navigation.navigate('UniversityDetail', { id: item.university.id })}
+                  />
+                ))
+              )}
+            </View>
+          )}
+
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </GlassBackground>
+
+      {/* Majors Modal */}
       <Modal visible={majorsModal} animationType="slide" transparent={false}>
-        <View style={styles.modal}>
+        <GlassBackground style={styles.modal}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select Majors</Text>
             <Pressable onPress={() => { setMajorsModal(false); setMajorSearch(''); }} style={styles.modalClose}>
-              <Ionicons name="close" size={22} color="#111827" />
+              <Ionicons name="close" size={22} color={colors.textPrimary} />
             </Pressable>
           </View>
 
           <View style={styles.modalSearch}>
-            <Ionicons name="search-outline" size={15} color="#9ca3af" />
+            <Ionicons name="search-outline" size={15} color={colors.textTertiary} />
             <TextInput
               style={styles.modalSearchInput}
               value={majorSearch}
               onChangeText={setMajorSearch}
-              placeholder="Search your subject / specialisation"
-              placeholderTextColor="#9ca3af"
+              placeholder="Search subject / specialisation"
+              placeholderTextColor={colors.textTertiary}
               autoFocus
             />
             {!!majorSearch && (
               <Pressable onPress={() => setMajorSearch('')}>
-                <Ionicons name="close-circle" size={16} color="#9ca3af" />
+                <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
               </Pressable>
             )}
           </View>
@@ -446,7 +402,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
               : filteredMajorCategories}
             keyExtractor={item => item.label}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 120 }}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item: cat }) => (
               <View>
@@ -460,7 +416,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
                       onPress={() => toggleMajor(major)}
                     >
                       <Text style={[styles.listItemText, sel && styles.listItemTextSelected]}>{major}</Text>
-                      {sel && <Ionicons name="checkmark-circle" size={20} color="#f97316" />}
+                      {sel && <Ionicons name="checkmark-circle" size={20} color={colors.orange} />}
                     </Pressable>
                   );
                 })}
@@ -469,43 +425,39 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
           />
 
           <View style={styles.modalFooter}>
-            <Pressable
-              style={[styles.button, selectedMajors.length === 0 && styles.buttonDisabled]}
+            <GlassButton
+              label={selectedMajors.length > 0 ? `Done · ${selectedMajors.length} selected` : 'Done'}
               onPress={() => { setMajorsModal(false); setMajorSearch(''); }}
-            >
-              <Text style={styles.buttonText}>
-                {selectedMajors.length > 0 ? `Done · ${selectedMajors.length} selected` : 'Done'}
-              </Text>
-            </Pressable>
+            />
           </View>
-        </View>
+        </GlassBackground>
       </Modal>
 
-      {/* ── Location Modal ────────────────────────────── */}
+      {/* Location Modal */}
       <Modal visible={locationModal} animationType="slide" transparent={false}>
-        <View style={styles.modal}>
+        <GlassBackground style={styles.modal}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               Select {country === 'USA' ? 'State' : 'City / Region'}
             </Text>
             <Pressable onPress={() => { setLocationModal(false); setLocationSearch(''); }} style={styles.modalClose}>
-              <Ionicons name="close" size={22} color="#111827" />
+              <Ionicons name="close" size={22} color={colors.textPrimary} />
             </Pressable>
           </View>
 
           <View style={styles.modalSearch}>
-            <Ionicons name="search-outline" size={15} color="#9ca3af" />
+            <Ionicons name="search-outline" size={15} color={colors.textTertiary} />
             <TextInput
               style={styles.modalSearchInput}
               value={locationSearch}
               onChangeText={setLocationSearch}
               placeholder={`Search ${country === 'USA' ? 'states' : 'cities / regions'}…`}
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textTertiary}
               autoFocus
             />
             {!!locationSearch && (
               <Pressable onPress={() => setLocationSearch('')}>
-                <Ionicons name="close-circle" size={16} color="#9ca3af" />
+                <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
               </Pressable>
             )}
           </View>
@@ -530,129 +482,137 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
                       onPress={() => { setLocation(item); setLocationModal(false); setLocationSearch(''); }}
                     >
                       <Text style={[styles.listItemText, sel && styles.listItemTextSelected]}>{item}</Text>
-                      {sel && <Ionicons name="checkmark-circle" size={20} color="#f97316" />}
+                      {sel && <Ionicons name="checkmark-circle" size={20} color={colors.orange} />}
                     </Pressable>
                   );
                 })}
               </View>
             )}
           />
-        </View>
+        </GlassBackground>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#f9fafb' },
-  container: { padding: 16, gap: 4 },
+  scroll: { flex: 1 },
+  container: { padding: 16, paddingTop: 56 },
 
-  // Study level
-  levelRow: { gap: 10, paddingRight: 4 },
-  levelChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 14, borderWidth: 1.5, borderColor: '#e5e7eb', backgroundColor: '#fff',
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 20,
+    letterSpacing: -0.5,
   },
-  levelChipActive: { backgroundColor: '#fff7ed', borderColor: '#f97316' },
-  levelIcon: { fontSize: 16 },
-  levelText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
-  levelTextActive: { color: '#f97316' },
 
-  // Sections
-  section: {
-    backgroundColor: '#fff', borderRadius: 16,
-    borderWidth: 1, borderColor: '#e5e7eb', padding: 16, marginBottom: 12,
-  },
+  section: { marginBottom: 12 },
+
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#111827', flex: 1 },
-  optional: { fontWeight: '400', color: '#9ca3af' },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flex: 1 },
+  optional: { fontWeight: '400', color: colors.textTertiary },
 
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 8,
-    backgroundColor: '#f9fafb', borderRadius: 999,
-    borderWidth: 1.5, borderColor: '#e5e7eb',
-  },
-  chipActive: {
-    paddingHorizontal: 14, paddingVertical: 8,
-    backgroundColor: '#fff7ed', borderRadius: 999,
-    borderWidth: 1.5, borderColor: '#f97316',
-  },
-  chipText: { fontSize: 13, fontWeight: '500', color: '#374151' },
-  chipTextActive: { fontSize: 13, fontWeight: '700', color: '#f97316' },
+  chipRow: { gap: 8, paddingRight: 4 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   selectField: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#f9fafb', borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#e5e7eb',
-    paddingHorizontal: 12, paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.glassInput,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.glassInputBorder,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
   },
-  selectText: { flex: 1, fontSize: 14, color: '#111827', fontWeight: '500' },
-  selectPlaceholder: { flex: 1, fontSize: 14, color: '#9ca3af' },
+  selectText: { flex: 1, fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
+  selectPlaceholder: { flex: 1, fontSize: 14, color: colors.textTertiary },
 
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginTop: 10, marginBottom: 6 },
-  twoCol: { flexDirection: 'row', gap: 12 },
-  input: {
-    backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb',
-    borderRadius: 10, padding: 11, fontSize: 14, color: '#111827',
-  },
+  twoCol: { flexDirection: 'row', gap: 12, marginBottom: 10 },
+  flex1: { flex: 1 },
 
   errorBox: {
-    backgroundColor: '#fef2f2', borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: '#fca5a5', marginBottom: 12,
+    backgroundColor: colors.dangerDim,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(248,113,113,0.35)',
+    padding: 12,
+    marginBottom: 12,
   },
-  errorText: { color: '#dc2626', fontSize: 13 },
+  errorText: { color: colors.danger, fontSize: 13 },
 
-  button: {
-    backgroundColor: '#f97316', padding: 15, borderRadius: 14,
-    alignItems: 'center', marginBottom: 4,
-    shadowColor: '#f97316', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
-  },
-  buttonDisabled: { backgroundColor: '#d1d5db', shadowOpacity: 0 },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  searchBtn: { marginBottom: 8 },
 
-  // Results
   resultsSection: { marginTop: 8 },
   searchBar: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 14,
-    paddingHorizontal: 14, paddingVertical: 10,
-    marginBottom: 10, borderWidth: 1.5, borderColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.glassInput,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: colors.glassInputBorder,
+    gap: 8,
   },
-  searchInput: { flex: 1, fontSize: 15, color: '#111827' },
-  resultCount: { fontSize: 13, color: '#9ca3af', fontWeight: '500', marginBottom: 12 },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  resultCount: { fontSize: 13, color: colors.textTertiary, fontWeight: '500', marginBottom: 12 },
   empty: { alignItems: 'center', paddingTop: 40, gap: 8 },
   emptyIcon: { fontSize: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  emptyText: { fontSize: 14, color: '#6b7280' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  emptyText: { fontSize: 14, color: colors.textSecondary },
 
-  // Modal
-  modal: { flex: 1, backgroundColor: '#fff' },
+  // Modals
+  modal: { flex: 1 },
   modalHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.glassBorder,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   modalClose: { padding: 4 },
   modalSearch: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    margin: 16, backgroundColor: '#f3f4f6',
-    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    margin: 16,
+    backgroundColor: colors.glassInput,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.glassInputBorder,
   },
-  modalSearchInput: { flex: 1, fontSize: 14, color: '#111827' },
+  modalSearchInput: { flex: 1, fontSize: 14, color: colors.textPrimary },
   groupLabel: {
-    fontSize: 11, fontWeight: '700', color: '#9ca3af', letterSpacing: 0.8,
-    textTransform: 'uppercase', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4,
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
   },
   listItem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 13,
-    borderBottomWidth: 1, borderBottomColor: '#f9fafb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.glassBorder,
   },
-  listItemSelected: { backgroundColor: '#fff7ed' },
-  listItemText: { fontSize: 15, color: '#111827' },
-  listItemTextSelected: { color: '#f97316', fontWeight: '600' },
-  modalFooter: { padding: 16, paddingBottom: 32, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  listItemSelected: { backgroundColor: colors.orangeDim },
+  listItemText: { fontSize: 15, color: colors.textSecondary },
+  listItemTextSelected: { color: colors.orange, fontWeight: '600' },
+  modalFooter: { padding: 16, paddingBottom: 32, borderTopWidth: 1, borderTopColor: colors.glassBorder },
 });

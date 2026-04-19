@@ -1,27 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  FadeInDown,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colorIdx } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
 import { MatchResult, University } from '../types';
+import { colors, radius, shadow } from '../theme';
+import { GlassCard } from './GlassCard';
 
 type Props = {
   item: MatchResult;
   onPress: () => void;
   onSave: () => void;
   onCompare: () => void;
+  index?: number;
 };
 
-const PALETTES = [
-  ['#0f172a', '#1e3a5f'],
-  ['#1a0a2e', '#3b0764'],
-  ['#0c2a1a', '#14532d'],
-  ['#2a0a0a', '#7c2d12'],
-  ['#0a1a2a', '#0c4a6e'],
-  ['#1a1a0a', '#713f12'],
-  ['#1a0a1a', '#4c1d95'],
-  ['#0a0a1a', '#1e3a5f'],
-  ['#2a1a0a', '#92400e'],
-  ['#0a2a2a', '#134e4a'],
+const PALETTES: [string, string][] = [
+  ['#1A0A00', '#7c2d12'],
+  ['#0A0A1A', '#3b0764'],
+  ['#0A1A0A', '#14532d'],
+  ['#1A0A0A', '#7c2d12'],
+  ['#0A1A2A', '#0c4a6e'],
+  ['#1A1A0A', '#713f12'],
+  ['#1A0A1A', '#4c1d95'],
+  ['#0A0A1A', '#1e3a5f'],
+  ['#2A1A0A', '#92400e'],
+  ['#0A2A2A', '#134e4a'],
 ];
 
 function getPalette(idx: number): [string, string] {
@@ -56,250 +66,257 @@ function getTypeStr(u: University): string {
   return parts.join(' · ') || 'University';
 }
 
-export function UniversityCard({ item, onPress, onSave, onCompare }: Props) {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export function UniversityCard({ item, onPress, onSave, onCompare, index = 0 }: Props) {
   const saved = useAppStore((s) => !!s.shortlist[item.university.id]);
   const compared = useAppStore((s) => s.compareIds.includes(item.university.id));
   const { university } = item;
-  const scoreColor = item.score >= 80 ? '#16a34a' : item.score >= 60 ? '#f97316' : '#6b7280';
+
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }), [scale]);
+
+  const scoreColor =
+    item.score >= 80 ? colors.success :
+    item.score >= 60 ? colors.orange :
+    colors.textTertiary;
+
   const [bgA, bgB] = getPalette(colorIdx(university.id));
   const initials = getInitials(university.name);
   const typeStr = getTypeStr(university);
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
-      <View style={styles.inner}>
+    <Animated.View
+      entering={FadeInDown.duration(400).delay(index * 60).springify()}
+    >
+      <AnimatedPressable
+        style={[styles.card, animStyle]}
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.97, { damping: 15, stiffness: 300 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
+      >
+        <GlassCard padding={0} borderRadius={radius.lg} style={styles.inner}>
+          {/* ── Left: color/visual panel (image placeholder) ── */}
+          <View style={[styles.left, { backgroundColor: bgA }]}>
+            <LinearGradient
+              colors={[bgB, bgA]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            {/* Accent blob */}
+            <View style={[styles.accentBlob, { backgroundColor: bgB }]} />
+            {/* Big initials watermark */}
+            <Text style={styles.bigInitials}>{initials}</Text>
 
-        {/* ── Left: text content ─────────────────────── */}
-        <View style={styles.left}>
-          <Text style={styles.name} numberOfLines={2}>{university.name} →</Text>
-          <Text style={styles.location}>
-            {university.city}{university.state ? `, ${university.state}` : ''}
-          </Text>
-
-          <View style={styles.divider} />
-
-          {/* Type row */}
-          <View style={styles.infoRow}>
-            <Ionicons name="information-circle-outline" size={13} color="#9ca3af" />
-            <Text style={styles.infoText} numberOfLines={1}>{typeStr}</Text>
-          </View>
-
-          {/* Acceptance rate */}
-          {university.acceptance_rate !== undefined && (
-            <View style={styles.infoRow}>
-              <Ionicons name="school-outline" size={13} color="#9ca3af" />
-              <Text style={styles.infoText}>
-                {Math.round(university.acceptance_rate * 100)}% acceptance rate
-              </Text>
+            {/* Save button at bottom */}
+            <View style={styles.leftBottom}>
+              <Pressable
+                style={[styles.saveBtn, saved && styles.saveBtnActive]}
+                onPress={onSave}
+                hitSlop={6}
+              >
+                <Ionicons
+                  name={saved ? 'heart' : 'heart-outline'}
+                  size={13}
+                  color={saved ? colors.orange : 'rgba(255,255,255,0.8)'}
+                />
+                <Text style={[styles.saveBtnText, saved && styles.saveBtnTextActive]}>
+                  {saved ? 'Saved' : 'Save'}
+                </Text>
+              </Pressable>
             </View>
-          )}
-
-          {/* Tuition */}
-          <View style={styles.infoRow}>
-            <Ionicons name="cash-outline" size={13} color="#9ca3af" />
-            <Text style={styles.infoText}>{formatTuition(university.tuition_estimate)}/yr</Text>
           </View>
 
-          {/* SAT range */}
-          <View style={styles.infoRow}>
-            <Text style={styles.satTag}>SAT</Text>
-            <Text style={styles.infoText}>
-              {university.sat_middle_50.min}–{university.sat_middle_50.max}
+          {/* ── Right: text content ── */}
+          <View style={styles.right}>
+            <Text style={styles.name} numberOfLines={2}>{university.name}</Text>
+            <Text style={styles.location}>
+              {university.city}{university.state ? `, ${university.state}` : ''}
             </Text>
-          </View>
 
-          {/* Footer: score + compare */}
-          <View style={styles.cardFooter}>
-            <View style={[styles.scorePill, { backgroundColor: scoreColor + '18' }]}>
-              <Text style={[styles.scoreText, { color: scoreColor }]}>{item.score}% match</Text>
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Ionicons name="information-circle-outline" size={13} color={colors.textTertiary} />
+              <Text style={styles.infoText} numberOfLines={1}>{typeStr}</Text>
             </View>
-            <Pressable
-              style={[styles.compareBtn, compared && styles.compareBtnActive]}
-              onPress={onCompare}
-            >
-              <Text style={[styles.compareBtnText, compared && styles.compareBtnTextActive]}>
-                {compared ? '✓ Added' : '+ Compare'}
+
+            {university.acceptance_rate !== undefined && (
+              <View style={styles.infoRow}>
+                <Ionicons name="school-outline" size={13} color={colors.textTertiary} />
+                <Text style={styles.infoText}>
+                  {Math.round(university.acceptance_rate * 100)}% acceptance
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.infoRow}>
+              <Ionicons name="cash-outline" size={13} color={colors.textTertiary} />
+              <Text style={styles.infoText}>{formatTuition(university.tuition_estimate)}/yr</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <View style={styles.satTag}><Text style={styles.satTagText}>SAT</Text></View>
+              <Text style={styles.infoText}>
+                {university.sat_middle_50.min}–{university.sat_middle_50.max}
               </Text>
-            </Pressable>
+            </View>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <View style={[styles.scorePill, { backgroundColor: scoreColor + '22' }]}>
+                <Text style={[styles.scoreText, { color: scoreColor }]}>{item.score}% match</Text>
+              </View>
+              <Pressable
+                style={[styles.compareBtn, compared && styles.compareBtnActive]}
+                onPress={onCompare}
+                hitSlop={4}
+              >
+                <Text style={[styles.compareBtnText, compared && styles.compareBtnTextActive]}>
+                  {compared ? '✓ Added' : '+ Compare'}
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-
-        {/* ── Right: visual panel ───────────────────── */}
-        <View style={[styles.right, { backgroundColor: bgA }]}>
-          <View style={[styles.rightAccent, { backgroundColor: bgB }]} />
-          <Text style={styles.rightInitials}>{initials}</Text>
-
-          <View style={styles.rightBottom}>
-            <Pressable
-              style={[styles.saveBtn, saved && styles.saveBtnActive]}
-              onPress={onSave}
-            >
-              <Ionicons
-                name={saved ? 'heart' : 'heart-outline'}
-                size={13}
-                color={saved ? '#f97316' : '#374151'}
-              />
-              <Text style={[styles.saveBtnText, saved && styles.saveBtnTextActive]}>
-                {saved ? 'Saved' : 'Save'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-      </View>
-    </Pressable>
+        </GlassCard>
+      </AnimatedPressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
     marginBottom: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    borderRadius: radius.lg,
+    ...shadow.dark,
   },
   inner: {
     flexDirection: 'row',
-    minHeight: 210,
+    minHeight: 200,
+    overflow: 'hidden',
   },
 
-  // Left panel
+  // Left visual panel
   left: {
-    flex: 1.5,
-    padding: 14,
-    paddingTop: 15,
-    justifyContent: 'flex-start',
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-    lineHeight: 21,
-    marginBottom: 3,
-  },
-  location: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 10,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#f3f4f6',
-    marginBottom: 10,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  infoText: {
-    fontSize: 12,
-    color: '#374151',
-    flex: 1,
-  },
-  satTag: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#6b7280',
-    letterSpacing: 0.5,
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  scorePill: {
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-  },
-  scoreText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  compareBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-  },
-  compareBtnActive: {
-    borderColor: '#f97316',
-    backgroundColor: '#fff7ed',
-  },
-  compareBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  compareBtnTextActive: { color: '#f97316' },
-
-  // Right panel
-  right: {
-    flex: 1,
+    width: 110,
     overflow: 'hidden',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 10,
   },
-  rightAccent: {
+  accentBlob: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     top: -40,
-    right: -30,
-    opacity: 0.45,
+    left: -30,
+    opacity: 0.5,
   },
-  rightInitials: {
+  bigInitials: {
     position: 'absolute',
-    fontSize: 72,
+    fontSize: 80,
     fontWeight: '900',
-    color: 'rgba(255,255,255,0.07)',
-    bottom: 24,
-    left: -4,
-    letterSpacing: -2,
+    color: 'rgba(255,255,255,0.06)',
+    bottom: 20,
+    right: -10,
+    letterSpacing: -3,
   },
-  rightBottom: {
+  leftBottom: {
     position: 'absolute',
-    bottom: 12,
-    right: 12,
-    left: 12,
-    alignItems: 'flex-end',
+    bottom: 10,
+    left: 8,
+    right: 8,
   },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 999,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: radius.full,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
   saveBtnActive: {
-    backgroundColor: '#fff7ed',
+    backgroundColor: colors.orangeDim,
+    borderColor: colors.orangeBorder,
   },
-  saveBtnText: {
+  saveBtnText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
+  saveBtnTextActive: { color: colors.orange },
+
+  // Right text panel
+  right: {
+    flex: 1,
+    padding: 14,
+    justifyContent: 'flex-start',
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: 3,
+  },
+  location: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginBottom: 8,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.glassBorder,
+    marginBottom: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 5,
+  },
+  infoText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
+    flex: 1,
   },
-  saveBtnTextActive: { color: '#f97316' },
+  satTag: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  satTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.textTertiary,
+    letterSpacing: 0.5,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  scorePill: {
+    borderRadius: radius.full,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  scoreText: { fontSize: 11, fontWeight: '700' },
+  compareBtn: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  compareBtnActive: {
+    borderColor: colors.orangeBorder,
+    backgroundColor: colors.orangeDim,
+  },
+  compareBtnText: { fontSize: 11, fontWeight: '600', color: colors.textTertiary },
+  compareBtnTextActive: { color: colors.orange },
 });

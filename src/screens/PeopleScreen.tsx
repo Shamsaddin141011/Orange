@@ -1,9 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { searchUsers } from '../lib/supabase';
 import { UserPublicProfile } from '../types';
+import { GlassBackground } from '../components/GlassBackground';
+import { GlassCard } from '../components/GlassCard';
+import { colors, radius } from '../theme';
 
 export function PeopleScreen() {
   const navigation = useNavigation<any>();
@@ -34,150 +38,150 @@ export function PeopleScreen() {
   }, [query]);
 
   return (
-    <View style={styles.container}>
+    <GlassBackground>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>People</Text>
         <Pressable style={styles.inboxBtn} onPress={() => navigation.navigate('Inbox')}>
-          <Ionicons name="chatbubbles-outline" size={22} color="#f97316" />
+          <Ionicons name="chatbubbles-outline" size={22} color={colors.orange} />
         </Pressable>
       </View>
 
       {/* Search */}
       <View style={styles.searchRow}>
-        <Ionicons name="search-outline" size={18} color="#9ca3af" style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
         <TextInput
           style={styles.searchInput}
           value={query}
           onChangeText={setQuery}
           placeholder="Search by username..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
         />
         {query.length > 0 && (
           <Pressable onPress={() => { setQuery(''); setResults([]); setSearched(false); }}>
-            <Ionicons name="close-circle" size={18} color="#9ca3af" />
+            <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
           </Pressable>
         )}
       </View>
 
-      {/* Results */}
       <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {loading && (
-          <View style={styles.center}><ActivityIndicator color="#f97316" /></View>
+          <View style={styles.center}><ActivityIndicator color={colors.orange} /></View>
         )}
 
         {!loading && searched && results.length === 0 && (
           <View style={styles.center}>
-            <Ionicons name="person-outline" size={40} color="#d1d5db" />
+            <Ionicons name="person-outline" size={40} color={colors.textTertiary} />
             <Text style={styles.emptyText}>No users found for "{query}"</Text>
           </View>
         )}
 
         {!loading && !searched && query.length < 2 && (
           <View style={styles.center}>
-            <Ionicons name="people-outline" size={48} color="#d1d5db" />
+            <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
             <Text style={styles.emptyText}>Find students by username</Text>
             <Text style={styles.emptyHint}>Type at least 2 characters to search</Text>
           </View>
         )}
 
-        {results.map((user) => (
-          <Pressable
-            key={user.id}
-            style={styles.userCard}
-            onPress={() => navigation.navigate('PublicProfile', { userId: user.id })}
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {(user.display_name || user.username).charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.displayName}>{user.display_name || user.username}</Text>
-              <Text style={styles.username}>@{user.username}</Text>
-              {user.bio ? <Text style={styles.bio} numberOfLines={1}>{user.bio}</Text> : null}
-            </View>
-            <View style={styles.meta}>
-              {user.country && <Text style={styles.country}>{user.country}</Text>}
-              <Ionicons name="chevron-forward" size={16} color="#d1d5db" />
-            </View>
-          </Pressable>
+        {results.map((user, i) => (
+          <Animated.View key={user.id} entering={FadeInDown.duration(350).delay(i * 50)}>
+            <Pressable onPress={() => navigation.navigate('PublicProfile', { userId: user.id })}>
+              <GlassCard padding={14} style={styles.userCard} borderRadius={radius.lg}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {(user.display_name || user.username).charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.displayName}>{user.display_name || user.username}</Text>
+                  <Text style={styles.username}>@{user.username}</Text>
+                  {user.bio ? <Text style={styles.bio} numberOfLines={1}>{user.bio}</Text> : null}
+                </View>
+                <View style={styles.meta}>
+                  {user.country && (
+                    <View style={styles.countryPill}>
+                      <Text style={styles.countryText}>{user.country}</Text>
+                    </View>
+                  )}
+                  <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                </View>
+              </GlassCard>
+            </Pressable>
+          </Animated.View>
         ))}
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingTop: 60,
+    paddingBottom: 12,
   },
-  title: { fontSize: 28, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
   inboxBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#fff7ed',
-    alignItems: 'center', justifyContent: 'center',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.orangeDim,
+    borderWidth: 1.5,
+    borderColor: colors.orangeBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 16,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  searchInput: { flex: 1, fontSize: 15, color: '#111827' },
-  list: { flex: 1 },
-  center: { alignItems: 'center', paddingTop: 64, gap: 10, paddingHorizontal: 24 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#6b7280', textAlign: 'center' },
-  emptyHint: { fontSize: 13, color: '#9ca3af', textAlign: 'center' },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.glassInput,
     marginHorizontal: 16,
-    marginBottom: 10,
-    borderRadius: 16,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 12,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: colors.glassInputBorder,
+    gap: 10,
   },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  list: { flex: 1, paddingHorizontal: 16 },
+  center: { alignItems: 'center', paddingTop: 64, gap: 10, paddingHorizontal: 24 },
+  emptyText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' },
+  emptyHint: { fontSize: 13, color: colors.textTertiary, textAlign: 'center' },
+  userCard: { marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
   avatar: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: '#fff7ed',
-    alignItems: 'center', justifyContent: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.orangeDim,
+    borderWidth: 1.5,
+    borderColor: colors.orangeBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: { fontSize: 20, fontWeight: '700', color: '#f97316' },
+  avatarText: { fontSize: 20, fontWeight: '700', color: colors.orange },
   userInfo: { flex: 1, gap: 2 },
-  displayName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  username: { fontSize: 13, color: '#9ca3af' },
-  bio: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  meta: { alignItems: 'flex-end', gap: 4 },
-  country: {
-    fontSize: 11, fontWeight: '600', color: '#f97316',
-    backgroundColor: '#fff7ed', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+  displayName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  username: { fontSize: 13, color: colors.textTertiary },
+  bio: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  meta: { alignItems: 'flex-end', gap: 6 },
+  countryPill: {
+    backgroundColor: colors.orangeDim,
+    borderWidth: 1,
+    borderColor: colors.orangeBorder,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
   },
+  countryText: { fontSize: 11, fontWeight: '600', color: colors.orange },
 });
