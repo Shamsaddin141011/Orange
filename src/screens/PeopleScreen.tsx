@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { searchUsers, getOrCreateConversation } from '../lib/supabase';
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     borderColor: colors.glassInputBorder,
     gap: 10,
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
   list: { flex: 1, paddingHorizontal: 16 },
   center: { alignItems: 'center', paddingTop: 64, gap: 10, paddingHorizontal: 24 },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' },

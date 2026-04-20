@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     maxHeight: 120,
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}),
   },
   sendBtn: {
     flexDirection: 'row',

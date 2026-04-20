@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
       // @ts-ignore
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
+      outlineWidth: 0,
     } : {}),
   },
   inputFocused: {

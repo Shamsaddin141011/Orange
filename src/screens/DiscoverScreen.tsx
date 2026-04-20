@@ -497,7 +497,7 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  container: { padding: 16, paddingTop: 56 },
+  container: { padding: 16, paddingTop: 56, width: '100%' },
 
   pageTitle: {
     fontSize: 32,
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     borderColor: colors.glassInputBorder,
     gap: 8,
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
   resultCount: { fontSize: 13, color: colors.textTertiary, fontWeight: '500', marginBottom: 12 },
   empty: { alignItems: 'center', paddingTop: 40, gap: 8 },
   emptyIcon: { fontSize: 40 },
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glassInputBorder,
   },
-  modalSearchInput: { flex: 1, fontSize: 14, color: colors.textPrimary },
+  modalSearchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
   groupLabel: {
     fontSize: 11,
     fontWeight: '700',
