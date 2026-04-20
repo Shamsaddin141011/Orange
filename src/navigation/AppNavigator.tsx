@@ -158,18 +158,11 @@ function MainTabs() {
             const icons = TAB_ICONS[route.name];
             if (!icons) return null;
             return (
-              <View style={focused ? {
-                shadowColor: colors.orange,
-                shadowOpacity: 0.6,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 0 },
-              } : undefined}>
-                <Ionicons
-                  name={focused ? icons.active : icons.inactive}
-                  size={focused ? size + 1 : size}
-                  color={color}
-                />
-              </View>
+              <Ionicons
+                name={focused ? icons.active : icons.inactive}
+                size={focused ? size + 1 : size}
+                color={color}
+              />
             );
           },
         })}

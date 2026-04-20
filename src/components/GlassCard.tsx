@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glassBorder,
     overflow: 'hidden',
+    alignSelf: 'stretch',
     // @ts-ignore web only
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
