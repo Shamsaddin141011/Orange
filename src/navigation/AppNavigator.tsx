@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, View } from 'react-native';
+import { useState } from 'react';
 import { BlurView } from 'expo-blur';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
@@ -21,6 +22,7 @@ import { PublicProfileScreen } from '../screens/PublicProfileScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { UsernameSetupModal } from '../components/UsernameSetupModal';
+import { OnboardingModal } from '../components/OnboardingModal';
 import { colors } from '../theme';
 
 export type DiscoverStackParamList = {
@@ -125,7 +127,9 @@ function TabBarBackground() {
 }
 
 function MainTabs() {
-  const { username } = useAppStore();
+  const { username, userDataLoaded, matches } = useAppStore();
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  const showOnboarding = userDataLoaded && username !== null && matches.length === 0 && !onboardingDone;
 
   return (
     <>
@@ -176,7 +180,8 @@ function MainTabs() {
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
 
-      <UsernameSetupModal visible={username === null} />
+      <UsernameSetupModal visible={userDataLoaded && username === null} />
+      <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDone(true)} />
     </>
   );
 }

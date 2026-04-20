@@ -11,6 +11,7 @@ interface AppState {
   session: Session | null;
   profile: StudentProfile;
   username: string | null;
+  userDataLoaded: boolean;
   shortlist: Record<string, { tag: ShortlistTag; note: string }>;
   compareIds: string[];
   tracker: Record<string, TrackerItemState>;
@@ -40,6 +41,7 @@ export const useAppStore = create<AppState>()(
       session: null,
       profile: defaultProfile,
       username: null,
+      userDataLoaded: false,
       shortlist: {},
       compareIds: [],
       tracker: {},
@@ -147,6 +149,7 @@ export const useAppStore = create<AppState>()(
         if (compareRes.data) {
           set({ compareIds: compareRes.data.university_ids ?? [] });
         }
+        set({ userDataLoaded: true });
       },
 
       // Save profile to Supabase
@@ -266,6 +269,7 @@ export const useAppStore = create<AppState>()(
           session: null,
           profile: defaultProfile,
           username: null,
+          userDataLoaded: false,
           shortlist: {},
           compareIds: [],
           tracker: {},
