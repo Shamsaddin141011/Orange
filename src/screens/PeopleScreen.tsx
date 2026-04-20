@@ -25,8 +25,8 @@ export function PeopleScreen() {
     if (!myId || messagingId) return;
     setMessagingId(user.id);
     try {
-      const convo = await getOrCreateConversation(myId, user.id);
-      navigation.navigate('Chat', { conversationId: convo.id, otherUsername: user.username });
+      const conversationId = await getOrCreateConversation(myId, user.id);
+      navigation.navigate('Chat', { conversationId, otherUsername: user.username });
     } finally {
       setMessagingId(null);
     }
