@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  card: { width: '100%', maxWidth: 400, alignItems: 'center' },
+  card: { width: '100%', maxWidth: 400, alignItems: 'center', alignSelf: 'center' },
   emoji: { fontSize: 48, marginBottom: 12 },
   title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
   sub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24 },

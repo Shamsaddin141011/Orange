@@ -20,13 +20,12 @@ export function GlassInput({ label, style, ...props }: Props) {
   const [focused, setFocused] = useState(false);
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, style]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[
           styles.input,
           focused && styles.inputFocused,
-          style,
         ]}
         placeholderTextColor={colors.textTertiary}
         onFocus={() => setFocused(true)}
@@ -46,6 +45,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   input: {
+    width: '100%',
     backgroundColor: colors.glassInput,
     borderWidth: 1.5,
     borderColor: colors.glassInputBorder,
