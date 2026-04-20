@@ -496,8 +496,8 @@ export function DiscoverScreen({ navigation }: NativeStackScreenProps<DiscoverSt
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  container: { padding: 16, paddingTop: 56, width: '100%' },
+  scroll: { flex: 1, width: '100%', alignSelf: 'stretch' },
+  container: { padding: 16, paddingTop: 56, flexGrow: 1, width: '100%' },
 
   pageTitle: {
     fontSize: 32,
