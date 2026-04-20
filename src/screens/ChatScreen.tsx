@@ -95,7 +95,7 @@ export function ChatScreen({ route }: any) {
   return (
     <GlassBackground>
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={styles.flexWithTabBar}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -158,6 +158,7 @@ export function ChatScreen({ route }: any) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  flexWithTabBar: { flex: 1, paddingBottom: 78 },
 
   header: {
     flexDirection: 'row',
