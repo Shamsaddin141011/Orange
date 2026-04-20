@@ -12,7 +12,10 @@ if (Platform.OS === 'web') {
       box-shadow: none !important;
     }
     /* Remove active/hover background square on tab bar items */
-    [role="tab"] {
+    [role="tab"],
+    [role="tab"] > *,
+    [role="tablist"] > *,
+    [role="tablist"] > * > * {
       background-color: transparent !important;
     }
   `;

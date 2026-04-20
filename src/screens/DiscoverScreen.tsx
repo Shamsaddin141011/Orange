@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
-  section: { marginBottom: 12 },
+  section: { marginBottom: 12, width: '100%' },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flex: 1 },
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   selectText: { flex: 1, fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
   selectPlaceholder: { flex: 1, fontSize: 14, color: colors.textTertiary },
 
-  twoCol: { flexDirection: 'row', gap: 12, marginBottom: 10 },
+  twoCol: { flexDirection: 'row', gap: 12, marginBottom: 10, width: '100%' },
   flex1: { flex: 1 },
 
   errorBox: {
