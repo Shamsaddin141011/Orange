@@ -126,9 +126,9 @@ function TabBarBackground() {
 }
 
 function MainTabs() {
-  const { username, userDataLoaded, matches } = useAppStore();
-  const [onboardingDone, setOnboardingDone] = useState(false);
-  const showOnboarding = userDataLoaded && username !== null && matches.length === 0 && !onboardingDone;
+  const { username, userDataLoaded, profile } = useAppStore();
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const showOnboarding = userDataLoaded && username !== null && profile.interests.length === 0 && !onboardingDismissed;
 
   return (
     <>
@@ -180,7 +180,7 @@ function MainTabs() {
       </Tab.Navigator>
 
       <UsernameSetupModal visible={userDataLoaded && username === null} />
-      <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDone(true)} />
+      <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDismissed(true)} />
     </>
   );
 }
