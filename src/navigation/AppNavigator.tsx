@@ -4,7 +4,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, View } from 'react-native';
-import { useState } from 'react';
 import { BlurView } from 'expo-blur';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
