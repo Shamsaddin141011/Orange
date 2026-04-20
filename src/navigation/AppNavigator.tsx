@@ -134,6 +134,7 @@ function MainTabs() {
           headerShown: false,
           tabBarActiveTintColor: colors.tabActive,
           tabBarInactiveTintColor: colors.tabInactive,
+          tabBarActiveBackgroundColor: 'transparent',
           tabBarStyle: {
             position: 'absolute',
             bottom: 16,

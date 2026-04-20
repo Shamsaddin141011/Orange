@@ -42,6 +42,7 @@ export function GlassButton({
 
   const isDisabled = disabled || loading;
   const paddingV = size === 'lg' ? 15 : 11;
+  const paddingH = size === 'lg' ? 28 : 22;
 
   if (variant === 'primary') {
     return (
@@ -58,7 +59,7 @@ export function GlassButton({
           end={{ x: 1, y: 1 }}
           style={[
             styles.base,
-            { paddingVertical: paddingV, borderRadius: radius.md },
+            { paddingVertical: paddingV, paddingHorizontal: paddingH, borderRadius: radius.md },
             !isDisabled && shadow.orange,
           ]}
         >
@@ -82,7 +83,7 @@ export function GlassButton({
         <View style={[
           styles.base,
           styles.dangerBtn,
-          { paddingVertical: paddingV, borderRadius: radius.md },
+          { paddingVertical: paddingV, paddingHorizontal: paddingH, borderRadius: radius.md },
         ]}>
           <Text style={styles.dangerText}>{label}</Text>
         </View>
@@ -102,7 +103,7 @@ export function GlassButton({
       <View style={[
         styles.base,
         styles.secondaryBtn,
-        { paddingVertical: paddingV, borderRadius: radius.md },
+        { paddingVertical: paddingV, paddingHorizontal: paddingH, borderRadius: radius.md },
         isDisabled && styles.disabled,
       ]}>
         <Text style={[styles.secondaryText, isDisabled && styles.disabledText]}>{label}</Text>

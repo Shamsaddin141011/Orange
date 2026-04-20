@@ -3,19 +3,34 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
-import { searchUsers } from '../lib/supabase';
+import { searchUsers, getOrCreateConversation } from '../lib/supabase';
 import { UserPublicProfile } from '../types';
 import { GlassBackground } from '../components/GlassBackground';
 import { GlassCard } from '../components/GlassCard';
+import { useAppStore } from '../store/useAppStore';
 import { colors, radius } from '../theme';
 
 export function PeopleScreen() {
   const navigation = useNavigation<any>();
+  const { session } = useAppStore();
+  const myId = session?.user.id ?? '';
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserPublicProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [messagingId, setMessagingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMessage = async (user: UserPublicProfile) => {
+    if (!myId || messagingId) return;
+    setMessagingId(user.id);
+    try {
+      const convo = await getOrCreateConversation(myId, user.id);
+      navigation.navigate('Chat', { conversationId: convo.id, otherUsername: user.username });
+    } finally {
+      setMessagingId(null);
+    }
+  };
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -106,7 +121,19 @@ export function PeopleScreen() {
                       <Text style={styles.countryText}>{user.country}</Text>
                     </View>
                   )}
-                  <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                  <Pressable
+                    style={styles.msgBtn}
+                    onPress={(e) => { e.stopPropagation?.(); handleMessage(user); }}
+                    disabled={messagingId === user.id}
+                  >
+                    {messagingId === user.id
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <>
+                          <Ionicons name="chatbubble-outline" size={13} color="#fff" />
+                          <Text style={styles.msgBtnText}>Message</Text>
+                        </>
+                    }
+                  </Pressable>
                 </View>
               </GlassCard>
             </Pressable>
@@ -184,4 +211,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   countryText: { fontSize: 11, fontWeight: '600', color: colors.orange },
+  msgBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.orange,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    minWidth: 76,
+    justifyContent: 'center',
+  },
+  msgBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
 });

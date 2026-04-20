@@ -141,14 +141,21 @@ export function ChatScreen({ route }: any) {
             maxLength={2000}
             returnKeyType="send"
             blurOnSubmit={false}
-            onSubmitEditing={Platform.OS !== 'web' ? handleSend : undefined}
+            onSubmitEditing={handleSend}
+            onKeyPress={(e: any) => {
+              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+                e.preventDefault?.();
+                handleSend();
+              }
+            }}
           />
           <Pressable
             style={[styles.sendBtn, (!text.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
             disabled={!text.trim() || sending}
           >
-            <Ionicons name="send" size={18} color="#fff" />
+            <Ionicons name="send" size={20} color="#fff" />
+            <Text style={styles.sendBtnLabel}>Send</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -229,11 +236,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.glassBorder,
     gap: 10,
-    backgroundColor: 'rgba(13,10,6,0.6)',
   },
   input: {
     flex: 1,
-    backgroundColor: colors.glassInput,
+    backgroundColor: 'transparent',
     borderWidth: 1.5,
     borderColor: colors.glassInputBorder,
     borderRadius: 22,
@@ -244,16 +250,19 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.orange,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.orange,
     shadowColor: colors.orange,
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
   },
+  sendBtnLabel: { color: '#fff', fontWeight: '700', fontSize: 14 },
   sendBtnDisabled: { opacity: 0.4, shadowOpacity: 0 },
 });
