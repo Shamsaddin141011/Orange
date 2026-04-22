@@ -90,7 +90,7 @@ export function CalendarPickerModal({ visible, value, onConfirm, onDismiss }: Pr
                 if (day === null) return <View key={`e${i}`} style={styles.gridCell} />;
                 const dateStr = fmt(viewYear, viewMonth + 1, day);
                 const isSel = dateStr === selected;
-                const isToday = dateStr === todayStr;
+                const isToday = dateStr === todayStr && !selected;
                 return (
                   <Pressable key={dateStr} style={styles.gridCell} onPress={() => setSelected(dateStr)}>
                     <View style={[
