@@ -5,14 +5,14 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { fetchUniversities, supabase } from '../lib/supabase';
 import { rowToUniversity } from '../lib/transform';
 import { scoreUniversity } from '../utils/scoring';
-import { MatchResult, ShortlistTag, StudentProfile, TrackerItemState } from '../types';
+import { ApplicationStatus, MatchResult, ShortlistMeta, ShortlistTag, StudentProfile, TrackerItemState } from '../types';
 
 interface AppState {
   session: Session | null;
   profile: StudentProfile;
   username: string | null;
   userDataLoaded: boolean;
-  shortlist: Record<string, { tag: ShortlistTag; note: string }>;
+  shortlist: Record<string, ShortlistMeta>;
   compareIds: string[];
   tracker: Record<string, TrackerItemState>;
   matches: MatchResult[];
@@ -27,7 +27,7 @@ interface AppState {
   loadUserData: () => Promise<void>;
   saveProfile: (profile: StudentProfile) => Promise<void>;
   toggleShortlist: (id: string) => void;
-  setShortlistMeta: (id: string, tag: ShortlistTag, note: string) => void;
+  setShortlistMeta: (id: string, updates: Partial<ShortlistMeta>) => void;
   toggleCompare: (id: string) => void;
   setTracker: (id: string, tracker: TrackerItemState) => void;
   signOut: () => Promise<void>;
@@ -123,9 +123,14 @@ export const useAppStore = create<AppState>()(
         }
 
         if (shortlistRes.data) {
-          const shortlist: Record<string, { tag: ShortlistTag; note: string }> = {};
+          const shortlist: Record<string, ShortlistMeta> = {};
           for (const row of shortlistRes.data) {
-            shortlist[row.university_id] = { tag: row.tag, note: row.note };
+            shortlist[row.university_id] = {
+              tag: row.tag,
+              note: row.note,
+              deadline: row.deadline ?? undefined,
+              appStatus: (row.app_status as ApplicationStatus) ?? 'unsent',
+            };
           }
           set({ shortlist });
         }
@@ -183,7 +188,7 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const shortlist = { ...state.shortlist };
           if (shortlist[id]) delete shortlist[id];
-          else shortlist[id] = { tag: 'match', note: '' };
+          else shortlist[id] = { tag: 'match', note: '', appStatus: 'unsent' };
           return { shortlist };
         });
         // Sync to Supabase
@@ -207,16 +212,36 @@ export const useAppStore = create<AppState>()(
         })();
       },
 
-      setShortlistMeta: (id, tag, note) => {
-        set((state) => ({ shortlist: { ...state.shortlist, [id]: { tag, note } } }));
+      setShortlistMeta: (id, updates) => {
+        set((state) => ({
+          shortlist: { ...state.shortlist, [id]: { ...state.shortlist[id], ...updates } },
+        }));
         (async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) return;
+          const meta = get().shortlist[id];
+          // Try full upsert including new columns; fall back without them if migration not run yet
           const { error } = await supabase.from('shortlist').upsert(
-            { user_id: session.user.id, university_id: id, tag, note },
+            {
+              user_id: session.user.id,
+              university_id: id,
+              tag: meta.tag,
+              note: meta.note,
+              deadline: meta.deadline ?? null,
+              app_status: meta.appStatus ?? 'unsent',
+            },
             { onConflict: 'user_id,university_id' }
           );
-          if (error) console.error('[shortlistMeta upsert]', error.message);
+          if (error) {
+            if (error.message?.includes('deadline') || error.message?.includes('app_status') || error.message?.includes('column')) {
+              await supabase.from('shortlist').upsert(
+                { user_id: session.user.id, university_id: id, tag: meta.tag, note: meta.note },
+                { onConflict: 'user_id,university_id' }
+              );
+            } else {
+              console.error('[shortlistMeta upsert]', error.message);
+            }
+          }
         })();
       },
 

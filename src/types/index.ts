@@ -1,6 +1,14 @@
 export type Country = 'USA' | 'UK' | 'EU' | 'China' | 'Canada' | 'Australia';
 export type AidStatus = 'yes' | 'no' | 'unknown';
 export type ShortlistTag = 'reach' | 'match' | 'safety';
+export type ApplicationStatus = 'unsent' | 'pending' | 'accepted' | 'not_accepted';
+
+export interface ShortlistMeta {
+  tag: ShortlistTag;
+  note: string;
+  deadline?: string;       // YYYY-MM-DD
+  appStatus?: ApplicationStatus;
+}
 
 export interface DeadlineItem {
   label: string;
