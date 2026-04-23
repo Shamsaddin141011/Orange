@@ -5,6 +5,7 @@ import { getFallbackColor } from '../data/universityImages';
 type Props = {
   name: string;
   idx: number;
+  imageUrl?: string | null;
   style?: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ViewStyle>;
 };
@@ -73,22 +74,26 @@ async function fetchCampusImage(name: string): Promise<string | null> {
   }
 }
 
-export function UniImage({ name, idx, style, containerStyle }: Props) {
+export function UniImage({ name, idx, imageUrl, style, containerStyle }: Props) {
   const bg = getFallbackColor(idx);
-  const [uri, setUri] = useState<string | null | undefined>(
-    cache[name] !== undefined ? cache[name] : undefined
-  );
+
+  // If a DB URL is provided, use it directly — no Wikipedia fetch needed
+  const dbUri = imageUrl || null;
+  const cacheKey = `db:${name}`;
+
+  const [uri, setUri] = useState<string | null | undefined>(() => {
+    if (dbUri) return dbUri;
+    return cache[name] !== undefined ? cache[name] : undefined;
+  });
 
   useEffect(() => {
-    if (cache[name] !== undefined) {
-      setUri(cache[name]);
-      return;
-    }
+    if (dbUri) { setUri(dbUri); return; }
+    if (cache[name] !== undefined) { setUri(cache[name]); return; }
     fetchCampusImage(name).then((url) => {
       cache[name] = url;
       setUri(url);
     });
-  }, [name]);
+  }, [name, dbUri]);
 
   const initials = name
     .split(' ')

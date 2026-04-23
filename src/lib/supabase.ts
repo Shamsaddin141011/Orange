@@ -33,6 +33,7 @@ export interface UniversityRow {
   tags: string[];
   brief_description: string;
   student_size: number | null;
+  image_url: string | null;
 }
 
 /** Fetch universities filtered server-side, scored client-side.

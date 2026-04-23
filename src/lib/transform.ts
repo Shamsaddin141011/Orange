@@ -26,6 +26,7 @@ export function rowToUniversity(row: UniversityRow): University {
     tags: row.tags ?? [],
     brief_description: row.brief_description ?? '',
     student_size: row.student_size ?? undefined,
+    image_url: row.image_url ?? undefined,
   };
 }
 

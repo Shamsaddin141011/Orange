@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS universities (
   intl_aid      TEXT DEFAULT 'unknown', -- 'yes' | 'no' | 'unknown'
   tags          TEXT[]  DEFAULT '{}',
   brief_description TEXT,
-  student_size  INTEGER
+  student_size  INTEGER,
+  image_url     TEXT
 );
 
 -- Speed up the filters the app uses

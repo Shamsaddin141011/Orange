@@ -10,7 +10,7 @@ import { University } from '../types';
 import { GlassBackground } from '../components/GlassBackground';
 import { GlassCard } from '../components/GlassCard';
 import { GlassButton } from '../components/GlassButton';
-import { getPalette, getInitials } from '../components/CardBanner';
+import { UniImage } from '../components/UniImage';
 import { colors, radius, shadow } from '../theme';
 
 type Props = {
@@ -42,22 +42,23 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
 
   const saved = !!shortlist[uni.id];
   const compared = compareIds.includes(uni.id);
-  const [bgA, bgB] = getPalette(colorIdx(uni.id));
-  const initials = getInitials(uni.name);
 
   return (
     <GlassBackground>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Hero banner */}
-        <View style={[styles.hero, { backgroundColor: bgA }]}>
-          <LinearGradient
-            colors={[bgB, bgA]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+        <View style={styles.hero}>
+          <UniImage
+            name={uni.name}
+            imageUrl={uni.image_url}
+            idx={colorIdx(uni.id)}
             style={StyleSheet.absoluteFill}
           />
-          <View style={[styles.accentBlob, { backgroundColor: bgB }]} />
-          <Text style={styles.heroBigInitials}>{initials}</Text>
+          {/* Dark overlay so text + buttons stay readable */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0.65)']}
+            style={StyleSheet.absoluteFill}
+          />
           {/* Back + actions */}
           <View style={styles.actionBar}>
             <Pressable onPress={() => navigation.goBack()} style={styles.glassBtn}>
@@ -175,24 +176,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'flex-end',
     padding: 20,
-  },
-  accentBlob: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    top: -100,
-    right: -60,
-    opacity: 0.4,
-  },
-  heroBigInitials: {
-    position: 'absolute',
-    fontSize: 200,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.04)',
-    bottom: -30,
-    left: -10,
-    letterSpacing: -6,
   },
   actionBar: {
     position: 'absolute',

@@ -32,6 +32,7 @@ export interface University {
   tags: string[];
   brief_description: string;
   student_size?: number;
+  image_url?: string;
 }
 
 export interface StudentProfile {

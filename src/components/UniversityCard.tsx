@@ -12,6 +12,7 @@ import { useAppStore } from '../store/useAppStore';
 import { MatchResult, University } from '../types';
 import { colors, radius, shadow } from '../theme';
 import { GlassCard } from './GlassCard';
+import { UniImage } from './UniImage';
 
 type Props = {
   item: MatchResult;
@@ -20,32 +21,6 @@ type Props = {
   onCompare: () => void;
   index?: number;
 };
-
-const PALETTES: [string, string][] = [
-  ['#1A0A00', '#7c2d12'],
-  ['#0A0A1A', '#3b0764'],
-  ['#0A1A0A', '#14532d'],
-  ['#1A0A0A', '#7c2d12'],
-  ['#0A1A2A', '#0c4a6e'],
-  ['#1A1A0A', '#713f12'],
-  ['#1A0A1A', '#4c1d95'],
-  ['#0A0A1A', '#1e3a5f'],
-  ['#2A1A0A', '#92400e'],
-  ['#0A2A2A', '#134e4a'],
-];
-
-function getPalette(idx: number): [string, string] {
-  return PALETTES[idx % PALETTES.length] as [string, string];
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter((w) => w.length > 2 && !/^(of|the|at|and)$/i.test(w))
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('');
-}
 
 function formatTuition(t: number): string {
   if (t >= 1000) return `$${Math.round(t / 1000)}K`;
@@ -83,8 +58,6 @@ export function UniversityCard({ item, onPress, onSave, onCompare, index = 0 }: 
     item.score >= 60 ? colors.orange :
     colors.textTertiary;
 
-  const [bgA, bgB] = getPalette(colorIdx(university.id));
-  const initials = getInitials(university.name);
   const typeStr = getTypeStr(university);
 
   return (
@@ -98,18 +71,19 @@ export function UniversityCard({ item, onPress, onSave, onCompare, index = 0 }: 
         onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
       >
         <GlassCard padding={0} borderRadius={radius.lg} style={styles.inner}>
-          {/* ── Left: color/visual panel (image placeholder) ── */}
-          <View style={[styles.left, { backgroundColor: bgA }]}>
-            <LinearGradient
-              colors={[bgB, bgA]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+          {/* ── Left: campus photo panel ── */}
+          <View style={styles.left}>
+            <UniImage
+              name={university.name}
+              imageUrl={university.image_url}
+              idx={colorIdx(university.id)}
               style={StyleSheet.absoluteFill}
             />
-            {/* Accent blob */}
-            <View style={[styles.accentBlob, { backgroundColor: bgB }]} />
-            {/* Big initials watermark */}
-            <Text style={styles.bigInitials}>{initials}</Text>
+            {/* Bottom fade so save button stays readable */}
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.55)']}
+              style={styles.imgOverlay}
+            />
 
             {/* Save button at bottom */}
             <View style={styles.leftBottom}>
@@ -121,7 +95,7 @@ export function UniversityCard({ item, onPress, onSave, onCompare, index = 0 }: 
                 <Ionicons
                   name={saved ? 'heart' : 'heart-outline'}
                   size={13}
-                  color={saved ? colors.orange : 'rgba(255,255,255,0.8)'}
+                  color={saved ? colors.orange : 'rgba(255,255,255,0.9)'}
                 />
                 <Text style={[styles.saveBtnText, saved && styles.saveBtnTextActive]}>
                   {saved ? 'Saved' : 'Save'}
@@ -199,30 +173,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Left visual panel
+  // Left campus photo panel
   left: {
-    width: 110,
+    width: 130,
     overflow: 'hidden',
-    justifyContent: 'space-between',
-    padding: 10,
   },
-  accentBlob: {
+  imgOverlay: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    top: -40,
-    left: -30,
-    opacity: 0.5,
-  },
-  bigInitials: {
-    position: 'absolute',
-    fontSize: 80,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.06)',
-    bottom: 20,
-    right: -10,
-    letterSpacing: -3,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 70,
   },
   leftBottom: {
     position: 'absolute',
