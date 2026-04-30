@@ -97,7 +97,9 @@ async function resolveChunk(rows) {
     const qid = page.pageprops?.wikibase_item ?? null;
     const pageImageTitle = page.pageimage;
     const thumb = page.thumbnail?.source;
-    const fallback = thumb && (!pageImageTitle || isCampusPhoto(pageImageTitle)) ? thumb : null;
+    // Backfill mode: accept logos/seals as last resort. The runtime filter is stricter,
+    // but here the alternative is colored initials — a school's seal is at least authentic.
+    const fallback = thumb || null;
     return { id: row.id, qid, fallback };
   });
 
@@ -136,7 +138,7 @@ async function fetchAllRows() {
   const rows = [];
   let from = 0;
   for (;;) {
-    let q = supabase.from('universities').select('id, name, image_url').range(from, from + PAGE_SIZE - 1);
+    let q = supabase.from('universities').select('id, name, image_url, website').range(from, from + PAGE_SIZE - 1);
     if (!REFRESH_ALL) q = q.is('image_url', null);
     const { data, error } = await q;
     if (error) throw error;
@@ -146,6 +148,75 @@ async function fetchAllRows() {
     from += PAGE_SIZE;
   }
   return rows;
+}
+
+// ── OG image scrape (for unis without a Wikipedia/Wikidata photo) ────────────
+const OG_TIMEOUT_MS = 5000;
+const OG_CONCURRENCY = 25;
+
+function absoluteUrl(maybeUrl, base) {
+  if (!maybeUrl) return null;
+  try { return new URL(maybeUrl, base).toString(); } catch { return null; }
+}
+
+async function scrapeOgImage(website) {
+  if (!website) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), OG_TIMEOUT_MS);
+  try {
+    const res = await fetch(website, {
+      headers: { 'User-Agent': UA, Accept: 'text/html' },
+      redirect: 'follow',
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    const html = (await res.text()).slice(0, 200_000);
+    // Look at <meta property="og:image"...> or twitter:image, in either attr order
+    const re = /<meta[^>]+(?:property|name)\s*=\s*["'](?:og:image|twitter:image)(?::secure_url)?["'][^>]*>/i;
+    const tag = html.match(re)?.[0];
+    if (!tag) return null;
+    const content = tag.match(/content\s*=\s*["']([^"']+)["']/i)?.[1];
+    return absoluteUrl(content, res.url);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function ogPass() {
+  const { data, error } = await supabase
+    .from('universities')
+    .select('id, name, website')
+    .is('image_url', null)
+    .not('website', 'is', null)
+    .neq('website', '');
+  if (error) throw error;
+  const todo = data ?? [];
+  if (!todo.length) {
+    console.log('\nOG pass: nothing left to fill.');
+    return;
+  }
+  console.log(`\nOG pass: scraping og:image for ${todo.length} schools...`);
+
+  let done = 0;
+  let written = 0;
+  for (let i = 0; i < todo.length; i += OG_CONCURRENCY) {
+    const slice = todo.slice(i, i + OG_CONCURRENCY);
+    const results = await Promise.all(slice.map(async (row) => {
+      const url = await scrapeOgImage(row.website);
+      return { id: row.id, url };
+    }));
+    const writes = [];
+    for (const { id, url } of results) {
+      done++;
+      if (url) { written++; writes.push(updateRow(id, url)); }
+    }
+    await Promise.all(writes);
+    const pct = ((done / todo.length) * 100).toFixed(1);
+    console.log(`  og ${done}/${todo.length} (${pct}%) — ${written} URLs written`);
+  }
+  console.log(`OG pass done. Wrote ${written} of ${todo.length}.`);
 }
 
 async function updateRow(id, url) {
@@ -177,7 +248,9 @@ async function updateRow(id, url) {
     await sleep(REQUEST_DELAY_MS);
   }
 
-  console.log(`\nDone. Resolved ${resolved}, wrote ${written} image URLs (${rows.length - written} had no usable photo).`);
+  console.log(`\nWiki pass done. Resolved ${resolved}, wrote ${written} image URLs (${rows.length - written} had no Wiki photo).`);
+
+  await ogPass();
 })().catch((err) => {
   console.error(err);
   process.exit(1);
