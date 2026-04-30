@@ -13,21 +13,14 @@ type Props = {
 const cache: Record<string, string | null> = {};
 
 const WIKI_NAME_OVERRIDES: Record<string, string> = {
-  'University of California, Berkeley': 'University_of_California,_Berkeley',
-  'University of Illinois Urbana-Champaign': 'University_of_Illinois_Urbana-Champaign',
-  'University of Wisconsin\u2013Madison': 'University_of_Wisconsin%E2%80%93Madison',
-  'Georgia Institute of Technology': 'Georgia_Institute_of_Technology',
-  'Massachusetts Institute of Technology': 'Massachusetts_Institute_of_Technology',
-  'London School of Economics': 'London_School_of_Economics',
-  "King's College London": "King%27s_College_London",
-  'Queen Mary University of London': 'Queen_Mary_University_of_London',
+  'University of Wisconsin–Madison': 'University_of_Wisconsin–Madison',
+  'London School of Economics': 'London_School_of_Economics_and_Political_Science',
 };
 
 function wikiTitle(name: string): string {
   return WIKI_NAME_OVERRIDES[name] ?? name.replace(/ /g, '_');
 }
 
-// Exclude logos, seals, coats of arms, flags, icons — keep actual campus/building photos
 function isCampusPhoto(title: string): boolean {
   const l = title.toLowerCase();
   if (/logo|seal|coat.of.arm|flag|map|icon|emblem|shield|crest|wordmark|mascot|portrait|headshot/.test(l)) return false;
@@ -35,51 +28,99 @@ function isCampusPhoto(title: string): boolean {
   return true;
 }
 
-async function fetchCampusImage(name: string): Promise<string | null> {
-  const title = wikiTitle(name);
+function commonsImageUrl(filename: string, width = 800): string {
+  // Special:FilePath redirects to the actual upload.wikimedia.org thumbnail URL.
+  // Browsers follow the redirect transparently when used as an <img src>.
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+}
+
+// ── Batching: collect titles within 50ms, fire one Wikipedia request for all ──
+// Two-step: Wikipedia (title → wikibase Q-id + fallback pageimage), then Wikidata (Q-id → P18 image).
+// Wikidata P18 is curated as the entity's main photo and almost always points to a campus shot,
+// whereas Wikipedia's pageimage typically returns the seal/coat-of-arms.
+type PendingItem = { title: string; resolve: (url: string | null) => void };
+let batchQueue: PendingItem[] = [];
+let batchTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function flushBatch() {
+  const batch = batchQueue.splice(0);
+  batchTimer = null;
+  if (!batch.length) return;
+
+  const titlesParam = batch.map(b => b.title).join('|');
+  let wikiData: any;
   try {
-    // media-list gives every image used on the Wikipedia article
     const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/media-list/${title}`,
-      { headers: { 'Api-User-Agent': 'OrangeUni/1.0' } }
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titlesParam)}&prop=pageimages%7Cpageprops&ppprop=wikibase_item&format=json&pithumbsize=800&pilicense=any&origin=*`
     );
-    const data = await res.json();
-    const items: any[] = data.items ?? [];
-
-    // Prefer wide/landscape images (srcset may have larger versions)
-    const candidate = items.find(
-      (item) =>
-        item.type === 'image' &&
-        item.title &&
-        isCampusPhoto(item.title) &&
-        item.srcset?.[0]?.src
-    );
-
-    if (candidate) {
-      // Use the largest srcset entry
-      const largest = candidate.srcset[candidate.srcset.length - 1];
-      const src: string = largest?.src ?? candidate.srcset[0].src;
-      return src.startsWith('//') ? `https:${src}` : src;
-    }
-
-    // Fallback: page summary thumbnail (might still be a logo, but better than nothing)
-    const summary = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${title}`,
-      { headers: { 'Api-User-Agent': 'OrangeUni/1.0' } }
-    );
-    const sData = await summary.json();
-    return sData?.originalimage?.source ?? sData?.thumbnail?.source ?? null;
+    if (!res.ok) { batch.forEach(b => b.resolve(null)); return; }
+    wikiData = await res.json();
   } catch {
-    return null;
+    batch.forEach(b => b.resolve(null));
+    return;
   }
+
+  const pages: Record<string, any> = wikiData.query?.pages ?? {};
+  const normalized: { from: string; to: string }[] = wikiData.query?.normalized ?? [];
+  const normMap: Record<string, string> = {};
+  for (const n of normalized) normMap[n.from] = n.to;
+
+  // Per-item: { qid, pageThumb (logo/seal fallback) }
+  type Resolved = { qid: string | null; pageThumb: string | null };
+  const resolvedByItem: Resolved[] = batch.map(({ title }) => {
+    const normalizedTitle = normMap[title] ?? title;
+    const page = Object.values(pages).find(
+      (p: any) => p.title === normalizedTitle || p.title === normalizedTitle.replace(/_/g, ' ')
+    ) as any;
+    if (!page || page.missing !== undefined) return { qid: null, pageThumb: null };
+    const qid: string | null = page.pageprops?.wikibase_item ?? null;
+    const pageImageTitle: string | undefined = page.pageimage;
+    const thumbSrc: string | undefined = page.thumbnail?.source;
+    const pageThumb = thumbSrc && (!pageImageTitle || isCampusPhoto(pageImageTitle)) ? thumbSrc : null;
+    return { qid, pageThumb };
+  });
+
+  // Wikidata P18 lookup for real campus photos
+  const qids = Array.from(new Set(resolvedByItem.map(r => r.qid).filter((q): q is string => !!q)));
+  const p18ByQid: Record<string, string> = {};
+  if (qids.length) {
+    try {
+      const wdRes = await fetch(
+        `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${encodeURIComponent(qids.join('|'))}&props=claims&format=json&origin=*`
+      );
+      if (wdRes.ok) {
+        const wd = await wdRes.json();
+        for (const [qid, ent] of Object.entries<any>(wd.entities ?? {})) {
+          const claims = ent.claims?.P18 ?? [];
+          for (const c of claims) {
+            const filename: string | undefined = c.mainsnak?.datavalue?.value;
+            if (filename && isCampusPhoto(filename)) { p18ByQid[qid] = filename; break; }
+          }
+        }
+      }
+    } catch { /* fall through to thumb fallback */ }
+  }
+
+  for (let i = 0; i < batch.length; i++) {
+    const { resolve } = batch[i];
+    const { qid, pageThumb } = resolvedByItem[i];
+    const p18 = qid ? p18ByQid[qid] : undefined;
+    if (p18) { resolve(commonsImageUrl(p18)); continue; }
+    resolve(pageThumb);
+  }
+}
+
+function fetchCampusImage(name: string): Promise<string | null> {
+  const title = wikiTitle(name);
+  return new Promise(resolve => {
+    batchQueue.push({ title, resolve });
+    if (!batchTimer) batchTimer = setTimeout(flushBatch, 50);
+  });
 }
 
 export function UniImage({ name, idx, imageUrl, style, containerStyle }: Props) {
   const bg = getFallbackColor(idx);
-
-  // If a DB URL is provided, use it directly — no Wikipedia fetch needed
   const dbUri = imageUrl || null;
-  const cacheKey = `db:${name}`;
 
   const [uri, setUri] = useState<string | null | undefined>(() => {
     if (dbUri) return dbUri;

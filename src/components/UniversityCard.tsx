@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
   // Left campus photo panel
   left: {
     width: 130,
+    alignSelf: 'stretch',
     overflow: 'hidden',
   },
   imgOverlay: {
