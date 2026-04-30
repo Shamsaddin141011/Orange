@@ -42,21 +42,20 @@ type PendingItem = { title: string; resolve: (url: string | null) => void };
 let batchQueue: PendingItem[] = [];
 let batchTimer: ReturnType<typeof setTimeout> | null = null;
 
-async function flushBatch() {
-  const batch = batchQueue.splice(0);
-  batchTimer = null;
-  if (!batch.length) return;
+// Wikipedia/Wikidata APIs both cap at 50 titles/IDs per query for anonymous clients.
+const API_CHUNK = 50;
 
-  const titlesParam = batch.map(b => b.title).join('|');
+async function processChunk(chunk: PendingItem[]) {
+  const titlesParam = chunk.map(b => b.title).join('|');
   let wikiData: any;
   try {
     const res = await fetch(
       `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titlesParam)}&prop=pageimages%7Cpageprops&ppprop=wikibase_item&format=json&pithumbsize=800&pilicense=any&origin=*`
     );
-    if (!res.ok) { batch.forEach(b => b.resolve(null)); return; }
+    if (!res.ok) { chunk.forEach(b => b.resolve(null)); return; }
     wikiData = await res.json();
   } catch {
-    batch.forEach(b => b.resolve(null));
+    chunk.forEach(b => b.resolve(null));
     return;
   }
 
@@ -65,9 +64,8 @@ async function flushBatch() {
   const normMap: Record<string, string> = {};
   for (const n of normalized) normMap[n.from] = n.to;
 
-  // Per-item: { qid, pageThumb (logo/seal fallback) }
   type Resolved = { qid: string | null; pageThumb: string | null };
-  const resolvedByItem: Resolved[] = batch.map(({ title }) => {
+  const resolvedByItem: Resolved[] = chunk.map(({ title }) => {
     const normalizedTitle = normMap[title] ?? title;
     const page = Object.values(pages).find(
       (p: any) => p.title === normalizedTitle || p.title === normalizedTitle.replace(/_/g, ' ')
@@ -80,7 +78,6 @@ async function flushBatch() {
     return { qid, pageThumb };
   });
 
-  // Wikidata P18 lookup for real campus photos
   const qids = Array.from(new Set(resolvedByItem.map(r => r.qid).filter((q): q is string => !!q)));
   const p18ByQid: Record<string, string> = {};
   if (qids.length) {
@@ -101,13 +98,24 @@ async function flushBatch() {
     } catch { /* fall through to thumb fallback */ }
   }
 
-  for (let i = 0; i < batch.length; i++) {
-    const { resolve } = batch[i];
+  for (let i = 0; i < chunk.length; i++) {
+    const { resolve } = chunk[i];
     const { qid, pageThumb } = resolvedByItem[i];
     const p18 = qid ? p18ByQid[qid] : undefined;
-    if (p18) { resolve(commonsImageUrl(p18)); continue; }
-    resolve(pageThumb);
+    resolve(p18 ? commonsImageUrl(p18) : pageThumb);
   }
+}
+
+async function flushBatch() {
+  const batch = batchQueue.splice(0);
+  batchTimer = null;
+  if (!batch.length) return;
+
+  const chunks: PendingItem[][] = [];
+  for (let i = 0; i < batch.length; i += API_CHUNK) {
+    chunks.push(batch.slice(i, i + API_CHUNK));
+  }
+  await Promise.all(chunks.map(processChunk));
 }
 
 function fetchCampusImage(name: string): Promise<string | null> {
