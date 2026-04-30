@@ -6,6 +6,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "orangeuni",
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": ["**/*"],
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "icon": "./assets/logo.png"
   }
 }
