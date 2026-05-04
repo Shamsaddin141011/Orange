@@ -10,13 +10,30 @@ import { GlassCard } from '../components/GlassCard';
 import { GlassButton } from '../components/GlassButton';
 import { GlassInput } from '../components/GlassInput';
 import { GlassChip } from '../components/GlassChip';
-import { colors, radius, shadow } from '../theme';
+import { colors, radius } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { validateAct, validateGre, validateIelts, validateSat, validateToefl } from '../utils/scoring';
 
-const COUNTRIES: Country[] = ['USA', 'UK', 'EU', 'China'];
+type StudyLevel = "Bachelor's" | "Master's" | 'PhD' | "Associate's";
+
+const COUNTRIES: { value: Country; flag: string; label: string }[] = [
+  { value: 'USA',       flag: '🇺🇸', label: 'USA' },
+  { value: 'UK',        flag: '🇬🇧', label: 'UK' },
+  { value: 'EU',        flag: '🇪🇺', label: 'Europe' },
+  { value: 'China',     flag: '🇨🇳', label: 'China' },
+  { value: 'Canada',    flag: '🇨🇦', label: 'Canada' },
+  { value: 'Australia', flag: '🇦🇺', label: 'Australia' },
+];
+
+const STUDY_LEVELS: { label: StudyLevel; icon: string }[] = [
+  { label: "Bachelor's",  icon: '🎓' },
+  { label: "Master's",    icon: '📚' },
+  { label: 'PhD',         icon: '🔬' },
+  { label: "Associate's", icon: '📖' },
+];
 
 export function ProfileScreen() {
-  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore, username, setUsername } = useAppStore();
+  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore, username } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -25,12 +42,24 @@ export function ProfileScreen() {
   const [bio, setBio] = useState('');
   const [editingBio, setEditingBio] = useState(false);
   const [savingBio, setSavingBio] = useState(false);
+  const [error, setError] = useState('');
 
   const [country, setCountry] = useState<Country>(profile.country);
-  const [satTotal, setSatTotal] = useState(profile.satTotal?.toString() ?? '');
-  const [gpa, setGpa] = useState(profile.gpa?.toString() ?? '');
+  const [studyLevel, setStudyLevel] = useState<StudyLevel>((profile.degreeLevel as StudyLevel) ?? "Bachelor's");
+  const [satTotal, setSatTotal]   = useState(profile.satTotal?.toString() ?? '');
+  const [act, setAct]             = useState(profile.act?.toString() ?? '');
+  const [ibScore, setIbScore]     = useState(profile.ibScore?.toString() ?? '');
+  const [gpa, setGpa]             = useState(profile.gpa?.toString() ?? '');
+  const [ielts, setIelts]         = useState(profile.ielts?.toString() ?? '');
+  const [toefl, setToefl]         = useState(profile.toefl?.toString() ?? '');
+  const [greVerbal, setGreVerbal] = useState(profile.greVerbal?.toString() ?? '');
+  const [greQuant, setGreQuant]   = useState(profile.greQuant?.toString() ?? '');
+  const [budgetMin, setBudgetMin] = useState(profile.budgetMin?.toString() ?? '');
   const [budgetMax, setBudgetMax] = useState(profile.budgetMax?.toString() ?? '');
   const [preferredLocation, setPreferredLocation] = useState(profile.preferredLocation ?? '');
+
+  const isGrad = studyLevel === "Master's" || studyLevel === 'PhD';
+  const isAssociate = studyLevel === "Associate's";
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -63,21 +92,62 @@ export function ProfileScreen() {
 
   const startEditing = () => {
     setCountry(profile.country);
+    setStudyLevel((profile.degreeLevel as StudyLevel) ?? "Bachelor's");
     setSatTotal(profile.satTotal?.toString() ?? '');
+    setAct(profile.act?.toString() ?? '');
+    setIbScore(profile.ibScore?.toString() ?? '');
     setGpa(profile.gpa?.toString() ?? '');
+    setIelts(profile.ielts?.toString() ?? '');
+    setToefl(profile.toefl?.toString() ?? '');
+    setGreVerbal(profile.greVerbal?.toString() ?? '');
+    setGreQuant(profile.greQuant?.toString() ?? '');
+    setBudgetMin(profile.budgetMin?.toString() ?? '');
     setBudgetMax(profile.budgetMax?.toString() ?? '');
     setPreferredLocation(profile.preferredLocation ?? '');
+    setError('');
     setEditing(true);
   };
 
   const saveEdits = async () => {
+    setError('');
+    const sat    = satTotal  ? Number(satTotal)  : undefined;
+    const actN   = act       ? Number(act)       : undefined;
+    const ib     = ibScore   ? Number(ibScore)   : undefined;
+    const gpaN   = gpa       ? Number(gpa)       : undefined;
+    const ieltsN = ielts     ? Number(ielts)     : undefined;
+    const toeflN = toefl     ? Number(toefl)     : undefined;
+    const greV   = greVerbal ? Number(greVerbal) : undefined;
+    const greQ   = greQuant  ? Number(greQuant)  : undefined;
+    const bMin   = budgetMin ? Number(budgetMin) : undefined;
+    const bMax   = budgetMax ? Number(budgetMax) : undefined;
+
+    if (!validateSat(sat))      { setError('SAT total must be 400–1600.'); return; }
+    if (!validateAct(actN))     { setError('ACT must be 1–36.'); return; }
+    if (ib !== undefined && (ib < 0 || ib > 45)) { setError('IB score must be 0–45.'); return; }
+    if (!validateIelts(ieltsN)) { setError('IELTS must be 0–9.'); return; }
+    if (!validateToefl(toeflN)) { setError('TOEFL must be 0–120.'); return; }
+    if (gpaN !== undefined && (gpaN < 0 || gpaN > 4.0)) { setError('GPA must be 0–4.0.'); return; }
+    if (!validateGre(greV))     { setError('GRE Verbal must be 130–170.'); return; }
+    if (!validateGre(greQ))     { setError('GRE Quant must be 130–170.'); return; }
+    if (bMin !== undefined && bMax !== undefined && bMin >= bMax) {
+      setError('Min budget must be less than max budget.'); return;
+    }
+
     setSaving(true);
     const updated = {
       ...profile,
       country,
-      satTotal: satTotal ? Number(satTotal) : undefined,
-      gpa: gpa ? Number(gpa) : undefined,
-      budgetMax: budgetMax ? Number(budgetMax) : undefined,
+      degreeLevel: studyLevel,
+      satTotal: sat,
+      act: actN,
+      ibScore: ib,
+      gpa: gpaN,
+      ielts: ieltsN,
+      toefl: toeflN,
+      greVerbal: greV,
+      greQuant: greQ,
+      budgetMin: bMin,
+      budgetMax: bMax,
       preferredLocation: preferredLocation || undefined,
     };
     await saveProfile(updated);
@@ -87,6 +157,11 @@ export function ProfileScreen() {
   };
 
   const initials = displayName.charAt(0).toUpperCase();
+
+  const fmtMoney = (n?: number) => (n != null ? `$${n.toLocaleString()}` : null);
+  const budgetDisplay = profile.budgetMin || profile.budgetMax
+    ? `${fmtMoney(profile.budgetMin) ?? 'Any'} – ${fmtMoney(profile.budgetMax) ?? 'Any'}`
+    : 'Not set';
 
   return (
     <GlassBackground>
@@ -167,17 +242,75 @@ export function ProfileScreen() {
             {editing ? (
               <>
                 <Text style={styles.fieldLabel}>Study Destination</Text>
-                <View style={styles.countryRow}>
+                <View style={styles.chipWrap}>
                   {COUNTRIES.map((c) => (
-                    <GlassChip key={c} label={c} active={country === c} onPress={() => setCountry(c)} />
+                    <GlassChip key={c.value} label={`${c.flag} ${c.label}`} active={country === c.value} onPress={() => setCountry(c.value)} />
                   ))}
                 </View>
-                <View style={{ gap: 10, marginTop: 12 }}>
-                  <GlassInput label="SAT Total" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" />
-                  <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="e.g. 3.8" />
-                  <GlassInput label="Max Budget (USD/yr)" keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" />
+
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Study Level</Text>
+                <View style={styles.chipWrap}>
+                  {STUDY_LEVELS.map((l) => (
+                    <GlassChip key={l.label} label={`${l.icon} ${l.label}`} active={studyLevel === l.label} onPress={() => setStudyLevel(l.label)} />
+                  ))}
+                </View>
+
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Test Scores</Text>
+                <View style={{ gap: 10 }}>
+                  {!isGrad && !isAssociate && (
+                    <>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
+                        <GlassInput label="ACT" keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" style={styles.flex1} />
+                      </View>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="IB Score" keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" style={styles.flex1} />
+                        <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+                      </View>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
+                        <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
+                      </View>
+                    </>
+                  )}
+
+                  {isGrad && (
+                    <>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+                        <GlassInput label="GRE Verbal" keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" style={styles.flex1} />
+                      </View>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="GRE Quant" keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" style={styles.flex1} />
+                        <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
+                      </View>
+                      <View style={styles.twoCol}>
+                        <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
+                        <View style={styles.flex1} />
+                      </View>
+                    </>
+                  )}
+
+                  {isAssociate && (
+                    <View style={styles.twoCol}>
+                      <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
+                      <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
+                    </View>
+                  )}
+                </View>
+
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Budget (USD/yr)</Text>
+                <View style={styles.twoCol}>
+                  <GlassInput label="Min" keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 0" style={styles.flex1} />
+                  <GlassInput label="Max" keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" style={styles.flex1} />
+                </View>
+
+                <View style={{ marginTop: 10 }}>
                   <GlassInput label="Preferred Location" value={preferredLocation} onChangeText={setPreferredLocation} placeholder="e.g. Boston, CA" />
                 </View>
+
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
                 <View style={styles.editActions}>
                   <Pressable onPress={() => setEditing(false)} style={styles.cancelBtn}>
                     <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -193,9 +326,16 @@ export function ProfileScreen() {
             ) : (
               <>
                 <InfoRow icon="school-outline" label="Country" value={profile.country} />
-                <InfoRow icon="ribbon-outline" label="SAT Total" value={profile.satTotal?.toString() ?? 'Not set'} />
+                <InfoRow icon="ribbon-outline" label="Study Level" value={profile.degreeLevel ?? 'Not set'} />
                 <InfoRow icon="trophy-outline" label="GPA" value={profile.gpa?.toString() ?? 'Not set'} />
-                <InfoRow icon="cash-outline" label="Max Budget" value={profile.budgetMax ? `$${profile.budgetMax.toLocaleString()}` : 'Not set'} />
+                <InfoRow icon="document-text-outline" label="SAT Total" value={profile.satTotal?.toString() ?? 'Not set'} />
+                <InfoRow icon="document-text-outline" label="ACT" value={profile.act?.toString() ?? 'Not set'} />
+                <InfoRow icon="document-text-outline" label="IB Score" value={profile.ibScore?.toString() ?? 'Not set'} />
+                <InfoRow icon="language-outline" label="IELTS" value={profile.ielts?.toString() ?? 'Not set'} />
+                <InfoRow icon="language-outline" label="TOEFL" value={profile.toefl?.toString() ?? 'Not set'} />
+                <InfoRow icon="document-text-outline" label="GRE Verbal" value={profile.greVerbal?.toString() ?? 'Not set'} />
+                <InfoRow icon="document-text-outline" label="GRE Quant" value={profile.greQuant?.toString() ?? 'Not set'} />
+                <InfoRow icon="cash-outline" label="Budget" value={budgetDisplay} />
                 <InfoRow icon="location-outline" label="Preferred Location" value={profile.preferredLocation ?? 'Not set'} />
               </>
             )}
@@ -211,7 +351,7 @@ export function ProfileScreen() {
                 <View key={i} style={styles.pill}>
                   <Text style={styles.pillText}>{i}</Text>
                 </View>
-              )) : <Text style={styles.none}>None selected</Text>}
+              )) : <Text style={styles.none}>None selected — set in Discover</Text>}
             </View>
           </GlassCard>
         </Animated.View>
@@ -303,7 +443,11 @@ const styles = StyleSheet.create({
   editBtnText: { fontSize: 12, fontWeight: '700', color: colors.orange },
 
   fieldLabel: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
-  countryRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  twoCol: { flexDirection: 'row', gap: 10 },
+  flex1: { flex: 1 },
+
+  errorText: { color: colors.danger, fontSize: 13, marginTop: 8 },
 
   editActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
   cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' },
