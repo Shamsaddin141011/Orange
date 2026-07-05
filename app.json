@@ -4,12 +4,35 @@
     "slug": "orangeuni",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "orangeuni",
-    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0A04"
+    },
+    "ios": {
+      "bundleIdentifier": "com.orangeuni.app",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used for profile photo.",
+        "NSPhotoLibraryUsageDescription": "Used to upload a profile photo.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "web": {
       "favicon": "./assets/logo.png"
     },
-    "icon": "./assets/logo.png"
+    "extra": {
+      "eas": {
+        "projectId": "4f9f294a-da58-42de-a0c8-daa7a6036de8"
+      }
+    },
+    "owner": "evilzakotb"
   }
 }

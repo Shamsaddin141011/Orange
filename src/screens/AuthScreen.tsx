@@ -1,21 +1,18 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { AntDesign } from '@expo/vector-icons';
 import { useState } from 'react';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../lib/supabase';
-import { GlassCard } from '../components/GlassCard';
-import { GlassBackground } from '../components/GlassBackground';
-import { colors, gradients, radius, shadow } from '../theme';
+import { useThemeColors, radius, fonts } from '../theme';
+import { Button } from '../components/ui/Button';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export function AuthScreen() {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,170 +61,107 @@ export function AuthScreen() {
   };
 
   return (
-    <GlassBackground style={styles.container}>
-      {/* Ambient glow blobs */}
-      <View style={styles.blobTopRight} />
-      <View style={styles.blobBottomLeft} />
+    <View style={[styles.screen, { backgroundColor: c.bg, paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}>
+      {/* Decorative blob */}
+      <View style={[styles.blob, { backgroundColor: c.primarySurface }]} />
 
-      {/* Logo */}
-      <Animated.View entering={FadeInUp.duration(600).delay(100)} style={styles.logoArea}>
-        <LinearGradient
-          colors={gradients.orangeButton as [string, string]}
-          style={styles.logoCircle}
-        >
-          <Text style={styles.logoEmoji}>🍊</Text>
-        </LinearGradient>
-        <Text style={styles.appName}>OrangeUni</Text>
-        <Text style={styles.tagline}>Find the university that fits you — transparently.</Text>
+      {/* Branding */}
+      <Animated.View entering={FadeInUp.duration(600).delay(100)} style={styles.branding}>
+        <View style={[styles.logoMark, { backgroundColor: c.primary }]}>
+          <Text style={styles.logoText}>O</Text>
+        </View>
+        <Text style={[styles.appName, { color: c.primary }]}>OrangeUni</Text>
+        <Text style={[styles.tagline, { color: c.textSecondary }]}>Find. Apply. Thrive.</Text>
+        <Text style={[styles.subtitle, { color: c.textTertiary }]}>
+          Your university journey starts here.
+        </Text>
       </Animated.View>
 
-      {/* Sign in card */}
-      <Animated.View entering={FadeInDown.duration(600).delay(200)} style={styles.cardWrap}>
-        <GlassCard glow intensity={25} style={styles.card}>
-          <Text style={styles.cardTitle}>Get started</Text>
-          <Text style={styles.cardSub}>
-            Sign in to save your shortlist, track applications, and compare schools.
-          </Text>
-
-          <Pressable
-            style={[styles.googleBtn, loading && styles.googleBtnDisabled]}
-            onPress={signInWithGoogle}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.orange} />
-            ) : (
-              <>
-                <AntDesign name="google" size={20} color="#ea4335" />
-                <Text style={styles.googleBtnText}>Continue with Google</Text>
-              </>
-            )}
-          </Pressable>
-
-          {!!error && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          <Text style={styles.legal}>
-            By continuing you agree to our Terms of Service and Privacy Policy.
-          </Text>
-        </GlassCard>
-      </Animated.View>
-
-      {/* Feature pills */}
-      <Animated.View entering={FadeInUp.duration(600).delay(350)} style={styles.features}>
-        {[
-          { icon: '🎯', text: 'Personalised matches' },
-          { icon: '❤️', text: 'Save your shortlist' },
-          { icon: '⚖️', text: 'Compare side by side' },
-          { icon: '📋', text: 'Track applications' },
-        ].map((f) => (
-          <View key={f.text} style={styles.featureItem}>
-            <Text style={styles.featureIcon}>{f.icon}</Text>
-            <Text style={styles.featureText}>{f.text}</Text>
+      {/* Auth card */}
+      <Animated.View entering={FadeInDown.duration(600).delay(250)} style={styles.card}>
+        {!!error && (
+          <View style={[styles.errorBox, { backgroundColor: c.dangerSurface, borderColor: c.dangerBorder }]}>
+            <Text style={[styles.errorText, { color: c.danger }]}>{error}</Text>
           </View>
-        ))}
+        )}
+
+        <Button
+          label={loading ? '' : 'Continue with Google'}
+          onPress={signInWithGoogle}
+          disabled={loading}
+          loading={loading}
+        />
+
+        <View style={styles.dividerRow}>
+          <View style={[styles.dividerLine, { backgroundColor: c.divider }]} />
+          <Text style={[styles.dividerText, { color: c.textTertiary }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: c.divider }]} />
+        </View>
+
+        <Pressable
+          style={[styles.emailBtn, { borderColor: c.surfaceBorder }]}
+          onPress={() => setError('Email sign-in coming soon — use Google for now.')}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.emailBtnText, { color: c.textSecondary }]}>Sign in with email</Text>
+        </Pressable>
+
+        <Text style={[styles.terms, { color: c.textTertiary }]}>
+          By signing up you agree to our Terms & Privacy Policy
+        </Text>
       </Animated.View>
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: 24 },
+  screen: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  blobTopRight: {
+  blob: {
     position: 'absolute',
-    top: -80,
-    right: -80,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: colors.orange,
-    opacity: 0.08,
-  },
-  blobBottomLeft: {
-    position: 'absolute',
-    bottom: -60,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: colors.orange,
-    opacity: 0.06,
+    top: -120,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.7,
   },
 
-  logoArea: { alignItems: 'center', marginBottom: 36 },
-  logoCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+  branding: { alignItems: 'center', marginBottom: 48 },
+  logoMark: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
-    ...shadow.orange,
-  },
-  logoEmoji: { fontSize: 40 },
-  appName: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -1,
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 280,
-  },
-
-  cardWrap: { width: '100%', marginBottom: 28 },
-  card: { width: '100%' },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  cardSub: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1.5,
-    borderColor: colors.glassBorder,
-    borderRadius: radius.md,
-    paddingVertical: 14,
     marginBottom: 16,
   },
-  googleBtnDisabled: { opacity: 0.6 },
-  googleBtnText: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  logoText: { fontSize: 36, fontFamily: 'Syne_800ExtraBold', color: '#fff' },
+  appName: { fontSize: 36, fontFamily: 'Syne_800ExtraBold', marginBottom: 6 },
+  tagline: { fontSize: 18, fontFamily: 'SpaceGrotesk_500Medium', marginBottom: 6 },
+  subtitle: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular', textAlign: 'center', maxWidth: 260 },
 
-  errorBox: {
-    backgroundColor: colors.dangerDim,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(248,113,113,0.35)',
-    padding: 10,
-    marginBottom: 12,
+  card: { width: '100%', paddingHorizontal: 24, gap: 12 },
+  errorBox: { borderRadius: 12, borderWidth: 1, padding: 12 },
+  errorText: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
+
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1 },
+  dividerText: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
+
+  emailBtn: {
+    height: 52,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  errorText: { color: colors.danger, fontSize: 13 },
+  emailBtnText: { fontSize: 16, fontFamily: 'SpaceGrotesk_700Bold' },
 
-  legal: { fontSize: 11, color: colors.textTertiary, textAlign: 'center', lineHeight: 16 },
-
-  features: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
-  featureItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  featureIcon: { fontSize: 16 },
-  featureText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  terms: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk_400Regular',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: 4,
+  },
 });

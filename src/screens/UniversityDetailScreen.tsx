@@ -1,17 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronLeft, Heart, BarChart3 } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
 import { University } from '../types';
-import { GlassBackground } from '../components/GlassBackground';
-import { GlassCard } from '../components/GlassCard';
-import { GlassButton } from '../components/GlassButton';
 import { UniImage } from '../components/UniImage';
-import { colors, radius, shadow } from '../theme';
+import { MatchBadge } from '../components/ui/MatchBadge';
+import { Button } from '../components/ui/Button';
+import { useThemeColors, radius, iconSize, shadow, layout } from '../theme';
 
 type Props = {
   route: { params: { id: string } };
@@ -19,10 +18,13 @@ type Props = {
 };
 
 export function UniversityDetailScreen({ route, navigation }: Props) {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { shortlist, toggleShortlist, compareIds, toggleCompare, matches } = useAppStore();
   const [fetchedUni, setFetchedUni] = useState<University | null>(null);
 
-  const matchedUni = matches.find((m) => m.university.id === route.params.id)?.university;
+  const matchResult = matches.find((m) => m.university.id === route.params.id);
+  const matchedUni = matchResult?.university;
 
   useEffect(() => {
     if (matchedUni) return;
@@ -32,11 +34,12 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
   }, [route.params.id]);
 
   const uni = matchedUni ?? fetchedUni;
+
   if (!uni) {
     return (
-      <GlassBackground style={styles.center}>
-        <ActivityIndicator color={colors.orange} />
-      </GlassBackground>
+      <View style={[styles.center, { backgroundColor: c.bg }]}>
+        <ActivityIndicator color={c.primary} size="large" />
+      </View>
     );
   }
 
@@ -44,9 +47,9 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
   const compared = compareIds.includes(uni.id);
 
   return (
-    <GlassBackground>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero banner */}
+    <View style={[styles.screen, { backgroundColor: c.bg }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Hero */}
         <View style={styles.hero}>
           <UniImage
             name={uni.name}
@@ -54,206 +57,192 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
             idx={colorIdx(uni.id)}
             style={StyleSheet.absoluteFill}
           />
-          {/* Dark overlay so text + buttons stay readable */}
           <LinearGradient
-            colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0.65)']}
+            colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.65)']}
             style={StyleSheet.absoluteFill}
           />
-          {/* Back + actions */}
-          <View style={styles.actionBar}>
-            <Pressable onPress={() => navigation.goBack()} style={styles.glassBtn}>
-              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+
+          {/* Floating actions */}
+          <View style={[styles.actionBar, { top: insets.top + 8 }]}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={styles.floatBtn}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+              hitSlop={8}
+            >
+              <ChevronLeft size={iconSize.md} color="#fff" strokeWidth={2} />
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Pressable onPress={() => toggleShortlist(uni.id)} style={[styles.glassBtn, saved && styles.glassBtnActive]}>
-              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={20} color={saved ? colors.orange : colors.textPrimary} />
+            <Pressable
+              onPress={() => toggleShortlist(uni.id)}
+              style={[styles.floatBtn, saved && styles.floatBtnActive]}
+              accessibilityLabel={saved ? 'Remove from shortlist' : 'Add to shortlist'}
+            >
+              <Heart
+                size={iconSize.md}
+                color={saved ? c.primary : '#fff'}
+                fill={saved ? c.primary : 'none'}
+                strokeWidth={1.5}
+              />
             </Pressable>
-            <Pressable onPress={() => toggleCompare(uni.id)} style={[styles.glassBtn, compared && styles.glassBtnActive]}>
-              <Ionicons name="git-compare-outline" size={20} color={compared ? colors.orange : colors.textPrimary} />
+            <Pressable
+              onPress={() => toggleCompare(uni.id)}
+              style={[styles.floatBtn, compared && styles.floatBtnActive]}
+              accessibilityLabel="Toggle compare"
+            >
+              <BarChart3 size={iconSize.md} color={compared ? c.primary : '#fff'} strokeWidth={1.5} />
             </Pressable>
           </View>
+
+          {/* Hero title */}
           <View style={styles.heroBottom}>
             <Text style={styles.heroName}>{uni.name}</Text>
-            <Text style={styles.heroLocation}>{uni.city}{uni.state ? `, ${uni.state}` : ''} · {uni.country}</Text>
+            <Text style={styles.heroLocation}>
+              {uni.city}{uni.state ? `, ${uni.state}` : ''} · {uni.country}
+            </Text>
           </View>
         </View>
 
         {/* Content */}
         <View style={styles.content}>
-          {/* Tags */}
-          <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.tagRow}>
+          {/* Match badge + tags */}
+          <View style={styles.badgeRow}>
+            {matchResult && <MatchBadge score={matchResult.score} />}
             {uni.tags.map((t) => (
-              <View key={t} style={styles.tag}>
-                <Text style={styles.tagText}>{t}</Text>
+              <View key={t} style={[styles.tag, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
+                <Text style={[styles.tagText, { color: c.primary }]}>{t}</Text>
               </View>
             ))}
-          </Animated.View>
-
-          {/* Description */}
-          <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-            <Text style={styles.description}>{uni.brief_description}</Text>
-          </Animated.View>
+          </View>
 
           {/* Stats grid */}
-          <Animated.View entering={FadeInDown.duration(400).delay(200)} style={styles.statsGrid}>
-            <GlassCard padding={14} style={styles.statCard} glow>
-              <Text style={styles.statValue}>${uni.tuition_estimate.toLocaleString()}</Text>
-              <Text style={styles.statLabel}>Tuition/yr</Text>
-            </GlassCard>
-            <GlassCard padding={14} style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {uni.acceptance_rate ? `${Math.round(uni.acceptance_rate * 100)}%` : 'N/A'}
-              </Text>
-              <Text style={styles.statLabel}>Acceptance</Text>
-            </GlassCard>
-            <GlassCard padding={14} style={styles.statCard}>
-              <Text style={styles.statValue}>{uni.sat_middle_50.min}–{uni.sat_middle_50.max}</Text>
-              <Text style={styles.statLabel}>SAT Mid-50</Text>
-            </GlassCard>
-            <GlassCard padding={14} style={styles.statCard}>
-              <Text style={styles.statValue}>{uni.intl_aid}</Text>
-              <Text style={styles.statLabel}>Intl Aid</Text>
-            </GlassCard>
-          </Animated.View>
+          <View style={styles.statsGrid}>
+            {[
+              { value: `$${uni.tuition_estimate.toLocaleString()}`, label: 'Tuition/yr' },
+              { value: uni.acceptance_rate ? `${Math.round(uni.acceptance_rate * 100)}%` : 'N/A', label: 'Acceptance' },
+              { value: `${uni.sat_middle_50.min}–${uni.sat_middle_50.max}`, label: 'SAT Mid-50' },
+              { value: uni.intl_aid, label: 'Intl Aid' },
+            ].map(({ value, label }) => (
+              <View key={label} style={[styles.statCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+                <Text style={[styles.statValue, { color: c.primary }]}>{value}</Text>
+                <Text style={[styles.statLabel, { color: c.textTertiary }]}>{label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* About */}
+          <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>About</Text>
+            <Text style={[styles.bodyText, { color: c.textSecondary }]}>{uni.brief_description}</Text>
+          </View>
 
           {/* Programs */}
-          <Animated.View entering={FadeInDown.duration(400).delay(250)}>
-            <GlassCard padding={16} style={styles.section}>
-              <Text style={styles.sectionTitle}>Programs</Text>
+          {uni.majors.length > 0 && (
+            <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+              <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Programs</Text>
               <View style={styles.pillRow}>
                 {uni.majors.map((m) => (
-                  <View key={m} style={styles.majorPill}>
-                    <Text style={styles.majorPillText}>{m}</Text>
+                  <View key={m} style={[styles.pill, { backgroundColor: c.bgMuted, borderColor: c.surfaceBorder }]}>
+                    <Text style={[styles.pillText, { color: c.textSecondary }]}>{m}</Text>
                   </View>
                 ))}
               </View>
-            </GlassCard>
-          </Animated.View>
+            </View>
+          )}
 
           {/* Deadlines */}
-          <Animated.View entering={FadeInDown.duration(400).delay(300)}>
-            <GlassCard padding={16} style={styles.section}>
-              <Text style={styles.sectionTitle}>Deadlines</Text>
+          {uni.deadlines.length > 0 && (
+            <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+              <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Deadlines</Text>
               {uni.deadlines.map((d) => (
-                <View key={d.label} style={styles.deadlineRow}>
-                  <Text style={styles.deadlineLabel}>{d.label}</Text>
-                  <Text style={styles.deadlineDate}>{d.date}</Text>
+                <View key={d.label} style={[styles.deadlineRow, { borderBottomColor: c.divider }]}>
+                  <Text style={[styles.deadlineLabel, { color: c.textSecondary }]}>{d.label}</Text>
+                  <Text style={[styles.deadlineDate, { color: c.textTertiary }]}>{d.date}</Text>
                 </View>
               ))}
-            </GlassCard>
-          </Animated.View>
+            </View>
+          )}
 
           {/* Requirements */}
-          <Animated.View entering={FadeInDown.duration(400).delay(350)}>
-            <GlassCard padding={16} style={styles.section}>
-              <Text style={styles.sectionTitle}>Requirements</Text>
-              <Text style={styles.bodyText}>SAT/ACT optional by policy; check official site.</Text>
-              <Text style={styles.bodyText}>International: English proficiency + visa docs required.</Text>
-            </GlassCard>
-          </Animated.View>
+          <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Requirements</Text>
+            <Text style={[styles.bodyText, { color: c.textSecondary }]}>
+              SAT/ACT optional by policy; check official site for the latest requirements.
+            </Text>
+            <Text style={[styles.bodyText, { color: c.textSecondary }]}>
+              International applicants: English proficiency test + visa documents required.
+            </Text>
+          </View>
 
-          <Animated.View entering={FadeInDown.duration(400).delay(400)}>
-            <GlassButton
-              label="Visit Official Website"
-              onPress={() => Linking.openURL(uni.website)}
-              style={styles.websiteBtn}
-            />
-          </Animated.View>
+          <Button label="Visit Official Website" onPress={() => Linking.openURL(uni.website)} variant="secondary" />
+          <View style={{ height: 8 }} />
+          <Button
+            label={saved ? 'Saved to Shortlist ✓' : 'Add to Shortlist'}
+            onPress={() => toggleShortlist(uni.id)}
+            variant={saved ? 'secondary' : 'primary'}
+          />
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: insets.bottom + layout.tabBarHeight + layout.tabBarBottomOffset + 16 }} />
         </View>
       </ScrollView>
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
+  screen: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  hero: {
-    height: 260,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    padding: 20,
-  },
-  actionBar: {
-    position: 'absolute',
-    top: 52,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  glassBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  hero: { height: 260, overflow: 'hidden', justifyContent: 'flex-end' },
+  actionBar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', gap: 8, alignItems: 'center' },
+  floatBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.35)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glassBtnActive: {
-    backgroundColor: colors.orangeDim,
-    borderColor: colors.orangeBorder,
-  },
-  heroBottom: { gap: 4 },
-  heroName: { fontSize: 22, fontWeight: '800', color: '#fff', lineHeight: 28 },
-  heroLocation: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
+  floatBtnActive: { backgroundColor: 'rgba(255,85,0,0.25)', borderColor: 'rgba(255,85,0,0.50)' },
+  heroBottom: { padding: 20, gap: 4 },
+  heroName: { fontSize: 22, fontFamily: 'Syne_800ExtraBold', color: '#fff', lineHeight: 28 },
+  heroLocation: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', color: 'rgba(255,255,255,0.65)' },
 
-  content: { padding: 16 },
+  content: { padding: 16, gap: 12 },
 
-  tagRow: { flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' },
-  tag: {
-    backgroundColor: colors.orangeDim,
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  tag: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.full, borderWidth: 1 },
+  tagText: { fontSize: 12, fontFamily: 'SpaceGrotesk_500Medium' },
+
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  statCard: {
+    flex: 1,
+    minWidth: '44%',
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.orangeBorder,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: radius.full,
+    padding: 14,
+    alignItems: 'center',
   },
-  tagText: { fontSize: 12, color: colors.orange, fontWeight: '600' },
+  statValue: { fontSize: 17, fontFamily: 'Syne_700Bold', marginBottom: 3 },
+  statLabel: { fontSize: 11, fontFamily: 'SpaceGrotesk_500Medium' },
 
-  description: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 16,
-  },
-
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  statCard: { flex: 1, minWidth: '44%', alignItems: 'center' },
-  statValue: { fontSize: 17, fontWeight: '800', color: colors.orange, marginBottom: 3 },
-  statLabel: { fontSize: 11, color: colors.textTertiary, fontWeight: '500' },
-
-  section: { marginBottom: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  section: { borderRadius: radius.lg, borderWidth: 1, padding: 16, gap: 10 },
+  sectionTitle: { fontSize: 14, fontFamily: 'Syne_700Bold' },
+  bodyText: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular', lineHeight: 22 },
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  majorPill: {
-    backgroundColor: colors.glassCard,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    borderRadius: radius.full,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  majorPillText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  pill: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.full, borderWidth: 1 },
+  pillText: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
 
   deadlineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.glassBorder,
   },
-  deadlineLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
-  deadlineDate: { fontSize: 14, color: colors.textTertiary },
-
-  bodyText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 4 },
-
-  websiteBtn: { marginTop: 4 },
+  deadlineLabel: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
+  deadlineDate: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular' },
 });

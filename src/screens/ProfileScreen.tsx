@@ -1,59 +1,55 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GraduationCap, Settings2, Edit2, Check } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { supabase, saveUserSocialProfile } from '../lib/supabase';
 import { useEffect, useState } from 'react';
 import { Country } from '../types';
-import { GlassBackground } from '../components/GlassBackground';
-import { GlassCard } from '../components/GlassCard';
-import { GlassButton } from '../components/GlassButton';
 import { GlassInput } from '../components/GlassInput';
-import { GlassChip } from '../components/GlassChip';
-import { colors, radius } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Button } from '../components/ui/Button';
+import { Chip } from '../components/ui/Chip';
+import { useThemeColors, radius, iconSize, layout } from '../theme';
 import { validateAct, validateGre, validateIelts, validateSat, validateToefl } from '../utils/scoring';
 
 type StudyLevel = "Bachelor's" | "Master's" | 'PhD' | "Associate's";
 
 const COUNTRIES: { value: Country; flag: string; label: string }[] = [
-  { value: 'USA',       flag: '🇺🇸', label: 'USA' },
-  { value: 'UK',        flag: '🇬🇧', label: 'UK' },
-  { value: 'EU',        flag: '🇪🇺', label: 'Europe' },
-  { value: 'China',     flag: '🇨🇳', label: 'China' },
-  { value: 'Canada',    flag: '🇨🇦', label: 'Canada' },
+  { value: 'USA', flag: '🇺🇸', label: 'USA' },
+  { value: 'UK',  flag: '🇬🇧', label: 'UK'  },
+  { value: 'EU',  flag: '🇪🇺', label: 'Europe' },
+  { value: 'China', flag: '🇨🇳', label: 'China' },
+  { value: 'Canada', flag: '🇨🇦', label: 'Canada' },
   { value: 'Australia', flag: '🇦🇺', label: 'Australia' },
 ];
 
-const STUDY_LEVELS: { label: StudyLevel; icon: string }[] = [
-  { label: "Bachelor's",  icon: '🎓' },
-  { label: "Master's",    icon: '📚' },
-  { label: 'PhD',         icon: '🔬' },
-  { label: "Associate's", icon: '📖' },
-];
+const STUDY_LEVELS: StudyLevel[] = ["Bachelor's", "Master's", 'PhD', "Associate's"];
 
 export function ProfileScreen() {
-  const { profile, shortlist, matches, signOut, saveProfile, fetchAndScore, username } = useAppStore();
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const { profile, shortlist, matches, compareIds, tracker, signOut, saveProfile, fetchAndScore, username } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
+  const trackingCount = Object.keys(tracker).length;
+
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [bio, setBio] = useState('');
   const [editingBio, setEditingBio] = useState(false);
   const [savingBio, setSavingBio] = useState(false);
   const [error, setError] = useState('');
 
   const [country, setCountry] = useState<Country>(profile.country);
   const [studyLevel, setStudyLevel] = useState<StudyLevel>((profile.degreeLevel as StudyLevel) ?? "Bachelor's");
-  const [satTotal, setSatTotal]   = useState(profile.satTotal?.toString() ?? '');
-  const [act, setAct]             = useState(profile.act?.toString() ?? '');
-  const [ibScore, setIbScore]     = useState(profile.ibScore?.toString() ?? '');
-  const [gpa, setGpa]             = useState(profile.gpa?.toString() ?? '');
-  const [ielts, setIelts]         = useState(profile.ielts?.toString() ?? '');
-  const [toefl, setToefl]         = useState(profile.toefl?.toString() ?? '');
+  const [satTotal, setSatTotal] = useState(profile.satTotal?.toString() ?? '');
+  const [act, setAct] = useState(profile.act?.toString() ?? '');
+  const [ibScore, setIbScore] = useState(profile.ibScore?.toString() ?? '');
+  const [gpa, setGpa] = useState(profile.gpa?.toString() ?? '');
+  const [ielts, setIelts] = useState(profile.ielts?.toString() ?? '');
+  const [toefl, setToefl] = useState(profile.toefl?.toString() ?? '');
   const [greVerbal, setGreVerbal] = useState(profile.greVerbal?.toString() ?? '');
-  const [greQuant, setGreQuant]   = useState(profile.greQuant?.toString() ?? '');
+  const [greQuant, setGreQuant] = useState(profile.greQuant?.toString() ?? '');
   const [budgetMin, setBudgetMin] = useState(profile.budgetMin?.toString() ?? '');
   const [budgetMax, setBudgetMax] = useState(profile.budgetMax?.toString() ?? '');
   const [preferredLocation, setPreferredLocation] = useState(profile.preferredLocation ?? '');
@@ -110,16 +106,16 @@ export function ProfileScreen() {
 
   const saveEdits = async () => {
     setError('');
-    const sat    = satTotal  ? Number(satTotal)  : undefined;
-    const actN   = act       ? Number(act)       : undefined;
-    const ib     = ibScore   ? Number(ibScore)   : undefined;
-    const gpaN   = gpa       ? Number(gpa)       : undefined;
-    const ieltsN = ielts     ? Number(ielts)     : undefined;
-    const toeflN = toefl     ? Number(toefl)     : undefined;
-    const greV   = greVerbal ? Number(greVerbal) : undefined;
-    const greQ   = greQuant  ? Number(greQuant)  : undefined;
-    const bMin   = budgetMin ? Number(budgetMin) : undefined;
-    const bMax   = budgetMax ? Number(budgetMax) : undefined;
+    const sat = satTotal ? Number(satTotal) : undefined;
+    const actN = act ? Number(act) : undefined;
+    const ib = ibScore ? Number(ibScore) : undefined;
+    const gpaN = gpa ? Number(gpa) : undefined;
+    const ieltsN = ielts ? Number(ielts) : undefined;
+    const toeflN = toefl ? Number(toefl) : undefined;
+    const greV = greVerbal ? Number(greVerbal) : undefined;
+    const greQ = greQuant ? Number(greQuant) : undefined;
+    const bMin = budgetMin ? Number(budgetMin) : undefined;
+    const bMax = budgetMax ? Number(budgetMax) : undefined;
 
     if (!validateSat(sat))      { setError('SAT total must be 400–1600.'); return; }
     if (!validateAct(actN))     { setError('ACT must be 1–36.'); return; }
@@ -129,345 +125,227 @@ export function ProfileScreen() {
     if (gpaN !== undefined && (gpaN < 0 || gpaN > 4.0)) { setError('GPA must be 0–4.0.'); return; }
     if (!validateGre(greV))     { setError('GRE Verbal must be 130–170.'); return; }
     if (!validateGre(greQ))     { setError('GRE Quant must be 130–170.'); return; }
-    if (bMin !== undefined && bMax !== undefined && bMin >= bMax) {
-      setError('Min budget must be less than max budget.'); return;
-    }
+    if (bMin !== undefined && bMax !== undefined && bMin >= bMax) { setError('Min budget must be less than max budget.'); return; }
 
     setSaving(true);
-    const updated = {
-      ...profile,
-      country,
-      degreeLevel: studyLevel,
-      satTotal: sat,
-      act: actN,
-      ibScore: ib,
-      gpa: gpaN,
-      ielts: ieltsN,
-      toefl: toeflN,
-      greVerbal: greV,
-      greQuant: greQ,
-      budgetMin: bMin,
-      budgetMax: bMax,
-      preferredLocation: preferredLocation || undefined,
-    };
+    const updated = { ...profile, country, degreeLevel: studyLevel, satTotal: sat, act: actN, ibScore: ib, gpa: gpaN, ielts: ieltsN, toefl: toeflN, greVerbal: greV, greQuant: greQ, budgetMin: bMin, budgetMax: bMax, preferredLocation: preferredLocation || undefined };
     await saveProfile(updated);
     await fetchAndScore(updated);
     setSaving(false);
     setEditing(false);
   };
 
-  const initials = displayName.charAt(0).toUpperCase();
-
-  const fmtMoney = (n?: number) => (n != null ? `$${n.toLocaleString()}` : null);
-  const budgetDisplay = profile.budgetMin || profile.budgetMax
-    ? `${fmtMoney(profile.budgetMin) ?? 'Any'} – ${fmtMoney(profile.budgetMax) ?? 'Any'}`
-    : 'Not set';
+  const initials = (displayName || 'S').charAt(0).toUpperCase();
+  const fmtMoney = (n?: number) => n != null ? `$${n.toLocaleString()}` : null;
+  const budgetDisplay = profile.budgetMin || profile.budgetMax ? `${fmtMoney(profile.budgetMin) ?? 'Any'} – ${fmtMoney(profile.budgetMax) ?? 'Any'}` : 'Not set';
 
   return (
-    <GlassBackground>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Avatar hero */}
-        <Animated.View entering={FadeInUp.duration(500)} style={styles.avatarSection}>
-          <LinearGradient
-            colors={['rgba(255,122,47,0.25)', 'transparent']}
-            style={styles.avatarGlow}
-          />
-          <View style={styles.avatarRing}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarInitial}>{initials}</Text>
+    <View style={[styles.screen, { backgroundColor: c.bg }]}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <View style={[styles.avatarRing, { borderColor: c.primaryBorder }]}>
+            <View style={[styles.avatar, { backgroundColor: c.primarySurface }]}>
+              <Text style={[styles.avatarInitial, { color: c.primary }]}>{initials}</Text>
             </View>
           </View>
-          <Text style={styles.name}>{displayName}</Text>
-          {username && <Text style={styles.usernameLabel}>@{username}</Text>}
-          <Text style={styles.emailLabel}>{email}</Text>
+          <Text style={[styles.displayName, { color: c.textPrimary }]}>{displayName}</Text>
+          {username && <Text style={[styles.usernameLabel, { color: c.primary }]}>@{username}</Text>}
+          <Text style={[styles.emailLabel, { color: c.textTertiary }]}>{email}</Text>
 
           {/* Bio */}
           {editingBio ? (
-            <View style={styles.bioEditWrap}>
+            <View style={[styles.bioEditWrap, { borderColor: c.inputBorder, backgroundColor: c.inputBg }]}>
               <TextInput
-                style={styles.bioInput}
+                style={[styles.bioInput, { color: c.textPrimary }, Platform.OS === 'web' && ({ outlineWidth: 0 } as any)]}
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Write a short bio..."
-                placeholderTextColor={colors.textTertiary}
+                placeholderTextColor={c.textTertiary}
                 multiline
                 maxLength={160}
               />
               <View style={styles.bioActions}>
-                <Pressable onPress={() => setEditingBio(false)} style={styles.cancelBtn}>
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Pressable onPress={() => setEditingBio(false)} style={[styles.cancelBtn, { borderColor: c.surfaceBorder }]}>
+                  <Text style={[styles.cancelBtnText, { color: c.textSecondary }]}>Cancel</Text>
                 </Pressable>
-                <Pressable onPress={saveBio} style={styles.saveBioBtn} disabled={savingBio}>
-                  {savingBio ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBioBtnText}>Save Bio</Text>}
+                <Pressable onPress={saveBio} disabled={savingBio} style={[styles.saveBioBtn, { backgroundColor: c.primary }]}>
+                  {savingBio ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBioBtnText}>Save</Text>}
                 </Pressable>
               </View>
             </View>
           ) : (
             <Pressable onPress={() => setEditingBio(true)} style={styles.bioRow}>
-              <Text style={styles.bioText}>{bio || 'Add a bio...'}</Text>
-              <Ionicons name="pencil-outline" size={14} color={colors.textTertiary} />
+              <Text style={[styles.bioText, { color: c.textTertiary }]}>{bio || 'Add a bio…'}</Text>
+              <Edit2 size={12} color={c.textTertiary} strokeWidth={1.5} />
             </Pressable>
           )}
-        </Animated.View>
+        </View>
 
         {/* Stats */}
-        <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.statsRow}>
-          <GlassCard padding={14} glow style={styles.statCard}>
-            <Text style={styles.statNum}>{matches.length}</Text>
-            <Text style={styles.statLabel}>Matches</Text>
-          </GlassCard>
-          <GlassCard padding={14} style={styles.statCard}>
-            <Text style={styles.statNum}>{savedCount}</Text>
-            <Text style={styles.statLabel}>Saved</Text>
-          </GlassCard>
-          <GlassCard padding={14} style={styles.statCard}>
-            <Text style={styles.statNum}>{profile.satTotal ?? '—'}</Text>
-            <Text style={styles.statLabel}>SAT</Text>
-          </GlassCard>
-        </Animated.View>
-
-        {/* Academic Info */}
-        <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-          <GlassCard padding={16} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Academic Info</Text>
-              {!editing && (
-                <Pressable onPress={startEditing} style={styles.editBtn}>
-                  <Ionicons name="pencil-outline" size={13} color={colors.orange} />
-                  <Text style={styles.editBtnText}>Edit</Text>
-                </Pressable>
-              )}
+        <View style={styles.statsGrid}>
+          {[
+            { value: matches.length,   label: 'Matches'    },
+            { value: savedCount,       label: 'Saved'      },
+            { value: compareIds.length,label: 'Comparing'  },
+            { value: trackingCount,    label: 'Tracking'   },
+          ].map(({ value, label }) => (
+            <View key={label} style={[styles.statCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+              <Text style={[styles.statNum, { color: c.primary }]}>{value}</Text>
+              <Text style={[styles.statLabel, { color: c.textTertiary }]}>{label}</Text>
             </View>
+          ))}
+        </View>
 
-            {editing ? (
-              <>
-                <Text style={styles.fieldLabel}>Study Destination</Text>
-                <View style={styles.chipWrap}>
-                  {COUNTRIES.map((c) => (
-                    <GlassChip key={c.value} label={`${c.flag} ${c.label}`} active={country === c.value} onPress={() => setCountry(c.value)} />
-                  ))}
-                </View>
-
-                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Study Level</Text>
-                <View style={styles.chipWrap}>
-                  {STUDY_LEVELS.map((l) => (
-                    <GlassChip key={l.label} label={`${l.icon} ${l.label}`} active={studyLevel === l.label} onPress={() => setStudyLevel(l.label)} />
-                  ))}
-                </View>
-
-                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Test Scores</Text>
-                <View style={{ gap: 10 }}>
-                  {!isGrad && !isAssociate && (
-                    <>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
-                        <GlassInput label="ACT" keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" style={styles.flex1} />
-                      </View>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="IB Score" keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" style={styles.flex1} />
-                        <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
-                      </View>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
-                        <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
-                      </View>
-                    </>
-                  )}
-
-                  {isGrad && (
-                    <>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
-                        <GlassInput label="GRE Verbal" keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" style={styles.flex1} />
-                      </View>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="GRE Quant" keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" style={styles.flex1} />
-                        <GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} />
-                      </View>
-                      <View style={styles.twoCol}>
-                        <GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} />
-                        <View style={styles.flex1} />
-                      </View>
-                    </>
-                  )}
-
-                  {isAssociate && (
-                    <View style={styles.twoCol}>
-                      <GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} />
-                      <GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} />
-                    </View>
-                  )}
-                </View>
-
-                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Budget (USD/yr)</Text>
-                <View style={styles.twoCol}>
-                  <GlassInput label="Min" keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 0" style={styles.flex1} />
-                  <GlassInput label="Max" keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" style={styles.flex1} />
-                </View>
-
-                <View style={{ marginTop: 10 }}>
-                  <GlassInput label="Preferred Location" value={preferredLocation} onChangeText={setPreferredLocation} placeholder="e.g. Boston, CA" />
-                </View>
-
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-                <View style={styles.editActions}>
-                  <Pressable onPress={() => setEditing(false)} style={styles.cancelBtn}>
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </Pressable>
-                  <GlassButton
-                    label={saving ? '' : 'Save & Update Matches'}
-                    loading={saving}
-                    onPress={saveEdits}
-                    style={{ flex: 2 }}
-                  />
-                </View>
-              </>
-            ) : (
-              <>
-                <InfoRow icon="school-outline" label="Country" value={profile.country} />
-                <InfoRow icon="ribbon-outline" label="Study Level" value={profile.degreeLevel ?? 'Not set'} />
-                <InfoRow icon="trophy-outline" label="GPA" value={profile.gpa?.toString() ?? 'Not set'} />
-                <InfoRow icon="document-text-outline" label="SAT Total" value={profile.satTotal?.toString() ?? 'Not set'} />
-                <InfoRow icon="document-text-outline" label="ACT" value={profile.act?.toString() ?? 'Not set'} />
-                <InfoRow icon="document-text-outline" label="IB Score" value={profile.ibScore?.toString() ?? 'Not set'} />
-                <InfoRow icon="language-outline" label="IELTS" value={profile.ielts?.toString() ?? 'Not set'} />
-                <InfoRow icon="language-outline" label="TOEFL" value={profile.toefl?.toString() ?? 'Not set'} />
-                <InfoRow icon="document-text-outline" label="GRE Verbal" value={profile.greVerbal?.toString() ?? 'Not set'} />
-                <InfoRow icon="document-text-outline" label="GRE Quant" value={profile.greQuant?.toString() ?? 'Not set'} />
-                <InfoRow icon="cash-outline" label="Budget" value={budgetDisplay} />
-                <InfoRow icon="location-outline" label="Preferred Location" value={profile.preferredLocation ?? 'Not set'} />
-              </>
+        {/* Academic info */}
+        <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+          <View style={styles.sectionHeader}>
+            <GraduationCap size={iconSize.md} color={c.primary} strokeWidth={1.5} />
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Academic Profile</Text>
+            {!editing && (
+              <Pressable onPress={startEditing} style={[styles.editBtn, { borderColor: c.primaryBorder, backgroundColor: c.primarySurface }]}>
+                <Edit2 size={12} color={c.primary} strokeWidth={2} />
+                <Text style={[styles.editBtnText, { color: c.primary }]}>Edit</Text>
+              </Pressable>
             )}
-          </GlassCard>
-        </Animated.View>
+          </View>
+
+          {editing ? (
+            <View style={{ gap: 12 }}>
+              <Text style={[styles.fieldLabel, { color: c.textSecondary }]}>Country</Text>
+              <View style={styles.chipWrap}>
+                {COUNTRIES.map(ct => (
+                  <Chip key={ct.value} label={`${ct.flag} ${ct.label}`} active={country === ct.value} onPress={() => setCountry(ct.value)} />
+                ))}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: c.textSecondary }]}>Study Level</Text>
+              <View style={styles.chipWrap}>
+                {STUDY_LEVELS.map(l => (
+                  <Chip key={l} label={l} active={studyLevel === l} onPress={() => setStudyLevel(l)} />
+                ))}
+              </View>
+
+              <Text style={[styles.fieldLabel, { color: c.textSecondary }]}>Test Scores</Text>
+              {!isGrad && !isAssociate && (<>
+                <View style={styles.twoCol}><GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} /><GlassInput label="ACT" keyboardType="number-pad" value={act} onChangeText={setAct} placeholder="1–36" style={styles.flex1} /></View>
+                <View style={styles.twoCol}><GlassInput label="IB" keyboardType="number-pad" value={ibScore} onChangeText={setIbScore} placeholder="0–45" style={styles.flex1} /><GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} /></View>
+                <View style={styles.twoCol}><GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} /><GlassInput label="TOEFL" keyboardType="number-pad" value={toefl} onChangeText={setToefl} placeholder="0–120" style={styles.flex1} /></View>
+              </>)}
+              {isGrad && (<>
+                <View style={styles.twoCol}><GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} /><GlassInput label="GRE V" keyboardType="number-pad" value={greVerbal} onChangeText={setGreVerbal} placeholder="130–170" style={styles.flex1} /></View>
+                <View style={styles.twoCol}><GlassInput label="GRE Q" keyboardType="number-pad" value={greQuant} onChangeText={setGreQuant} placeholder="130–170" style={styles.flex1} /><GlassInput label="IELTS" keyboardType="decimal-pad" value={ielts} onChangeText={setIelts} placeholder="0–9.0" style={styles.flex1} /></View>
+              </>)}
+              {isAssociate && (
+                <View style={styles.twoCol}><GlassInput label="SAT" keyboardType="number-pad" value={satTotal} onChangeText={setSatTotal} placeholder="400–1600" style={styles.flex1} /><GlassInput label="GPA" keyboardType="decimal-pad" value={gpa} onChangeText={setGpa} placeholder="0–4.0" style={styles.flex1} /></View>
+              )}
+
+              <Text style={[styles.fieldLabel, { color: c.textSecondary }]}>Budget (USD/yr)</Text>
+              <View style={styles.twoCol}><GlassInput label="Min" keyboardType="number-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="e.g. 0" style={styles.flex1} /><GlassInput label="Max" keyboardType="number-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="e.g. 50000" style={styles.flex1} /></View>
+
+              <GlassInput label="Preferred Location" value={preferredLocation} onChangeText={setPreferredLocation} placeholder="e.g. Boston, CA" />
+
+              {!!error && <Text style={[styles.errorText, { color: c.danger }]}>{error}</Text>}
+
+              <View style={styles.editActions}>
+                <Pressable onPress={() => setEditing(false)} style={[styles.cancelBtn, { borderColor: c.surfaceBorder, flex: 1 }]}>
+                  <Text style={[styles.cancelBtnText, { color: c.textSecondary }]}>Cancel</Text>
+                </Pressable>
+                <View style={{ flex: 2 }}>
+                  <Button label={saving ? '' : 'Save & Update'} loading={saving} onPress={saveEdits} />
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={{ gap: 10 }}>
+              {[
+                { label: 'Country', value: profile.country },
+                { label: 'Study Level', value: profile.degreeLevel ?? 'Not set' },
+                { label: 'GPA', value: profile.gpa?.toString() ?? 'Not set' },
+                { label: 'SAT', value: profile.satTotal?.toString() ?? 'Not set' },
+                { label: 'IELTS', value: profile.ielts?.toString() ?? 'Not set' },
+                { label: 'Budget', value: budgetDisplay },
+                { label: 'Location', value: profile.preferredLocation ?? 'Not set' },
+              ].map(({ label, value }) => (
+                <View key={label} style={styles.infoRow}>
+                  <Text style={[styles.infoLabel, { color: c.textSecondary }]}>{label}</Text>
+                  <Text style={[styles.infoValue, { color: c.textPrimary }]}>{value}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
 
         {/* Interests */}
-        <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-          <GlassCard padding={16} style={styles.section}>
-            <Text style={styles.sectionTitle}>Interests</Text>
-            <View style={styles.pillRow}>
-              {profile.interests.length ? profile.interests.map((i) => (
-                <View key={i} style={styles.pill}>
-                  <Text style={styles.pillText}>{i}</Text>
-                </View>
-              )) : <Text style={styles.none}>None selected — set in Discover</Text>}
-            </View>
-          </GlassCard>
-        </Animated.View>
+        <View style={[styles.section, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+          <View style={styles.sectionHeader}>
+            <Settings2 size={iconSize.md} color={c.primary} strokeWidth={1.5} />
+            <Text style={[styles.sectionTitle, { color: c.textPrimary }]}>Interests</Text>
+          </View>
+          <View style={styles.chipWrap}>
+            {profile.interests.length ? profile.interests.map(interest => (
+              <Chip key={interest} label={interest} active />
+            )) : (
+              <Text style={[styles.none, { color: c.textTertiary }]}>None selected — set in Discover</Text>
+            )}
+          </View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(250)}>
-          <GlassButton label="Sign out" variant="danger" onPress={signOut} />
-        </Animated.View>
+        <Button label="Sign Out" variant="secondary" onPress={signOut} />
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: insets.bottom + layout.tabBarHeight + layout.tabBarBottomOffset + 16 }} />
       </ScrollView>
-    </GlassBackground>
-  );
-}
-
-function InfoRow({ icon, label, value }: { icon: React.ComponentProps<typeof Ionicons>['name']; label: string; value: string }) {
-  return (
-    <View style={styles.infoRow}>
-      <Ionicons name={icon} size={16} color={colors.orange} />
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  content: { padding: 20, paddingTop: 56, gap: 14 },
+  screen: { flex: 1 },
+  content: { padding: 16, gap: 14 },
 
-  avatarSection: { alignItems: 'center', paddingVertical: 20, position: 'relative' },
-  avatarGlow: {
-    position: 'absolute',
-    top: 0,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    alignSelf: 'center',
-  },
-  avatarRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 2,
-    borderColor: colors.orangeBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: colors.orange,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.orangeDim,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: { fontSize: 34, fontWeight: '800', color: colors.orange },
-  name: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 2 },
-  usernameLabel: { fontSize: 14, color: colors.orange, fontWeight: '600', marginBottom: 2 },
-  emailLabel: { fontSize: 13, color: colors.textTertiary },
+  avatarSection: { alignItems: 'center', paddingVertical: 8, gap: 4 },
+  avatarRing: { width: 90, height: 90, borderRadius: 45, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  avatar: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { fontSize: 32, fontFamily: 'Syne_800ExtraBold' },
+  displayName: { fontSize: 20, fontFamily: 'Syne_700Bold' },
+  usernameLabel: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
+  emailLabel: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
 
-  bioRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  bioText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', fontStyle: 'italic' },
-  bioEditWrap: { width: '100%', marginTop: 12, gap: 8 },
-  bioInput: {
-    backgroundColor: colors.glassInput,
-    borderWidth: 1.5,
-    borderColor: colors.glassInputBorder,
-    borderRadius: radius.md,
-    padding: 10,
-    fontSize: 14,
-    color: colors.textPrimary,
-    minHeight: 60,
-  },
-  bioActions: { flexDirection: 'row', gap: 10 },
+  bioRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  bioText: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular', fontStyle: 'italic' },
+  bioEditWrap: { width: '100%', borderRadius: radius.md, borderWidth: 1.5, padding: 10, marginTop: 8, gap: 8 },
+  bioInput: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular', minHeight: 60 },
+  bioActions: { flexDirection: 'row', gap: 8 },
 
-  statsRow: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 22, fontWeight: '800', color: colors.orange },
-  statLabel: { fontSize: 11, color: colors.textTertiary, fontWeight: '500', marginTop: 2 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  statCard: { flex: 1, minWidth: '44%', borderRadius: radius.lg, borderWidth: 1, padding: 14, alignItems: 'center' },
+  statNum: { fontSize: 22, fontFamily: 'Syne_700Bold', marginBottom: 2 },
+  statLabel: { fontSize: 11, fontFamily: 'SpaceGrotesk_500Medium' },
 
-  section: { gap: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full, borderWidth: 1.5, borderColor: colors.orangeBorder },
-  editBtnText: { fontSize: 12, fontWeight: '700', color: colors.orange },
+  section: { borderRadius: radius.lg, borderWidth: 1, padding: 16, gap: 14 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionTitle: { flex: 1, fontSize: 14, fontFamily: 'Syne_700Bold' },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.full, borderWidth: 1.5 },
+  editBtnText: { fontSize: 12, fontFamily: 'SpaceGrotesk_700Bold' },
 
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
+  fieldLabel: { fontSize: 12, fontFamily: 'SpaceGrotesk_500Medium', marginBottom: 2 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   twoCol: { flexDirection: 'row', gap: 10 },
   flex1: { flex: 1 },
 
-  errorText: { color: colors.danger, fontSize: 13, marginTop: 8 },
+  errorText: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
+  editActions: { flexDirection: 'row', gap: 10, marginTop: 4, alignItems: 'center' },
+  cancelBtn: { borderRadius: radius.md, borderWidth: 1.5, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  cancelBtnText: { fontSize: 14, fontFamily: 'SpaceGrotesk_700Bold' },
+  saveBioBtn: { borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center' },
+  saveBioBtnText: { fontSize: 14, fontFamily: 'SpaceGrotesk_700Bold', color: '#fff' },
 
-  editActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.glassBorder, alignItems: 'center', justifyContent: 'center' },
-  cancelBtnText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
-  saveBioBtn: { flex: 2, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.orange, alignItems: 'center' },
-  saveBioBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  infoLabel: { flex: 1, fontSize: 14, color: colors.textSecondary },
-  infoValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pill: {
-    backgroundColor: colors.orangeDim,
-    borderWidth: 1,
-    borderColor: colors.orangeBorder,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-  },
-  pillText: { fontSize: 13, color: colors.orange, fontWeight: '600' },
-  none: { fontSize: 14, color: colors.textTertiary },
+  infoRow: { flexDirection: 'row', alignItems: 'center' },
+  infoLabel: { flex: 1, fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular' },
+  infoValue: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
+  none: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular' },
 });

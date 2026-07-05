@@ -1,11 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
+import {
+  Home, Search, Heart, CheckSquare, MoreHorizontal,
+  BarChart3, Users, User, X,
+} from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { AuthScreen } from '../screens/AuthScreen';
@@ -23,7 +27,7 @@ import { ChatScreen } from '../screens/ChatScreen';
 import { UsernameSetupModal } from '../components/UsernameSetupModal';
 import { OnboardingModal } from '../components/OnboardingModal';
 import { HelpFAQ } from '../components/HelpFAQ';
-import { colors } from '../theme';
+import { useThemeColors, radius, fonts, iconSize, layout } from '../theme';
 
 export type DiscoverStackParamList = {
   DiscoverResults: undefined;
@@ -47,13 +51,11 @@ const Stack = createNativeStackNavigator<DiscoverStackParamList>();
 const ShortlistNav = createNativeStackNavigator<ShortlistStackParamList>();
 const PeopleNav = createNativeStackNavigator<PeopleStackParamList>();
 
-const stackScreenOptions = {
-  headerShown: false,
-};
+const stackOptions = { headerShown: false };
 
 function ShortlistStack() {
   return (
-    <ShortlistNav.Navigator screenOptions={stackScreenOptions}>
+    <ShortlistNav.Navigator screenOptions={stackOptions}>
       <ShortlistNav.Screen name="ShortlistMain" component={ShortlistScreen} />
       <ShortlistNav.Screen name="UniversityDetail" component={UniversityDetailScreen} />
     </ShortlistNav.Navigator>
@@ -62,7 +64,7 @@ function ShortlistStack() {
 
 function DiscoverStack() {
   return (
-    <Stack.Navigator screenOptions={stackScreenOptions}>
+    <Stack.Navigator screenOptions={stackOptions}>
       <Stack.Screen name="DiscoverResults" component={DiscoverScreen} />
       <Stack.Screen name="UniversityDetail" component={UniversityDetailScreen} />
     </Stack.Navigator>
@@ -71,7 +73,7 @@ function DiscoverStack() {
 
 function PeopleStack() {
   return (
-    <PeopleNav.Navigator screenOptions={{ headerShown: false }}>
+    <PeopleNav.Navigator screenOptions={stackOptions}>
       <PeopleNav.Screen name="PeopleSearch" component={PeopleScreen} />
       <PeopleNav.Screen name="PublicProfile" component={PublicProfileScreen} />
       <PeopleNav.Screen name="Chat" component={ChatScreen} />
@@ -80,29 +82,70 @@ function PeopleStack() {
   );
 }
 
-type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+// ─── More modal ──────────────────────────────────────────────────────────────
 
-const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }> = {
-  Home:      { active: 'home',             inactive: 'home-outline' },
-  Discover:  { active: 'search',           inactive: 'search-outline' },
-  Shortlist: { active: 'heart',            inactive: 'heart-outline' },
-  Compare:   { active: 'git-compare',      inactive: 'git-compare-outline' },
-  Tracker:   { active: 'checkmark-circle', inactive: 'checkmark-circle-outline' },
-  People:    { active: 'people',           inactive: 'people-outline' },
-  Profile:   { active: 'person',           inactive: 'person-outline' },
-};
+interface MoreModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onNavigate: (screen: string) => void;
+}
 
-function TabBarBackground() {
+function MoreModal({ visible, onClose, onNavigate }: MoreModalProps) {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
+
+  const items = [
+    { icon: BarChart3, label: 'Compare',  screen: 'Compare' },
+    { icon: Users,     label: 'People',   screen: 'People'  },
+    { icon: User,      label: 'Profile',  screen: 'Profile' },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.moreOverlay} onPress={onClose}>
+        <View
+          style={[
+            styles.moreSheet,
+            {
+              backgroundColor: c.bgElevated,
+              borderColor: c.surfaceBorder,
+              paddingBottom: insets.bottom + 16,
+            },
+          ]}
+        >
+          <View style={[styles.moreDragHandle, { backgroundColor: c.surfaceBorder }]} />
+          <Text style={[styles.moreTitle, { color: c.textPrimary }]}>More</Text>
+          {items.map(({ icon: Icon, label, screen }) => (
+            <Pressable
+              key={screen}
+              style={[styles.moreItem, { borderBottomColor: c.divider }]}
+              onPress={() => { onClose(); onNavigate(screen); }}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+            >
+              <Icon size={iconSize.md} color={c.primary} strokeWidth={1.5} />
+              <Text style={[styles.moreItemLabel, { color: c.textPrimary }]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ─── Tab bar background ───────────────────────────────────────────────────────
+
+function TabBarBackground({ isDark }: { isDark: boolean }) {
   if (Platform.OS === 'web') {
     return (
       <View
         style={{
           position: 'absolute',
-          inset: 0,
-          backgroundColor: colors.tabBarBg,
+          top: 0, bottom: 0, left: 0, right: 0,
+          backgroundColor: isDark ? 'rgba(15,10,4,0.88)' : 'rgba(255,250,245,0.88)',
           borderRadius: 32,
           borderWidth: 1,
-          borderColor: colors.tabBarBorder,
+          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
           // @ts-ignore
           backdropFilter: 'blur(30px)',
           WebkitBackdropFilter: 'blur(30px)',
@@ -113,22 +156,36 @@ function TabBarBackground() {
   return (
     <BlurView
       intensity={30}
-      tint="dark"
+      tint={isDark ? 'dark' : 'light'}
       style={{
         position: 'absolute',
-        inset: 0,
+        top: 0, bottom: 0, left: 0, right: 0,
         borderRadius: 32,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: colors.tabBarBorder,
+        borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
       }}
     />
   );
 }
 
+// ─── More placeholder screen ──────────────────────────────────────────────────
+
+function MorePlaceholder() {
+  return <View style={{ flex: 1 }} />;
+}
+
+// ─── Main tabs ────────────────────────────────────────────────────────────────
+
 function MainTabs() {
+  const c = useThemeColors();
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
   const { username, userDataLoaded, profile } = useAppStore();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [moreVisible, setMoreVisible] = useState(false);
+  const [moreNavigation, setMoreNavigation] = useState<any>(null);
+
   const showOnboarding = userDataLoaded && username !== null && profile.interests.length === 0 && !onboardingDismissed;
 
   return (
@@ -136,8 +193,8 @@ function MainTabs() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: colors.tabActive,
-          tabBarInactiveTintColor: colors.tabInactive,
+          tabBarActiveTintColor: c.tabActive,
+          tabBarInactiveTintColor: c.tabInactive,
           tabBarActiveBackgroundColor: 'transparent',
           tabBarInactiveBackgroundColor: 'transparent',
           tabBarButton: (props) => (
@@ -148,37 +205,61 @@ function MainTabs() {
             bottom: 16,
             left: 12,
             right: 12,
-            height: 62,
+            height: layout.tabBarHeight,
             borderRadius: 32,
             backgroundColor: 'transparent',
             borderTopWidth: 0,
             elevation: 0,
             shadowOpacity: 0,
           },
-          tabBarBackground: () => <TabBarBackground />,
-          tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginBottom: 4 },
+          tabBarBackground: () => <TabBarBackground isDark={isDark} />,
+          tabBarLabelStyle: { fontSize: 10, fontFamily: 'SpaceGrotesk_500Medium', marginBottom: 4 },
           tabBarItemStyle: { paddingTop: 6 },
-          tabBarIcon: ({ focused, color, size }) => {
-            const icons = TAB_ICONS[route.name];
-            if (!icons) return null;
-            return (
-              <Ionicons
-                name={focused ? icons.active : icons.inactive}
-                size={focused ? size + 1 : size}
-                color={color}
-              />
-            );
-          },
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Discover" component={DiscoverStack} />
-        <Tab.Screen name="Shortlist" component={ShortlistStack} />
-        <Tab.Screen name="Compare" component={CompareScreen} />
-        <Tab.Screen name="Tracker" component={TrackerScreen} />
-        <Tab.Screen name="People" component={PeopleStack} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ tabBarIcon: ({ color, size, focused }) => <Home size={focused ? size + 1 : size} color={color} strokeWidth={1.5} /> }}
+        />
+        <Tab.Screen
+          name="Discover"
+          component={DiscoverStack}
+          options={{ tabBarIcon: ({ color, size, focused }) => <Search size={focused ? size + 1 : size} color={color} strokeWidth={1.5} /> }}
+        />
+        <Tab.Screen
+          name="Shortlist"
+          component={ShortlistStack}
+          options={{ tabBarIcon: ({ color, size, focused }) => <Heart size={focused ? size + 1 : size} color={color} fill={focused ? color : 'none'} strokeWidth={1.5} /> }}
+        />
+        <Tab.Screen
+          name="Tracker"
+          component={TrackerScreen}
+          options={{ tabBarIcon: ({ color, size, focused }) => <CheckSquare size={focused ? size + 1 : size} color={color} strokeWidth={1.5} /> }}
+        />
+        <Tab.Screen
+          name="More"
+          component={MorePlaceholder}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              setMoreNavigation(navigation);
+              setMoreVisible(true);
+            },
+          })}
+          options={{ tabBarIcon: ({ color, size }) => <MoreHorizontal size={size} color={color} strokeWidth={1.5} /> }}
+        />
+        {/* Hidden tabs — navigated to from More modal */}
+        <Tab.Screen name="Compare" component={CompareScreen} options={{ tabBarButton: () => null }} />
+        <Tab.Screen name="People" component={PeopleStack} options={{ tabBarButton: () => null }} />
+        <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarButton: () => null }} />
       </Tab.Navigator>
+
+      <MoreModal
+        visible={moreVisible}
+        onClose={() => setMoreVisible(false)}
+        onNavigate={(screen) => moreNavigation?.navigate(screen)}
+      />
 
       <UsernameSetupModal visible={userDataLoaded && username === null} />
       <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDismissed(true)} />
@@ -187,9 +268,12 @@ function MainTabs() {
   );
 }
 
+// ─── Root navigator ───────────────────────────────────────────────────────────
+
 export function AppNavigator() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialising, setInitialising] = useState(true);
+  const c = useThemeColors();
   const { setSession: storeSetSession, loadUserData } = useAppStore();
 
   useEffect(() => {
@@ -199,16 +283,22 @@ export function AppNavigator() {
       if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
         loadUserData();
       }
+      // After a Supabase pause, the access token may be expired on INITIAL_SESSION so DB
+      // queries fail silently. autoRefreshToken will fire TOKEN_REFRESHED once the token is
+      // renewed — retry loadUserData at that point if we haven't loaded yet.
+      if (session && event === 'TOKEN_REFRESHED') {
+        const { userDataLoaded } = useAppStore.getState();
+        if (!userDataLoaded) loadUserData();
+      }
       setInitialising(false);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
   if (initialising) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDeep }}>
-        <ActivityIndicator size="large" color={colors.orange} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg }}>
+        <ActivityIndicator size="large" color={c.primary} />
       </View>
     );
   }
@@ -219,3 +309,43 @@ export function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  moreOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.50)',
+    justifyContent: 'flex-end',
+  },
+  moreSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    paddingTop: 12,
+    paddingHorizontal: 0,
+  },
+  moreDragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  moreTitle: {
+    fontSize: 16,
+    fontFamily: 'Syne_700Bold',
+    paddingHorizontal: 24,
+    marginBottom: 8,
+  },
+  moreItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  moreItemLabel: {
+    fontSize: 16,
+    fontFamily: 'SpaceGrotesk_500Medium',
+  },
+});

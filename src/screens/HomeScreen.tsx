@@ -1,30 +1,30 @@
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Search, Heart, BarChart3, CheckSquare } from 'lucide-react-native';
 import { CardBanner } from '../components/CardBanner';
-import { GlassBackground } from '../components/GlassBackground';
-import { GlassCard } from '../components/GlassCard';
-import { GlassButton } from '../components/GlassButton';
 import { colorIdx } from '../lib/transform';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { colors, gradients, radius, shadow } from '../theme';
+import { useThemeColors, radius, iconSize, shadow, layout } from '../theme';
 
 const FEATURES = [
-  { icon: '🔍', label: 'Discover', desc: 'Matched by SAT, interests & budget', tab: 'Discover' },
-  { icon: '❤️', label: 'Shortlist', desc: 'Tag schools as reach, match or safety', tab: 'Shortlist' },
-  { icon: '⚖️', label: 'Compare', desc: 'Side-by-side stats for up to 3 schools', tab: 'Compare' },
-  { icon: '📋', label: 'Tracker', desc: 'Track essays, deadlines & status', tab: 'Tracker' },
+  { Icon: Search,     label: 'Discover', desc: 'Matched by scores & budget',   tab: 'Discover' },
+  { Icon: Heart,      label: 'Shortlist', desc: 'Save and tag your favourites', tab: 'Shortlist' },
+  { Icon: BarChart3,  label: 'Compare',  desc: 'Side-by-side stats for 3 unis',tab: 'Compare' },
+  { Icon: CheckSquare,label: 'Tracker',  desc: 'Track deadlines & applications',tab: 'Tracker' },
 ];
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { shortlist, matches } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const matchCount = matches.length;
-  const featured = matches.slice(0, 4);
+  const featured = matches.slice(0, 6);
   const [totalSchools, setTotalSchools] = useState<number | null>(null);
 
   useEffect(() => {
@@ -34,73 +34,50 @@ export function HomeScreen() {
   }, []);
 
   return (
-    <GlassBackground>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
-        <Animated.View entering={FadeInUp.duration(600)}>
-          <View style={styles.hero}>
-            <LinearGradient
-              colors={['rgba(255,122,47,0.18)', 'transparent']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.heroBlobTR} />
-            <Text style={styles.heroEyebrow}>Welcome to</Text>
-            <Text style={styles.heroTitle}>OrangeUni</Text>
-            <Text style={styles.heroSub}>Find universities that fit you — transparently.</Text>
-            <GlassButton
-              label="Start Discovering →"
-              onPress={() => navigation.navigate('Discover')}
-              size="md"
-              style={styles.heroCta}
-            />
-          </View>
+    <View style={[styles.screen, { backgroundColor: c.bg }]}>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+      >
+        {/* Greeting */}
+        <Animated.View entering={FadeInDown.duration(500)} style={styles.greetingSection}>
+          <Text style={[styles.eyebrow, { color: c.textTertiary }]}>Good morning 👋</Text>
+          <Text style={[styles.greeting, { color: c.textPrimary }]}>Your Dashboard</Text>
         </Animated.View>
 
-        {/* Stats */}
-        <Animated.View entering={FadeInDown.duration(500).delay(100)} style={styles.statsRow}>
-          <GlassCard padding={16} glow style={styles.statCard}>
-            <Text style={styles.statNum}>{matchCount || '—'}</Text>
-            <Text style={styles.statLabel}>Matches</Text>
-          </GlassCard>
-          <GlassCard padding={16} style={styles.statCard}>
-            <Text style={styles.statNum}>{savedCount || '—'}</Text>
-            <Text style={styles.statLabel}>Saved</Text>
-          </GlassCard>
-          <GlassCard padding={16} style={styles.statCard}>
-            <Text style={styles.statNum}>{totalSchools ?? '—'}</Text>
-            <Text style={styles.statLabel}>Schools</Text>
-          </GlassCard>
-        </Animated.View>
-
-        {/* Features */}
-        <Text style={styles.sectionTitle}>What you can do</Text>
-        <Animated.View entering={FadeInDown.duration(500).delay(200)} style={styles.featureGrid}>
-          {FEATURES.map((f, i) => (
-            <Animated.View key={f.label} entering={FadeInDown.duration(400).delay(200 + i * 60)} style={styles.featureCardWrap}>
-              <Pressable
-                style={styles.featureCardPress}
-                onPress={() => navigation.navigate(f.tab)}
-              >
-                <GlassCard padding={16} style={styles.featureCard}>
-                  <Text style={styles.featureIcon}>{f.icon}</Text>
-                  <Text style={styles.featureLabel}>{f.label}</Text>
-                  <Text style={styles.featureDesc}>{f.desc}</Text>
-                </GlassCard>
-              </Pressable>
-            </Animated.View>
+        {/* Stats row */}
+        <Animated.View entering={FadeInDown.duration(500).delay(80)} style={styles.statsRow}>
+          {[
+            { value: matchCount || '—', label: 'Matches' },
+            { value: savedCount || '—', label: 'Saved' },
+            { value: totalSchools ?? '—', label: 'Universities' },
+          ].map(({ value, label }) => (
+            <View key={label} style={[styles.statCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
+              <Text style={[styles.statNum, { color: c.primary }]}>{value}</Text>
+              <Text style={[styles.statLabel, { color: c.textTertiary }]}>{label}</Text>
+            </View>
           ))}
         </Animated.View>
 
-        {/* Top Matches */}
+        {/* Top matches */}
         {featured.length > 0 && (
-          <Animated.View entering={FadeInDown.duration(500).delay(400)}>
-            <Text style={styles.sectionTitle}>Top Matches</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
+          <Animated.View entering={FadeInDown.duration(500).delay(160)}>
+            <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>TOP MATCHES</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.featuredList}
+              snapToInterval={212}
+              decelerationRate="fast"
+            >
               {featured.map((m) => (
-                <Pressable key={m.university.id} onPress={() => navigation.navigate('Discover')}>
-                  <GlassCard padding={0} style={styles.featuredCard} borderRadius={radius.lg}>
+                <Pressable
+                  key={m.university.id}
+                  style={[styles.featuredCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
+                  onPress={() => navigation.navigate('Discover')}
+                >
+                  <View style={styles.featuredImageWrap}>
                     <CardBanner
                       name={m.university.name}
                       city={m.university.city}
@@ -108,97 +85,106 @@ export function HomeScreen() {
                       country={m.university.country}
                       idx={colorIdx(m.university.id)}
                       height={110}
+                      showText={false}
                     />
-                    <View style={styles.featuredInfo}>
-                      <Text style={styles.featuredName} numberOfLines={1}>{m.university.name}</Text>
-                      <Text style={styles.featuredMeta}>{m.university.city} · {m.score}% match</Text>
-                    </View>
-                  </GlassCard>
+                  </View>
+                  <View style={styles.featuredInfo}>
+                    <Text style={[styles.featuredName, { color: c.textPrimary }]} numberOfLines={1}>
+                      {m.university.name}
+                    </Text>
+                    <Text style={[styles.featuredMeta, { color: c.textTertiary }]}>
+                      {m.university.city} · {m.score}% match
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </ScrollView>
           </Animated.View>
         )}
 
-        <View style={{ height: 100 }} />
+        {/* Quick actions */}
+        <Animated.View entering={FadeInDown.duration(500).delay(240)}>
+          <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>QUICK ACTIONS</Text>
+          <View style={styles.featureGrid}>
+            {FEATURES.map(({ Icon, label, desc, tab }, i) => (
+              <Animated.View
+                key={label}
+                entering={FadeInDown.duration(400).delay(240 + i * 60)}
+                style={styles.featureWrap}
+              >
+                <Pressable
+                  style={[styles.featureCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
+                  onPress={() => navigation.navigate(tab)}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                >
+                  <Icon size={iconSize.xl} color={c.primary} strokeWidth={1.5} />
+                  <Text style={[styles.featureLabel, { color: c.textPrimary }]}>{label}</Text>
+                  <Text style={[styles.featureDesc, { color: c.textSecondary }]}>{desc}</Text>
+                </Pressable>
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <View style={{ height: insets.bottom + layout.tabBarHeight + layout.tabBarBottomOffset + 16 }} />
       </ScrollView>
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
+  screen: { flex: 1 },
+  content: { paddingHorizontal: layout.screenPadding, gap: 0 },
 
-  hero: {
-    paddingHorizontal: 24,
-    paddingTop: 64,
-    paddingBottom: 36,
-    overflow: 'hidden',
+  greetingSection: { marginBottom: 20 },
+  eyebrow: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium', marginBottom: 4 },
+  greeting: { fontSize: 28, fontFamily: 'Syne_800ExtraBold' },
+
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 28 },
+  statCard: {
+    flex: 1,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: 14,
+    alignItems: 'center',
   },
-  heroBlobTR: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: colors.orange,
-    opacity: 0.08,
-  },
-  heroEyebrow: {
-    color: colors.orange,
-    fontWeight: '600',
-    fontSize: 12,
-    letterSpacing: 2,
+  statNum: { fontSize: 24, fontFamily: 'Syne_700Bold', marginBottom: 2 },
+  statLabel: { fontSize: 11, fontFamily: 'SpaceGrotesk_500Medium' },
+
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    marginBottom: 6,
-  },
-  heroTitle: {
-    color: colors.textPrimary,
-    fontSize: 44,
-    fontWeight: '800',
-    letterSpacing: -1.5,
-    marginBottom: 10,
-  },
-  heroSub: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 24,
-    maxWidth: 280,
-  },
-  heroCta: { alignSelf: 'flex-start' },
-
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 16,
-    marginTop: 4,
-    marginBottom: 24,
-  },
-  statCard: { flex: 1, alignItems: 'center' },
-  statNum: { fontSize: 26, fontWeight: '800', color: colors.orange },
-  statLabel: { fontSize: 11, color: colors.textTertiary, marginTop: 2, fontWeight: '500' },
-
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    paddingHorizontal: 16,
     marginBottom: 12,
   },
 
-  featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginBottom: 24 },
-  featureCardWrap: { width: '47%' },
-  featureCardPress: { flex: 1 },
-  featureCard: {},
-  featureIcon: { fontSize: 26, marginBottom: 8 },
-  featureLabel: { fontWeight: '700', fontSize: 14, color: colors.textPrimary, marginBottom: 4 },
-  featureDesc: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
-
-  featuredList: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
-  featuredCard: { width: 200, overflow: 'hidden' },
+  featuredList: { gap: 12, paddingBottom: 4, marginBottom: 28 },
+  featuredCard: {
+    width: 200,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  featuredImageWrap: { height: 110 },
   featuredInfo: { padding: 10 },
-  featuredName: { fontWeight: '700', fontSize: 13, color: colors.textPrimary, marginBottom: 2 },
-  featuredMeta: { fontSize: 11, color: colors.textTertiary },
+  featuredName: { fontSize: 13, fontFamily: 'Syne_700Bold', marginBottom: 2 },
+  featuredMeta: { fontSize: 11, fontFamily: 'SpaceGrotesk_400Regular' },
+
+  featureGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 8,
+  },
+  featureWrap: { width: '47.5%' },
+  featureCard: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: 16,
+    gap: 8,
+  },
+  featureLabel: { fontSize: 14, fontFamily: 'Syne_700Bold' },
+  featureDesc: { fontSize: 12, fontFamily: 'SpaceGrotesk_400Regular', lineHeight: 17 },
 });

@@ -1,16 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
+import { MessageCircle, Search, Users, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { searchUsers, getOrCreateConversation } from '../lib/supabase';
 import { UserPublicProfile } from '../types';
-import { GlassBackground } from '../components/GlassBackground';
-import { GlassCard } from '../components/GlassCard';
 import { useAppStore } from '../store/useAppStore';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, iconSize, shadow } from '../theme';
 
 export function PeopleScreen() {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { session } = useAppStore();
   const myId = session?.user.id ?? '';
@@ -53,174 +54,177 @@ export function PeopleScreen() {
   }, [query]);
 
   return (
-    <GlassBackground>
+    <View style={[styles.screen, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>People</Text>
-        <Pressable style={styles.inboxBtn} onPress={() => navigation.navigate('Inbox')}>
-          <Ionicons name="chatbubbles-outline" size={22} color={colors.orange} />
+        <Text style={[styles.title, { color: c.textPrimary }]}>People</Text>
+        <Pressable
+          style={[styles.inboxBtn, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}
+          onPress={() => navigation.navigate('Inbox')}
+        >
+          <MessageCircle size={20} color={c.primary} strokeWidth={1.5} />
         </Pressable>
       </View>
 
       {/* Search */}
-      <View style={styles.searchRow}>
-        <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
+      <View style={[styles.searchRow, { backgroundColor: c.inputBg, borderColor: c.inputBorder }]}>
+        <Search size={iconSize.sm} color={c.textTertiary} strokeWidth={1.5} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: c.textPrimary }, Platform.OS === 'web' && ({ outlineWidth: 0 } as any)]}
           value={query}
           onChangeText={setQuery}
           placeholder="Search by username..."
-          placeholderTextColor={colors.textTertiary}
+          placeholderTextColor={c.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
         />
         {query.length > 0 && (
-          <Pressable onPress={() => { setQuery(''); setResults([]); setSearched(false); }}>
-            <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+          <Pressable onPress={() => { setQuery(''); setResults([]); setSearched(false); }} hitSlop={8}>
+            <X size={iconSize.sm} color={c.textTertiary} strokeWidth={2} />
           </Pressable>
         )}
       </View>
 
       <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {loading && (
-          <View style={styles.center}><ActivityIndicator color={colors.orange} /></View>
+          <View style={styles.center}><ActivityIndicator color={c.primary} /></View>
         )}
 
         {!loading && searched && results.length === 0 && (
           <View style={styles.center}>
-            <Ionicons name="person-outline" size={40} color={colors.textTertiary} />
-            <Text style={styles.emptyText}>No users found for "{query}"</Text>
+            <Users size={40} color={c.textTertiary} strokeWidth={1.5} />
+            <Text style={[styles.emptyText, { color: c.textSecondary }]}>No users found for "{query}"</Text>
           </View>
         )}
 
         {!loading && !searched && query.length < 2 && (
           <View style={styles.center}>
-            <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
-            <Text style={styles.emptyText}>Find students by username</Text>
-            <Text style={styles.emptyHint}>Type at least 2 characters to search</Text>
+            <Users size={48} color={c.textTertiary} strokeWidth={1.5} />
+            <Text style={[styles.emptyText, { color: c.textSecondary }]}>Find students by username</Text>
+            <Text style={[styles.emptyHint, { color: c.textTertiary }]}>Type at least 2 characters to search</Text>
           </View>
         )}
 
         {results.map((user, i) => (
           <Animated.View key={user.id} entering={FadeInDown.duration(350).delay(i * 50)}>
             <Pressable onPress={() => navigation.navigate('PublicProfile', { userId: user.id })}>
-              <GlassCard padding={14} style={styles.userCard} borderRadius={radius.lg}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
+              <View style={[styles.userCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }, shadow.sm]}>
+                <View style={[styles.avatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
+                  <Text style={[styles.avatarText, { color: c.primary }]}>
                     {(user.display_name || user.username).charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={styles.userInfo}>
-                  <Text style={styles.displayName}>{user.display_name || user.username}</Text>
-                  <Text style={styles.username}>@{user.username}</Text>
-                  {user.bio ? <Text style={styles.bio} numberOfLines={1}>{user.bio}</Text> : null}
+                  <Text style={[styles.displayName, { color: c.textPrimary }]}>{user.display_name || user.username}</Text>
+                  <Text style={[styles.username, { color: c.textTertiary }]}>@{user.username}</Text>
+                  {user.bio ? <Text style={[styles.bio, { color: c.textSecondary }]} numberOfLines={1}>{user.bio}</Text> : null}
                 </View>
                 <View style={styles.meta}>
                   {user.country && (
-                    <View style={styles.countryPill}>
-                      <Text style={styles.countryText}>{user.country}</Text>
+                    <View style={[styles.countryPill, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
+                      <Text style={[styles.countryText, { color: c.primary }]}>{user.country}</Text>
                     </View>
                   )}
                   <Pressable
-                    style={styles.msgBtn}
+                    style={[styles.msgBtn, { backgroundColor: c.primary }]}
                     onPress={(e) => { e.stopPropagation?.(); handleMessage(user); }}
                     disabled={messagingId === user.id}
                   >
                     {messagingId === user.id
                       ? <ActivityIndicator size="small" color="#fff" />
                       : <>
-                          <Ionicons name="chatbubble-outline" size={13} color="#fff" />
+                          <MessageCircle size={13} color="#fff" strokeWidth={1.5} />
                           <Text style={styles.msgBtnText}>Message</Text>
                         </>
                     }
                   </Pressable>
                 </View>
-              </GlassCard>
+              </View>
             </Pressable>
           </Animated.View>
         ))}
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 12,
   },
-  title: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
+  title: { fontSize: 32, fontFamily: 'Syne_800ExtraBold', letterSpacing: -0.5 },
   inboxBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.orangeDim,
     borderWidth: 1.5,
-    borderColor: colors.orangeBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glassInput,
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1.5,
-    borderColor: colors.glassInputBorder,
     gap: 10,
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
+  searchInput: { flex: 1, fontSize: 15, fontFamily: 'SpaceGrotesk_400Regular' },
   list: { flex: 1, paddingHorizontal: 16 },
   center: { alignItems: 'center', paddingTop: 64, gap: 10, paddingHorizontal: 24 },
-  emptyText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' },
-  emptyHint: { fontSize: 13, color: colors.textTertiary, textAlign: 'center' },
-  userCard: { marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
+  emptyText: { fontSize: 15, fontFamily: 'SpaceGrotesk_500Medium', textAlign: 'center' },
+  emptyHint: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', textAlign: 'center' },
+  userCard: {
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: 14,
+  },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.orangeDim,
     borderWidth: 1.5,
-    borderColor: colors.orangeBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    flexShrink: 0,
   },
-  avatarText: { fontSize: 20, fontWeight: '700', color: colors.orange },
+  avatarText: { fontSize: 20, fontFamily: 'Syne_700Bold' },
   userInfo: { flex: 1, gap: 2 },
-  displayName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  username: { fontSize: 13, color: colors.textTertiary },
-  bio: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  meta: { alignItems: 'flex-end', gap: 6 },
+  displayName: { fontSize: 15, fontFamily: 'Syne_700Bold' },
+  username: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
+  bio: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', marginTop: 2 },
+  meta: { alignItems: 'flex-end', gap: 6, marginLeft: 8 },
   countryPill: {
-    backgroundColor: colors.orangeDim,
     borderWidth: 1,
-    borderColor: colors.orangeBorder,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.full,
   },
-  countryText: { fontSize: 11, fontWeight: '600', color: colors.orange },
+  countryText: { fontSize: 11, fontFamily: 'SpaceGrotesk_700Bold' },
   msgBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.orange,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radius.full,
     minWidth: 76,
     justifyContent: 'center',
   },
-  msgBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  msgBtnText: { fontSize: 12, fontFamily: 'SpaceGrotesk_700Bold', color: '#fff' },
 });
