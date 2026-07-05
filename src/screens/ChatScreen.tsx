@@ -1,18 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, Send } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList, KeyboardAvoidingView, Platform, Pressable,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase, getMessages, sendMessage } from '../lib/supabase';
 import { Message } from '../types';
 import { useAppStore } from '../store/useAppStore';
-import { GlassBackground } from '../components/GlassBackground';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, iconSize } from '../theme';
 
 export function ChatScreen({ route }: any) {
   const { conversationId, otherUsername } = route.params as { conversationId: string; otherUsername: string };
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { session } = useAppStore();
   const myId = session?.user.id ?? '';
@@ -80,12 +82,17 @@ export function ChatScreen({ route }: any) {
     const isMe = item.sender_id === myId;
     return (
       <View style={[styles.bubbleWrap, isMe ? styles.bubbleWrapMe : styles.bubbleWrapThem]}>
-        <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
-          <Text style={[styles.bubbleText, isMe ? styles.bubbleTextMe : styles.bubbleTextThem]}>
+        <View style={[
+          styles.bubble,
+          isMe
+            ? [styles.bubbleMe, { backgroundColor: c.primary }]
+            : [styles.bubbleThem, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }],
+        ]}>
+          <Text style={[styles.bubbleText, { color: isMe ? '#fff' : c.textPrimary }]}>
             {item.content}
           </Text>
         </View>
-        <Text style={[styles.timestamp, isMe ? styles.timestampMe : styles.timestampThem]}>
+        <Text style={[styles.timestamp, { color: c.textTertiary }, isMe ? styles.timestampMe : styles.timestampThem]}>
           {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Text>
       </View>
@@ -93,22 +100,25 @@ export function ChatScreen({ route }: any) {
   };
 
   return (
-    <GlassBackground>
+    <View style={[styles.screen, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <KeyboardAvoidingView
-        style={styles.flexWithTabBar}
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+        <View style={[styles.header, { borderBottomColor: c.divider }]}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={[styles.backBtn, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
+          >
+            <ArrowLeft size={iconSize.sm} color={c.textPrimary} strokeWidth={1.5} />
           </Pressable>
           <View style={styles.headerInfo}>
-            <View style={styles.headerAvatar}>
-              <Text style={styles.headerAvatarText}>{otherInitial}</Text>
+            <View style={[styles.headerAvatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
+              <Text style={[styles.headerAvatarText, { color: c.primary }]}>{otherInitial}</Text>
             </View>
-            <Text style={styles.headerName}>@{otherUsername}</Text>
+            <Text style={[styles.headerName, { color: c.textPrimary }]}>@{otherUsername}</Text>
           </View>
           <View style={{ width: 40 }} />
         </View>
@@ -123,20 +133,20 @@ export function ChatScreen({ route }: any) {
           onLayout={() => flatRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={styles.emptyChat}>
-              <Ionicons name="chatbubble-outline" size={40} color={colors.textTertiary} />
-              <Text style={styles.emptyChatText}>Start the conversation!</Text>
+              <Text style={[styles.emptyChatText, { color: c.textTertiary }]}>Start the conversation!</Text>
             </View>
           }
         />
 
         {/* Input bar */}
-        <View style={styles.inputBar}>
+        <View style={[styles.inputBar, { borderTopColor: c.divider, backgroundColor: c.bg, paddingBottom: insets.bottom + 78 }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: c.textPrimary, borderColor: c.inputBorder, backgroundColor: c.bgElevated },
+              Platform.OS === 'web' && ({ outlineWidth: 0 } as any)]}
             value={text}
             onChangeText={setText}
             placeholder="Message..."
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor={c.textTertiary}
             multiline
             maxLength={2000}
             returnKeyType="send"
@@ -150,40 +160,36 @@ export function ChatScreen({ route }: any) {
             }}
           />
           <Pressable
-            style={[styles.sendBtn, (!text.trim() || sending) && styles.sendBtnDisabled]}
+            style={[styles.sendBtn, { backgroundColor: c.primary }, (!text.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
             disabled={!text.trim() || sending}
           >
-            <Ionicons name="send" size={20} color="#fff" />
-            <Text style={styles.sendBtnLabel}>Send</Text>
+            <Send size={18} color="#fff" strokeWidth={2} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   flex: { flex: 1 },
-  flexWithTabBar: { flex: 1, paddingBottom: 78 },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 12,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.glassBorder,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.glassCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,78 +198,50 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.orangeDim,
     borderWidth: 1.5,
-    borderColor: colors.orangeBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerAvatarText: { fontSize: 15, fontWeight: '700', color: colors.orange },
-  headerName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  headerAvatarText: { fontSize: 15, fontFamily: 'Syne_700Bold' },
+  headerName: { fontSize: 16, fontFamily: 'Syne_700Bold' },
 
   messageList: { padding: 16, gap: 4, flexGrow: 1 },
   bubbleWrap: { marginBottom: 8 },
   bubbleWrapMe: { alignItems: 'flex-end' },
   bubbleWrapThem: { alignItems: 'flex-start' },
   bubble: { maxWidth: '75%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  bubbleMe: {
-    backgroundColor: colors.orange,
-    borderBottomRightRadius: 4,
-    shadowColor: colors.orange,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  bubbleThem: {
-    backgroundColor: colors.glassCard,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleText: { fontSize: 15, lineHeight: 21 },
-  bubbleTextMe: { color: '#fff' },
-  bubbleTextThem: { color: colors.textPrimary },
-  timestamp: { fontSize: 10, color: colors.textTertiary, marginTop: 3, marginHorizontal: 4 },
+  bubbleMe: { borderBottomRightRadius: 4 },
+  bubbleThem: { borderWidth: 1, borderBottomLeftRadius: 4 },
+  bubbleText: { fontSize: 15, fontFamily: 'SpaceGrotesk_400Regular', lineHeight: 21 },
+  timestamp: { fontSize: 10, fontFamily: 'SpaceGrotesk_400Regular', marginTop: 3, marginHorizontal: 4 },
   timestampMe: { textAlign: 'right' },
   timestampThem: { textAlign: 'left' },
-  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 10 },
-  emptyChatText: { fontSize: 14, color: colors.textTertiary, fontWeight: '500' },
+  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  emptyChatText: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
 
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.glassBorder,
     gap: 10,
   },
   input: {
     flex: 1,
-    backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: colors.glassInputBorder,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
-    color: colors.textPrimary,
+    fontFamily: 'SpaceGrotesk_400Regular',
     maxHeight: 120,
-    ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}),
   },
   sendBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
+    width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.orange,
-    shadowColor: colors.orange,
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 3 },
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sendBtnLabel: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  sendBtnDisabled: { opacity: 0.4, shadowOpacity: 0 },
+  sendBtnDisabled: { opacity: 0.4 },
 });

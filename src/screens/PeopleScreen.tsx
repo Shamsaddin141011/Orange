@@ -156,7 +156,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 68, // leave room for the global HelpFAQ button (42px + 16px + gap)
     paddingTop: 16,
     paddingBottom: 12,
   },

@@ -1,14 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, MessageCircle } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConversations } from '../lib/supabase';
 import { Conversation } from '../types';
 import { useAppStore } from '../store/useAppStore';
-import { GlassBackground } from '../components/GlassBackground';
-import { GlassCard } from '../components/GlassCard';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, iconSize } from '../theme';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -22,6 +21,8 @@ function timeAgo(iso: string): string {
 }
 
 export function InboxScreen() {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { session } = useAppStore();
   const myId = session?.user.id ?? '';
@@ -45,30 +46,33 @@ export function InboxScreen() {
   const handleRefresh = () => { setRefreshing(true); load(); };
 
   return (
-    <GlassBackground>
+    <View style={[styles.screen, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={[styles.backBtn, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
+        >
+          <ArrowLeft size={iconSize.sm} color={c.textPrimary} strokeWidth={1.5} />
         </Pressable>
-        <Text style={styles.title}>Messages</Text>
+        <Text style={[styles.title, { color: c.textPrimary }]}>Messages</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.orange} size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color={c.primary} size="large" /></View>
       ) : (
         <ScrollView
           style={styles.list}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.orange} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={c.primary} />}
         >
           {conversations.length === 0 && (
             <View style={styles.center}>
-              <Ionicons name="chatbubbles-outline" size={52} color={colors.textTertiary} />
-              <Text style={styles.emptyTitle}>No messages yet</Text>
-              <Text style={styles.emptyHint}>Find a student in People and start a conversation</Text>
+              <MessageCircle size={52} color={c.textTertiary} strokeWidth={1.5} />
+              <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No messages yet</Text>
+              <Text style={[styles.emptyHint, { color: c.textTertiary }]}>Find a student in People and start a conversation</Text>
             </View>
           )}
 
@@ -82,21 +86,22 @@ export function InboxScreen() {
                     conversationId: conv.id,
                     otherUsername: other?.username ?? 'Unknown',
                   })}
+                  style={[styles.convRow, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
                 >
-                  <GlassCard padding={14} style={styles.convRow} borderRadius={radius.lg}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{initials}</Text>
-                    </View>
-                    <View style={styles.convInfo}>
-                      <View style={styles.convTop}>
-                        <Text style={styles.convName}>{other?.display_name || other?.username || 'Unknown'}</Text>
-                        <Text style={styles.convTime}>{timeAgo(conv.last_message_at)}</Text>
-                      </View>
-                      <Text style={styles.convPreview} numberOfLines={1}>
-                        {conv.last_message_content ?? 'Start a conversation'}
+                  <View style={[styles.avatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
+                    <Text style={[styles.avatarText, { color: c.primary }]}>{initials}</Text>
+                  </View>
+                  <View style={styles.convInfo}>
+                    <View style={styles.convTop}>
+                      <Text style={[styles.convName, { color: c.textPrimary }]}>
+                        {other?.display_name || other?.username || 'Unknown'}
                       </Text>
+                      <Text style={[styles.convTime, { color: c.textTertiary }]}>{timeAgo(conv.last_message_at)}</Text>
                     </View>
-                  </GlassCard>
+                    <Text style={[styles.convPreview, { color: c.textSecondary }]} numberOfLines={1}>
+                      {conv.last_message_content ?? 'Start a conversation'}
+                    </Text>
+                  </View>
                 </Pressable>
               </Animated.View>
             );
@@ -105,51 +110,54 @@ export function InboxScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       )}
-    </GlassBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.glassCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  title: { fontSize: 20, fontFamily: 'Syne_700Bold' },
   center: { alignItems: 'center', paddingTop: 80, gap: 12, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textSecondary },
-  emptyHint: { fontSize: 14, color: colors.textTertiary, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 17, fontFamily: 'Syne_700Bold' },
+  emptyHint: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular', textAlign: 'center', lineHeight: 20 },
   list: { flex: 1 },
   listContent: { padding: 16, gap: 10 },
-  convRow: { flexDirection: 'row', alignItems: 'center' },
+  convRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: 14,
+  },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.orangeDim,
     borderWidth: 1.5,
-    borderColor: colors.orangeBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  avatarText: { fontSize: 22, fontWeight: '700', color: colors.orange },
+  avatarText: { fontSize: 22, fontFamily: 'Syne_700Bold' },
   convInfo: { flex: 1 },
   convTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
-  convName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  convTime: { fontSize: 11, color: colors.textTertiary },
-  convPreview: { fontSize: 13, color: colors.textSecondary },
+  convName: { fontSize: 15, fontFamily: 'SpaceGrotesk_700Bold' },
+  convTime: { fontSize: 11, fontFamily: 'SpaceGrotesk_400Regular' },
+  convPreview: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },
 });
