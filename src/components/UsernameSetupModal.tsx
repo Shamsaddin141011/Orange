@@ -2,13 +2,12 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View 
 import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { checkUsernameAvailable, saveUserSocialProfile } from '../lib/supabase';
-import { supabase } from '../lib/supabase';
 import { GlassCard } from './GlassCard';
 import { GlassButton } from './GlassButton';
 import { colors, radius } from '../theme';
 
 export function UsernameSetupModal({ visible }: { visible: boolean }) {
-  const { setUsername } = useAppStore();
+  const { setUsername, session } = useAppStore();
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -31,7 +30,9 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
       const available = await checkUsernameAvailable(value);
       if (!available) { setError('Username already taken'); setSaving(false); return; }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use the session already in the store — avoids a network-validated getUser() call
+      // which fails when the access token is stale (e.g. right after a Supabase project unpause).
+      const user = session?.user;
       if (!user) throw new Error('Not signed in');
 
       await saveUserSocialProfile(user.id, {
