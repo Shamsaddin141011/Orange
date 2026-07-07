@@ -1,4 +1,4 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigatorScreenParams, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
@@ -46,7 +46,18 @@ export type PeopleStackParamList = {
   Inbox: undefined;
 };
 
-const Tab = createBottomTabNavigator();
+export type MainTabParamList = {
+  Home: undefined;
+  Discover: NavigatorScreenParams<DiscoverStackParamList>;
+  Shortlist: NavigatorScreenParams<ShortlistStackParamList>;
+  Tracker: undefined;
+  More: undefined;
+  Compare: undefined;
+  People: NavigatorScreenParams<PeopleStackParamList>;
+  Profile: undefined;
+};
+
+const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<DiscoverStackParamList>();
 const ShortlistNav = createNativeStackNavigator<ShortlistStackParamList>();
 const PeopleNav = createNativeStackNavigator<PeopleStackParamList>();
@@ -270,6 +281,38 @@ function MainTabs() {
 
 // ─── Root navigator ───────────────────────────────────────────────────────────
 
+const linking: LinkingOptions<MainTabParamList> = {
+  prefixes: ['https://www.orangeuni.org', 'https://orangeuni.org', 'orangeuni://'],
+  config: {
+    screens: {
+      Home: 'home',
+      Discover: {
+        screens: {
+          DiscoverResults: 'discover',
+          UniversityDetail: 'discover/university/:id',
+        },
+      },
+      Shortlist: {
+        screens: {
+          ShortlistMain: 'shortlist',
+          UniversityDetail: 'shortlist/university/:id',
+        },
+      },
+      Tracker: 'tracker',
+      Compare: 'compare',
+      People: {
+        screens: {
+          PeopleSearch: 'people',
+          PublicProfile: 'people/:userId',
+          Chat: 'people/chat/:conversationId',
+          Inbox: 'inbox',
+        },
+      },
+      Profile: 'profile',
+    },
+  },
+};
+
 export function AppNavigator() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialising, setInitialising] = useState(true);
@@ -304,7 +347,7 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {session ? <MainTabs /> : <AuthScreen />}
     </NavigationContainer>
   );
