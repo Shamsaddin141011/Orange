@@ -49,8 +49,8 @@ export function HomeScreen() {
         {/* Stats row */}
         <Animated.View entering={FadeInDown.duration(500).delay(80)} style={styles.statsRow}>
           {[
-            { value: matchCount || '—', label: 'Matches' },
-            { value: savedCount || '—', label: 'Saved' },
+            { value: matchCount, label: 'Matches' },
+            { value: savedCount, label: 'Saved' },
             { value: totalSchools ?? '—', label: 'Universities' },
           ].map(({ value, label }) => (
             <View key={label} style={[styles.statCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
@@ -61,9 +61,9 @@ export function HomeScreen() {
         </Animated.View>
 
         {/* Top matches */}
-        {featured.length > 0 && (
-          <Animated.View entering={FadeInDown.duration(500).delay(160)}>
-            <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>TOP MATCHES</Text>
+        <Animated.View entering={FadeInDown.duration(500).delay(160)}>
+          <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>TOP MATCHES</Text>
+          {featured.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -99,8 +99,21 @@ export function HomeScreen() {
                 </Pressable>
               ))}
             </ScrollView>
-          </Animated.View>
-        )}
+          ) : (
+            <Pressable
+              style={[styles.emptyMatchesCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
+              onPress={() => navigation.navigate('Discover')}
+            >
+              <Search size={iconSize.xl} color={c.primary} strokeWidth={1.5} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.featureLabel, { color: c.textPrimary }]}>Get matched with universities</Text>
+                <Text style={[styles.featureDesc, { color: c.textSecondary }]}>
+                  Answer a few questions and we'll score {totalSchools ?? ''} universities against your budget & scores.
+                </Text>
+              </View>
+            </Pressable>
+          )}
+        </Animated.View>
 
         {/* Quick actions */}
         <Animated.View entering={FadeInDown.duration(500).delay(240)}>
@@ -161,6 +174,15 @@ const styles = StyleSheet.create({
   },
 
   featuredList: { gap: 12, paddingBottom: 4, marginBottom: 28 },
+  emptyMatchesCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 28,
+  },
   featuredCard: {
     width: 200,
     borderRadius: radius.lg,
