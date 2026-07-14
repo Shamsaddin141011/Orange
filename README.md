@@ -9,6 +9,30 @@ npm install
 npm run start
 ```
 
+## Fresh setup on a new PC (Windows/PowerShell)
+
+If you do not have the repo on your computer yet, clone it first:
+
+```powershell
+cd $HOME
+git clone https://github.com/<your-username>/Orange.git
+cd Orange
+```
+
+Then install and run the app:
+
+```powershell
+npm install
+npm run start
+```
+
+If you already cloned before and just need the latest files:
+
+```powershell
+git checkout main
+git pull origin main
+```
+
 ## Folder structure
 
 ```txt
