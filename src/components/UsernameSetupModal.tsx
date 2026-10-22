@@ -1,25 +1,47 @@
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
+import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { checkUsernameAvailable, saveUserSocialProfile } from '../lib/supabase';
-import { GlassCard } from './GlassCard';
 import { GlassButton } from './GlassButton';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, fonts, shadow } from '../theme';
+
+const MIN_LEN = 4;
+const MAX_LEN = 20;
+
+type Availability = 'idle' | 'checking' | 'available' | 'taken';
 
 export function UsernameSetupModal({ visible }: { visible: boolean }) {
+  const c = useThemeColors();
   const { setUsername, session } = useAppStore();
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [availability, setAvailability] = useState<Availability>('idle');
 
   const sanitize = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '');
 
   const validate = (u: string) => {
-    if (u.length < 3) return 'At least 3 characters';
-    if (u.length > 20) return 'Max 20 characters';
+    if (u.length < MIN_LEN) return `At least ${MIN_LEN} characters`;
+    if (u.length > MAX_LEN) return `Max ${MAX_LEN} characters`;
     if (!/^[a-z0-9_]+$/.test(u)) return 'Letters, numbers and underscores only';
     return '';
   };
+
+  // Live availability check, debounced while typing
+  useEffect(() => {
+    if (value.length < MIN_LEN) { setAvailability('idle'); return; }
+    setAvailability('checking');
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const ok = await checkUsernameAvailable(value);
+        if (!cancelled) setAvailability(ok ? 'available' : 'taken');
+      } catch {
+        if (!cancelled) setAvailability('idle');
+      }
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [value]);
 
   const handleClaim = async () => {
     const err = validate(value);
@@ -28,7 +50,7 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
     setError('');
     try {
       const available = await checkUsernameAvailable(value);
-      if (!available) { setError('Username already taken'); setSaving(false); return; }
+      if (!available) { setAvailability('taken'); setError('Username already taken'); return; }
 
       // Use the session already in the store — avoids a network-validated getUser() call
       // which fails when the access token is stale (e.g. right after a Supabase project unpause).
@@ -43,45 +65,70 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
       });
       setUsername(value);
     } catch (e: any) {
-      setError(e.message ?? 'Something went wrong');
+      // Private profiles are hidden from the availability check by RLS, so the
+      // UNIQUE constraint on profiles.username is the final word on duplicates.
+      if (e?.code === '23505') {
+        setAvailability('taken');
+        setError('Username already taken');
+      } else {
+        setError(e?.message ?? 'Something went wrong');
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  const status =
+    error ? { text: error, color: c.danger } :
+    availability === 'checking' ? { text: 'Checking…', color: c.textTertiary } :
+    availability === 'available' ? { text: `@${value} is available`, color: c.success } :
+    availability === 'taken' ? { text: 'Username already taken', color: c.danger } :
+    null;
+
+  const borderColor =
+    error || availability === 'taken' ? c.dangerBorder :
+    availability === 'available' ? c.successBorder :
+    c.primaryBorder;
+
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <GlassCard glow intensity={30} padding={28} borderRadius={radius.xl} style={styles.card}>
+      <View style={[styles.overlay, { backgroundColor: c.scrim }]}>
+        <View style={[styles.card, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
           <Text style={styles.emoji}>🎓</Text>
-          <Text style={styles.title}>Pick a username</Text>
-          <Text style={styles.sub}>This is how other students find and message you on OrangeUni.</Text>
+          <Text style={[styles.title, { color: c.textPrimary }]}>Pick a username</Text>
+          <Text style={[styles.sub, { color: c.textSecondary }]}>
+            This is how other students find and message you on OrangeUni.
+          </Text>
 
-          <View style={styles.inputRow}>
-            <Text style={styles.at}>@</Text>
+          <View style={[styles.inputRow, { backgroundColor: c.inputBg, borderColor }]}>
+            <Text style={[styles.at, { color: c.primary }]}>@</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: c.textPrimary }]}
               value={value}
               onChangeText={(t) => { setValue(sanitize(t)); setError(''); }}
+              onSubmitEditing={handleClaim}
               placeholder="your_username"
-              placeholderTextColor={colors.textTertiary}
+              placeholderTextColor={c.textTertiary}
               autoCapitalize="none"
               autoCorrect={false}
-              maxLength={20}
+              autoFocus
+              maxLength={MAX_LEN}
             />
           </View>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Text style={styles.hint}>3–20 chars · lowercase letters, numbers, underscores</Text>
+          <Text style={[styles.status, { color: status?.color ?? 'transparent' }]}>{status?.text ?? ' '}</Text>
+          <Text style={[styles.hint, { color: c.textTertiary }]}>
+            {MIN_LEN}–{MAX_LEN} chars · lowercase letters, numbers, underscores
+          </Text>
 
           <GlassButton
             label="Claim Username →"
             loading={saving}
-            disabled={saving || value.length < 3}
+            disabled={saving || value.length < MIN_LEN || availability === 'taken'}
             onPress={handleClaim}
             style={styles.btn}
           />
-        </GlassCard>
+        </View>
       </View>
     </Modal>
   );
@@ -90,29 +137,35 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  card: { width: '100%', maxWidth: 400, alignItems: 'center', alignSelf: 'center' },
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    alignSelf: 'center',
+    padding: 28,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    ...shadow.lg,
+  },
   emoji: { fontSize: 48, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
-  sub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  title: { fontSize: 22, fontFamily: fonts.headingXBold, marginBottom: 8, textAlign: 'center' },
+  sub: { fontSize: 14, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.orangeBorder,
     borderRadius: radius.md,
     paddingHorizontal: 14,
     width: '100%',
     marginBottom: 8,
-    backgroundColor: colors.glassInput,
   },
-  at: { fontSize: 18, fontWeight: '700', color: colors.orange, marginRight: 4 },
-  input: { flex: 1, fontSize: 18, color: colors.textPrimary, paddingVertical: 12 },
-  error: { fontSize: 13, color: colors.danger, marginBottom: 4, alignSelf: 'flex-start' },
-  hint: { fontSize: 12, color: colors.textTertiary, alignSelf: 'flex-start', marginBottom: 24 },
+  at: { fontSize: 18, fontFamily: fonts.bodyBold, marginRight: 4 },
+  input: { flex: 1, fontSize: 18, fontFamily: fonts.body, paddingVertical: 12, outlineStyle: 'none' } as any,
+  status: { fontSize: 13, fontFamily: fonts.bodyMedium, marginBottom: 4, alignSelf: 'flex-start' },
+  hint: { fontSize: 12, fontFamily: fonts.body, alignSelf: 'flex-start', marginBottom: 24 },
   btn: { width: '100%' },
 });
