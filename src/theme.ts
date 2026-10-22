@@ -96,6 +96,9 @@ const dark = {
 
 export type ThemeColors = typeof light;
 
+/** Dark palette, for surfaces that are always dark (e.g. GlassCard modals). */
+export const darkColors: ThemeColors = dark;
+
 export function useThemeColors(): ThemeColors {
   const scheme = useColorScheme();
   return scheme === 'dark' ? dark : light;

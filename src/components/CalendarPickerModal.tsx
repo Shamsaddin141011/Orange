@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius } from '../theme';
+import { colors, darkColors, radius } from '../theme';
 import { GlassCard } from './GlassCard';
 
 const MONTHS = [
@@ -150,25 +150,25 @@ const styles = StyleSheet.create({
 
   navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   navBtn: { padding: 4 },
-  navArrow: { fontSize: 28, color: colors.textPrimary, lineHeight: 32 },
-  monthYear: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  navArrow: { fontSize: 28, color: darkColors.textPrimary, lineHeight: 32 },
+  monthYear: { fontSize: 17, fontWeight: '700', color: darkColors.textPrimary },
 
   weekRow: { flexDirection: 'row', marginBottom: 4 },
   weekCell: { width: '14.28%', alignItems: 'center', paddingVertical: 4 },
-  weekLabel: { fontSize: 12, fontWeight: '600', color: colors.textTertiary },
+  weekLabel: { fontSize: 12, fontWeight: '600', color: darkColors.textSecondary },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   gridCell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
   dayCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   dayCircleSel: { backgroundColor: colors.orange },
-  dayCircleToday: { borderWidth: 1.5, borderColor: colors.orange },
-  dayNum: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+  dayCircleToday: { borderWidth: 1.5, borderColor: darkColors.primary },
+  dayNum: { fontSize: 14, color: darkColors.textPrimary, fontWeight: '500' },
   dayNumSel: { color: '#fff', fontWeight: '700' },
-  dayNumToday: { color: colors.orange, fontWeight: '700' },
+  dayNumToday: { color: darkColors.primary, fontWeight: '700' },
 
   selectedRow: { marginTop: 14, alignItems: 'center' },
-  selectedText: { fontSize: 13, color: colors.orange, fontWeight: '600' },
-  selectedPlaceholder: { fontSize: 13, color: colors.textTertiary },
+  selectedText: { fontSize: 13, color: darkColors.primary, fontWeight: '600' },
+  selectedPlaceholder: { fontSize: 13, color: darkColors.textSecondary },
 
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   cancelBtn: {
@@ -176,10 +176,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: colors.glassBorder,
+    borderColor: darkColors.inputBorder,
     alignItems: 'center',
   },
-  cancelText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
+  cancelText: { fontSize: 15, fontWeight: '600', color: darkColors.textPrimary },
   doneBtn: {
     flex: 1,
     paddingVertical: 12,
