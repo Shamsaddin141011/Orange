@@ -5,7 +5,10 @@ import { BarChart3, Plus, X } from 'lucide-react-native';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAppStore } from '../store/useAppStore';
 import { useThemeColors, fonts, radius, iconSize, layout } from '../theme';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { rowToUniversity } from '../lib/transform';
+import { University } from '../types';
 
 const COMPARE_COLORS = ['#FF5500', '#0EA5E9', '#16A34A'];
 
@@ -24,9 +27,30 @@ export function CompareScreen() {
   const navigation = useNavigation<any>();
   const { compareIds, toggleCompare, matches } = useAppStore();
 
+  const [fetched, setFetched] = useState<Record<string, University>>({});
+
+  // compareIds outlive the current search (and are synced from Supabase), so some
+  // may not be in `matches`. Fetch those directly; otherwise they'd be invisible,
+  // unremovable, and still count toward the 3-item cap — silently blocking the
+  // compare button in Discover.
+  useEffect(() => {
+    const missing = compareIds.filter(id => !fetched[id] && !matches.some(m => m.university.id === id));
+    if (missing.length === 0) return;
+    supabase.from('universities').select('*').in('id', missing).then(({ data, error }) => {
+      if (error || !data) return;
+      const found: Record<string, University> = {};
+      for (const row of data) found[row.id] = rowToUniversity(row as any);
+      setFetched(prev => ({ ...prev, ...found }));
+      // Drop ids that no longer exist in the DB so they stop occupying a slot.
+      missing
+        .filter(id => !found[id] && useAppStore.getState().compareIds.includes(id))
+        .forEach(id => toggleCompare(id));
+    });
+  }, [compareIds, matches]);
+
   const compareUnis = useMemo(
-    () => compareIds.map(id => matches.find(m => m.university.id === id)?.university).filter(Boolean),
-    [compareIds, matches],
+    () => compareIds.map(id => matches.find(m => m.university.id === id)?.university ?? fetched[id]).filter(Boolean),
+    [compareIds, matches, fetched],
   );
 
   if (compareIds.length === 0) {
