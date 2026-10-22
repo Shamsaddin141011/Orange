@@ -283,6 +283,16 @@ export function AppNavigator() {
       if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
         loadUserData();
       }
+      // A restored session can belong to a user that was deleted server-side (e.g. after
+      // wiping auth.users). Its JWT still looks valid locally, so ask the server and sign
+      // out only on a definite "user not found" — not on network/stale-token errors.
+      if (session && event === 'INITIAL_SESSION') {
+        supabase.auth.getUser().then(({ error }) => {
+          if (error && ((error as any).code === 'user_not_found' || /does not exist/i.test(error.message))) {
+            useAppStore.getState().signOut();
+          }
+        });
+      }
       // After a Supabase pause, the access token may be expired on INITIAL_SESSION so DB
       // queries fail silently. autoRefreshToken will fire TOKEN_REFRESHED once the token is
       // renewed — retry loadUserData at that point if we haven't loaded yet.

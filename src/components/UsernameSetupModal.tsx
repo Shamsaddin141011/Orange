@@ -70,6 +70,9 @@ export function UsernameSetupModal({ visible }: { visible: boolean }) {
       if (e?.code === '23505') {
         setAvailability('taken');
         setError('Username already taken');
+      } else if (e?.code === '23503') {
+        // Session points at a user that no longer exists — drop it so they can sign in fresh.
+        await useAppStore.getState().signOut();
       } else {
         setError(e?.message ?? 'Something went wrong');
       }
