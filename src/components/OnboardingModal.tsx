@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { GlassBackground } from './GlassBackground';
 import { GlassChip } from './GlassChip';
 import { GlassButton } from './GlassButton';
 import { useAppStore } from '../store/useAppStore';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, fonts } from '../theme';
 
 const QUICK_MAJORS = [
   { label: 'Computer Science', icon: '💻' },
@@ -44,6 +43,7 @@ const BUDGETS: { label: string; min?: number; max?: number }[] = [
 type Props = { visible: boolean; onDone: () => void };
 
 export function OnboardingModal({ visible, onDone }: Props) {
+  const c = useThemeColors();
   const { fetchAndScore, saveProfile, profile } = useAppStore();
   const [step, setStep] = useState(0);
   const [majors, setMajors] = useState<string[]>([]);
@@ -97,18 +97,18 @@ export function OnboardingModal({ visible, onDone }: Props) {
       canNext: true,
       content: (
         <View style={styles.section}>
-          <Text style={styles.subLabel}>Country</Text>
+          <Text style={[styles.subLabel, { color: c.textTertiary }]}>Country</Text>
           <View style={styles.chipGrid}>
-            {COUNTRIES.map(c => (
+            {COUNTRIES.map(ct => (
               <GlassChip
-                key={c.value}
-                label={`${c.flag} ${c.value}`}
-                active={country === c.value}
-                onPress={() => setCountry(c.value)}
+                key={ct.value}
+                label={`${ct.flag} ${ct.value}`}
+                active={country === ct.value}
+                onPress={() => setCountry(ct.value)}
               />
             ))}
           </View>
-          <Text style={[styles.subLabel, { marginTop: 16 }]}>Degree level</Text>
+          <Text style={[styles.subLabel, { color: c.textTertiary, marginTop: 16 }]}>Degree level</Text>
           <View style={styles.chipGrid}>
             {DEGREES.map(d => (
               <GlassChip
@@ -129,20 +129,31 @@ export function OnboardingModal({ visible, onDone }: Props) {
       canNext: budget !== null,
       content: (
         <View style={styles.budgetList}>
-          {BUDGETS.map(b => (
-            <Pressable
-              key={b.label}
-              style={[styles.budgetRow, budget?.label === b.label && styles.budgetRowActive]}
-              onPress={() => setBudget(b)}
-            >
-              <Text style={[styles.budgetText, budget?.label === b.label && styles.budgetTextActive]}>
-                {b.label}
-              </Text>
-              {budget?.label === b.label && (
-                <Ionicons name="checkmark-circle" size={20} color={colors.orange} />
-              )}
-            </Pressable>
-          ))}
+          {BUDGETS.map(b => {
+            const active = budget?.label === b.label;
+            return (
+              <Pressable
+                key={b.label}
+                style={[
+                  styles.budgetRow,
+                  active
+                    ? { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }
+                    : { backgroundColor: c.surface, borderColor: c.surfaceBorder },
+                ]}
+                onPress={() => setBudget(b)}
+              >
+                <Text style={[
+                  styles.budgetText,
+                  active
+                    ? { color: c.primary, fontFamily: fonts.bodyBold }
+                    : { color: c.textPrimary },
+                ]}>
+                  {b.label}
+                </Text>
+                {active && <CheckCircle2 size={20} color={c.primary} />}
+              </Pressable>
+            );
+          })}
         </View>
       ),
     },
@@ -152,25 +163,35 @@ export function OnboardingModal({ visible, onDone }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <GlassBackground style={styles.root}>
+      <View style={[styles.root, { backgroundColor: c.bg }]}>
         {/* Progress dots */}
         <View style={styles.progress}>
           {steps.map((_, i) => (
-            <View key={i} style={[styles.dot, i === step && styles.dotActive, i < step && styles.dotDone]} />
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                { backgroundColor: i === step ? c.primary : i < step ? c.primaryBorder : c.surfaceBorder },
+                i === step && styles.dotActive,
+              ]}
+            />
           ))}
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={styles.emoji}>{current.icon}</Text>
-          <Text style={styles.title}>{current.title}</Text>
-          <Text style={styles.subtitle}>{current.subtitle}</Text>
+          <Text style={[styles.title, { color: c.textPrimary }]}>{current.title}</Text>
+          <Text style={[styles.subtitle, { color: c.textSecondary }]}>{current.subtitle}</Text>
           {current.content}
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: c.bgElevated, borderTopColor: c.surfaceBorder }]}>
           {step > 0 && (
-            <Pressable style={styles.backBtn} onPress={() => setStep(s => s - 1)}>
-              <Ionicons name="arrow-back" size={20} color={colors.textSecondary} />
+            <Pressable
+              style={[styles.backBtn, { backgroundColor: c.surface, borderColor: c.surfaceBorder }]}
+              onPress={() => setStep(s => s - 1)}
+            >
+              <ArrowLeft size={20} color={c.textSecondary} />
             </Pressable>
           )}
           <View style={styles.footerFlex}>
@@ -192,7 +213,7 @@ export function OnboardingModal({ visible, onDone }: Props) {
             )}
           </View>
         </View>
-      </GlassBackground>
+      </View>
     </Modal>
   );
 }
@@ -206,21 +227,17 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 8,
   },
-  dot: {
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: colors.glassBorder,
-  },
-  dotActive: { backgroundColor: colors.orange, width: 24 },
-  dotDone: { backgroundColor: colors.orangeBorder },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  dotActive: { width: 24 },
 
   scroll: { flex: 1 },
   content: { padding: 24, paddingBottom: 40 },
 
   emoji: { fontSize: 52, marginBottom: 16 },
-  title: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, letterSpacing: -0.5 },
-  subtitle: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: 28 },
+  title: { fontSize: 26, fontFamily: fonts.headingXBold, marginBottom: 8, letterSpacing: -0.5 },
+  subtitle: { fontSize: 15, fontFamily: fonts.body, lineHeight: 22, marginBottom: 28 },
 
-  subLabel: { fontSize: 13, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 },
+  subLabel: { fontSize: 13, fontFamily: fonts.bodyBold, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 },
 
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {},
@@ -232,16 +249,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderRadius: radius.lg,
-    backgroundColor: colors.glassCard,
     borderWidth: 1.5,
-    borderColor: colors.glassBorder,
   },
-  budgetRowActive: {
-    borderColor: colors.orangeBorder,
-    backgroundColor: colors.orangeDim,
-  },
-  budgetText: { fontSize: 16, color: colors.textSecondary, fontWeight: '500' },
-  budgetTextActive: { color: colors.orange, fontWeight: '700' },
+  budgetText: { fontSize: 16, fontFamily: fonts.bodyMedium },
 
   footer: {
     flexDirection: 'row',
@@ -250,12 +260,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     borderTopWidth: 1,
-    borderTopColor: colors.glassBorder,
   },
   backBtn: {
     width: 46, height: 46, borderRadius: 23,
-    backgroundColor: colors.glassCard,
-    borderWidth: 1, borderColor: colors.glassBorder,
+    borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
   footerFlex: { flex: 1 },

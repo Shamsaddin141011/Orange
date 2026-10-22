@@ -3,7 +3,7 @@
  */
 import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { colors, radius } from '../theme';
+import { useThemeColors, radius, fonts } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -15,6 +15,7 @@ type Props = {
 };
 
 export function GlassChip({ label, active, onPress, icon }: Props) {
+  const c = useThemeColors();
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -24,7 +25,10 @@ export function GlassChip({ label, active, onPress, icon }: Props) {
     <AnimatedPressable
       style={[
         styles.chip,
-        active ? styles.chipActive : styles.chipInactive,
+        active
+          ? { backgroundColor: c.primarySurface, borderColor: c.primaryBorder, shadowColor: c.primary }
+          : { backgroundColor: c.surface, borderColor: c.surfaceBorder },
+        active && styles.chipActiveGlow,
         animStyle,
       ]}
       onPress={onPress}
@@ -32,7 +36,7 @@ export function GlassChip({ label, active, onPress, icon }: Props) {
       onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
     >
       {icon ? <Text style={styles.icon}>{icon}</Text> : null}
-      <Text style={[styles.text, active && styles.textActive]}>{label}</Text>
+      <Text style={[styles.text, { color: active ? c.primary : c.textPrimary }]}>{label}</Text>
     </AnimatedPressable>
   );
 }
@@ -47,14 +51,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: 1.5,
   },
-  chipInactive: {
-    backgroundColor: colors.glassCard,
-    borderColor: colors.glassBorder,
-  },
-  chipActive: {
-    backgroundColor: colors.orangeDim,
-    borderColor: colors.orangeBorder,
-    shadowColor: colors.orange,
+  chipActiveGlow: {
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
@@ -62,10 +59,6 @@ const styles = StyleSheet.create({
   icon: { fontSize: 14 },
   text: {
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  textActive: {
-    color: colors.orange,
+    fontFamily: fonts.bodyMedium,
   },
 });
