@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronDown, ChevronUp, HelpCircle, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { GlassBackground } from './GlassBackground';
-import { colors, radius, shadow } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColors, radius, shadow, iconSize, fonts } from '../theme';
 
 type FAQ = { q: string; a: string };
 
@@ -50,6 +50,8 @@ const FAQS: FAQ[] = [
 ];
 
 export function HelpFAQ() {
+  const c = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(0);
 
@@ -57,60 +59,68 @@ export function HelpFAQ() {
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        style={({ pressed }) => [
+          styles.fab,
+          { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder },
+          pressed && { backgroundColor: c.primarySurface, borderColor: c.primaryBorder },
+        ]}
         accessibilityLabel="Help and FAQ"
         accessibilityRole="button"
       >
-        <Ionicons name="help" size={22} color={colors.textPrimary} />
+        <HelpCircle size={iconSize.md} color={c.textPrimary} strokeWidth={1.75} />
       </Pressable>
 
       <Modal visible={open} animationType="slide" transparent={false} onRequestClose={() => setOpen(false)}>
-        <GlassBackground style={styles.modalRoot}>
+        <View style={[styles.modalRoot, { backgroundColor: c.bg, paddingTop: insets.top }]}>
           <View style={styles.header}>
             <View style={styles.headerTextWrap}>
-              <Text style={styles.headerTitle}>Help & FAQ</Text>
-              <Text style={styles.headerSubtitle}>Everything you might want to know about OrangeUni</Text>
+              <Text style={[styles.headerTitle, { color: c.textPrimary }]}>Help & FAQ</Text>
+              <Text style={[styles.headerSubtitle, { color: c.textSecondary }]}>
+                Everything you might want to know about OrangeUni
+              </Text>
             </View>
             <Pressable
               onPress={() => setOpen(false)}
-              style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder },
+                pressed && { opacity: 0.7 },
+              ]}
               accessibilityLabel="Close help"
             >
-              <Ionicons name="close" size={22} color={colors.textPrimary} />
+              <X size={iconSize.md} color={c.textPrimary} strokeWidth={1.75} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {FAQS.map((item, i) => {
               const isOpen = expanded === i;
+              const Chevron = isOpen ? ChevronUp : ChevronDown;
               return (
                 <Pressable
                   key={i}
                   onPress={() => setExpanded(isOpen ? null : i)}
                   style={({ pressed }) => [
                     styles.row,
-                    isOpen && styles.rowOpen,
-                    pressed && styles.rowPressed,
+                    { backgroundColor: c.surface, borderColor: c.surfaceBorder },
+                    isOpen && { backgroundColor: c.primarySurface, borderColor: c.primaryBorder },
+                    pressed && !isOpen && { backgroundColor: c.bgMuted },
                   ]}
                 >
                   <View style={styles.rowHead}>
-                    <Text style={[styles.q, isOpen && styles.qOpen]}>{item.q}</Text>
-                    <Ionicons
-                      name={isOpen ? 'chevron-up' : 'chevron-down'}
-                      size={18}
-                      color={isOpen ? colors.orange : colors.textTertiary}
-                    />
+                    <Text style={[styles.q, { color: isOpen ? c.primary : c.textPrimary }]}>{item.q}</Text>
+                    <Chevron size={iconSize.sm} color={isOpen ? c.primary : c.textTertiary} strokeWidth={1.75} />
                   </View>
-                  {isOpen && <Text style={styles.a}>{item.a}</Text>}
+                  {isOpen && <Text style={[styles.a, { color: c.textSecondary }]}>{item.a}</Text>}
                 </Pressable>
               );
             })}
 
-            <Text style={styles.footerNote}>
+            <Text style={[styles.footerNote, { color: c.textTertiary }]}>
               Still stuck? Reach out at sorujov141011@gmail.com.
             </Text>
           </ScrollView>
-        </GlassBackground>
+        </View>
       </Modal>
     </>
   );
@@ -124,42 +134,34 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.glassCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
     ...shadow.darkSubtle,
     ...(Platform.OS === 'web'
       ? // @ts-ignore web only
-        { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', cursor: 'pointer' }
+        { cursor: 'pointer' }
       : {}),
-  },
-  fabPressed: {
-    backgroundColor: colors.glassCardHover,
-    borderColor: colors.orangeBorder,
   },
 
   modalRoot: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingTop: 56,
+    paddingTop: 24,
     paddingHorizontal: 24,
     paddingBottom: 16,
     gap: 12,
   },
   headerTextWrap: { flex: 1 },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  headerTitle: { fontSize: 28, fontFamily: fonts.headingXBold, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 14, fontFamily: fonts.body, marginTop: 4 },
   closeBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: colors.glassCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -168,18 +170,9 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 120, gap: 10 },
 
   row: {
-    backgroundColor: colors.glassCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
     borderRadius: radius.lg,
     padding: 16,
-  },
-  rowOpen: {
-    borderColor: colors.orangeBorder,
-    backgroundColor: colors.orangeDim,
-  },
-  rowPressed: {
-    backgroundColor: colors.glassCardHover,
   },
   rowHead: {
     flexDirection: 'row',
@@ -187,13 +180,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  q: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  qOpen: { color: colors.orange },
-  a: { fontSize: 14, color: colors.textSecondary, lineHeight: 21, marginTop: 12 },
+  q: { flex: 1, fontSize: 15, fontFamily: fonts.bodyBold },
+  a: { fontSize: 14, fontFamily: fonts.body, lineHeight: 21, marginTop: 12 },
 
   footerNote: {
     textAlign: 'center',
-    color: colors.textTertiary,
+    fontFamily: fonts.body,
     fontSize: 13,
     marginTop: 24,
   },
