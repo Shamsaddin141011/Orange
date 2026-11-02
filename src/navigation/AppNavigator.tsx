@@ -26,6 +26,7 @@ import { InboxScreen } from '../screens/InboxScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { UsernameSetupModal } from '../components/UsernameSetupModal';
 import { OnboardingModal } from '../components/OnboardingModal';
+import { SignInPromptModal } from '../components/SignInPromptModal';
 import { useThemeColors, radius, fonts, iconSize, layout } from '../theme';
 
 export type DiscoverStackParamList = {
@@ -176,11 +177,17 @@ function MorePlaceholder() {
 
 // ─── Main tabs ────────────────────────────────────────────────────────────────
 
-function MainTabs() {
+function MainTabs({ guest = false }: { guest?: boolean }) {
   const c = useThemeColors();
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
-  const { username, userDataLoaded, profile } = useAppStore();
+  const { username, userDataLoaded, profile, promptSignIn } = useAppStore();
+
+  // Guests can only use Discover; every other tab asks them to sign in instead of opening.
+  const guestLock = (reason: string) =>
+    guest
+      ? { tabPress: (e: { preventDefault: () => void }) => { e.preventDefault(); promptSignIn(reason); } }
+      : undefined;
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);
   const [moreNavigation, setMoreNavigation] = useState<any>(null);
@@ -190,6 +197,7 @@ function MainTabs() {
   return (
     <>
       <Tab.Navigator
+        initialRouteName={guest ? 'Discover' : 'Home'}
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: c.tabActive,
@@ -219,6 +227,7 @@ function MainTabs() {
         <Tab.Screen
           name="Home"
           component={HomeScreen}
+          listeners={guestLock('see your dashboard')}
           options={{ tabBarIcon: ({ color, size, focused }) => <Home size={focused ? size + 1 : size} color={color} strokeWidth={1.5} /> }}
         />
         <Tab.Screen
@@ -229,11 +238,13 @@ function MainTabs() {
         <Tab.Screen
           name="Shortlist"
           component={ShortlistStack}
+          listeners={guestLock('save universities to your shortlist')}
           options={{ tabBarIcon: ({ color, size, focused }) => <Heart size={focused ? size + 1 : size} color={color} fill={focused ? color : 'none'} strokeWidth={1.5} /> }}
         />
         <Tab.Screen
           name="Tracker"
           component={TrackerScreen}
+          listeners={guestLock('track your applications')}
           options={{ tabBarIcon: ({ color, size, focused }) => <CheckSquare size={focused ? size + 1 : size} color={color} strokeWidth={1.5} /> }}
         />
         <Tab.Screen
@@ -242,6 +253,7 @@ function MainTabs() {
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
+              if (guest) { promptSignIn('compare universities, meet other students and set up your profile'); return; }
               setMoreNavigation(navigation);
               setMoreVisible(true);
             },
@@ -260,8 +272,9 @@ function MainTabs() {
         onNavigate={(screen) => moreNavigation?.navigate(screen)}
       />
 
-      <UsernameSetupModal visible={userDataLoaded && username === null} />
-      <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDismissed(true)} />
+      <UsernameSetupModal visible={!guest && userDataLoaded && username === null} />
+      <OnboardingModal visible={!guest && showOnboarding} onDone={() => setOnboardingDismissed(true)} />
+      <SignInPromptModal />
     </>
   );
 }
@@ -272,13 +285,14 @@ export function AppNavigator() {
   const [session, setSession] = useState<Session | null>(null);
   const [initialising, setInitialising] = useState(true);
   const c = useThemeColors();
-  const { setSession: storeSetSession, loadUserData } = useAppStore();
+  const { setSession: storeSetSession, loadUserData, guest, exitGuestMode } = useAppStore();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       storeSetSession(session);
       if (session && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+        exitGuestMode();
         loadUserData();
       }
       // A restored session can belong to a user that was deleted server-side (e.g. after
@@ -313,7 +327,7 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {session ? <MainTabs /> : <AuthScreen />}
+      {session ? <MainTabs /> : guest ? <MainTabs guest /> : <AuthScreen />}
     </NavigationContainer>
   );
 }

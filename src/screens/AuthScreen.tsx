@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { supabase } from '../lib/supabase';
+import { useAppStore } from '../store/useAppStore';
 import { useThemeColors, radius, fonts } from '../theme';
 import { Button } from '../components/ui/Button';
 
@@ -35,6 +36,7 @@ export function AuthScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState('');
   const [nativeAppleAvailable, setNativeAppleAvailable] = useState(false);
+  const enterGuestMode = useAppStore((s) => s.enterGuestMode);
 
   useEffect(() => {
     if (Platform.OS === 'ios') {
@@ -205,6 +207,16 @@ export function AuthScreen() {
           loading={loading}
         />
 
+        <Pressable
+          style={({ pressed }) => [styles.guestBtn, { borderColor: c.surfaceBorder }, pressed && { opacity: 0.7 }]}
+          onPress={enterGuestMode}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel="Continue as guest"
+        >
+          <Text style={[styles.guestBtnText, { color: c.textSecondary }]}>Continue as guest</Text>
+        </Pressable>
+
         <Text style={[styles.terms, { color: c.textTertiary }]}>
           By signing up you agree to our{' '}
           <Text style={[styles.termsLink, { color: c.textSecondary }]} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}>
@@ -274,4 +286,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   termsLink: { textDecorationLine: 'underline' },
+  guestBtn: {
+    height: 52,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestBtnText: { fontSize: 16, fontFamily: 'SpaceGrotesk_700Bold' },
 });

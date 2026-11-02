@@ -19,6 +19,10 @@ interface AppState {
   matches: MatchResult[];
   loading: boolean;
   error: string | null;
+  /** Browsing without an account: Discover + university pages only. */
+  guest: boolean;
+  /** Reason text for the "sign in to continue" prompt; null when hidden. */
+  signInPrompt: string | null;
 
   setSession: (session: Session | null) => void;
   setProfile: (profile: StudentProfile) => void;
@@ -34,6 +38,10 @@ interface AppState {
   setTracker: (id: string, tracker: TrackerItemState) => void;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  enterGuestMode: () => void;
+  exitGuestMode: () => void;
+  promptSignIn: (reason: string) => void;
+  dismissSignInPrompt: () => void;
 }
 
 const defaultProfile: StudentProfile = { country: 'USA', interests: [] };
@@ -52,6 +60,8 @@ export const useAppStore = create<AppState>()(
       matches: [],
       loading: false,
       error: null,
+      guest: false,
+      signInPrompt: null,
 
       setSession: (session) => set({ session }),
       setProfile: (profile) => set({ profile }),
@@ -190,6 +200,7 @@ export const useAppStore = create<AppState>()(
       },
 
       toggleShortlist: (id) => {
+        if (get().guest) { set({ signInPrompt: 'save universities to your shortlist' }); return; }
         set((state) => {
           const shortlist = { ...state.shortlist };
           if (shortlist[id]) delete shortlist[id];
@@ -218,6 +229,7 @@ export const useAppStore = create<AppState>()(
       },
 
       setShortlistMeta: (id, updates) => {
+        if (get().guest) { set({ signInPrompt: 'manage your shortlist' }); return; }
         set((state) => ({
           shortlist: { ...state.shortlist, [id]: { ...state.shortlist[id], ...updates } },
         }));
@@ -251,6 +263,7 @@ export const useAppStore = create<AppState>()(
       },
 
       toggleCompare: (id) => {
+        if (get().guest) { set({ signInPrompt: 'compare universities' }); return; }
         set((state) => {
           const exists = state.compareIds.includes(id);
           if (exists) return { compareIds: state.compareIds.filter((v) => v !== id) };
@@ -271,6 +284,7 @@ export const useAppStore = create<AppState>()(
       },
 
       setTracker: (id, trackerItem) => {
+        if (get().guest) { set({ signInPrompt: 'track your applications' }); return; }
         set((state) => ({ tracker: { ...state.tracker, [id]: trackerItem } }));
         (async () => {
           const { data: { session } } = await supabase.auth.getSession();
@@ -305,6 +319,8 @@ export const useAppStore = create<AppState>()(
           compareIds: [],
           tracker: {},
           matches: [],
+          guest: false,
+          signInPrompt: null,
         });
       },
 
@@ -314,13 +330,18 @@ export const useAppStore = create<AppState>()(
         // Drop the persisted key entirely so nothing of the old user survives a restart.
         await useAppStore.persist.clearStorage();
       },
+
+      enterGuestMode: () => set({ guest: true, signInPrompt: null }),
+      exitGuestMode: () => set({ guest: false, signInPrompt: null }),
+      promptSignIn: (reason) => set({ signInPrompt: reason }),
+      dismissSignInPrompt: () => set({ signInPrompt: null }),
     }),
     {
       name: 'orangeuni-store',
       storage: createJSONStorage(() => AsyncStorage),
       // Only persist profile locally — shortlist/compare/tracker are loaded
       // fresh from Supabase on sign-in to avoid stale-cache race conditions.
-      partialize: (s) => ({ profile: s.profile }),
+      partialize: (s) => ({ profile: s.profile, guest: s.guest }),
     }
   )
 );
