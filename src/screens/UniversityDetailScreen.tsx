@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Heart, BarChart3 } from 'lucide-react-native';
@@ -8,9 +9,10 @@ import { colorIdx, rowToUniversity } from '../lib/transform';
 import { useAppStore } from '../store/useAppStore';
 import { University } from '../types';
 import { UniImage } from '../components/UniImage';
+import { fetchPhotoCredit, formatPhotoCredit, photoSourceDomain, PhotoCredit } from '../lib/photoCredit';
 import { MatchBadge } from '../components/ui/MatchBadge';
 import { Button } from '../components/ui/Button';
-import { useThemeColors, radius, iconSize, shadow, layout } from '../theme';
+import { useThemeColors, radius, iconSize, shadow, layout, fonts } from '../theme';
 
 type Props = {
   route: { params: { id: string } };
@@ -22,6 +24,8 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { shortlist, toggleShortlist, compareIds, toggleCompare, matches } = useAppStore();
   const [fetchedUni, setFetchedUni] = useState<University | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [credit, setCredit] = useState<PhotoCredit | null>(null);
 
   const matchResult = matches.find((m) => m.university.id === route.params.id);
   const matchedUni = matchResult?.university;
@@ -34,6 +38,13 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
   }, [route.params.id]);
 
   const uni = matchedUni ?? fetchedUni;
+
+  useEffect(() => {
+    let cancelled = false;
+    setCredit(null);
+    fetchPhotoCredit(photoUri).then((c) => { if (!cancelled) setCredit(c); });
+    return () => { cancelled = true; };
+  }, [photoUri]);
 
   if (!uni) {
     return (
@@ -56,6 +67,7 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
             imageUrl={uni.image_url}
             idx={colorIdx(uni.id)}
             style={StyleSheet.absoluteFill}
+            onUriResolved={setPhotoUri}
           />
           <LinearGradient
             colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.65)']}
@@ -102,6 +114,27 @@ export function UniversityDetailScreen({ route, navigation }: Props) {
               {uni.city}{uni.state ? `, ${uni.state}` : ''} · {uni.country}
             </Text>
           </View>
+
+          {/* Photo credit (Commons licences require author + licence) */}
+          {credit && formatPhotoCredit(credit) ? (
+            <Pressable
+              onPress={() => WebBrowser.openBrowserAsync(credit.pageUrl)}
+              style={styles.credit}
+              accessibilityRole="link"
+              accessibilityLabel={`Photo credit: ${formatPhotoCredit(credit)}. Opens Wikimedia Commons`}
+              hitSlop={6}
+            >
+              <Text style={styles.creditText} numberOfLines={1}>
+                Photo: {formatPhotoCredit(credit)}
+              </Text>
+            </Pressable>
+          ) : !credit && photoSourceDomain(photoUri) ? (
+            <View style={styles.credit}>
+              <Text style={styles.creditText} numberOfLines={1}>
+                Photo: {photoSourceDomain(photoUri)}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Content */}
@@ -210,6 +243,17 @@ const styles = StyleSheet.create({
   heroBottom: { padding: 20, gap: 4 },
   heroName: { fontSize: 22, fontFamily: 'Syne_800ExtraBold', color: '#fff', lineHeight: 28 },
   heroLocation: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', color: 'rgba(255,255,255,0.65)' },
+  credit: {
+    position: 'absolute',
+    right: 8,
+    bottom: 6,
+    maxWidth: '70%',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  creditText: { fontSize: 10, fontFamily: fonts.body, color: 'rgba(255,255,255,0.75)' },
 
   content: { padding: 16, gap: 12 },
 

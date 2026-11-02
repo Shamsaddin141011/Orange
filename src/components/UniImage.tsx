@@ -8,6 +8,8 @@ type Props = {
   imageUrl?: string | null;
   style?: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Called with the photo URL actually shown (null when falling back to initials). */
+  onUriResolved?: (uri: string | null) => void;
 };
 
 const cache: Record<string, string | null> = {};
@@ -126,7 +128,7 @@ function fetchCampusImage(name: string): Promise<string | null> {
   });
 }
 
-export function UniImage({ name, idx, imageUrl, style, containerStyle }: Props) {
+export function UniImage({ name, idx, imageUrl, style, containerStyle, onUriResolved }: Props) {
   const bg = getFallbackColor(idx);
   const dbUri = imageUrl || null;
 
@@ -143,6 +145,10 @@ export function UniImage({ name, idx, imageUrl, style, containerStyle }: Props) 
       setUri(url);
     });
   }, [name, dbUri]);
+
+  useEffect(() => {
+    if (uri !== undefined) onUriResolved?.(uri);
+  }, [uri]);
 
   const initials = name
     .split(' ')
