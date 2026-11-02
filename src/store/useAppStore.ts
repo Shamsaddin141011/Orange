@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { fetchUniversities, supabase } from '../lib/supabase';
+import { deleteMyAccount, fetchUniversities, supabase } from '../lib/supabase';
 import { rowToUniversity } from '../lib/transform';
 import { scoreUniversity } from '../utils/scoring';
 import { ApplicationStatus, MatchResult, ShortlistMeta, ShortlistTag, StudentProfile, TrackerItemState } from '../types';
@@ -33,6 +33,7 @@ interface AppState {
   toggleCompare: (id: string) => void;
   setTracker: (id: string, tracker: TrackerItemState) => void;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const defaultProfile: StudentProfile = { country: 'USA', interests: [] };
@@ -305,6 +306,13 @@ export const useAppStore = create<AppState>()(
           tracker: {},
           matches: [],
         });
+      },
+
+      deleteAccount: async () => {
+        await deleteMyAccount();
+        await get().signOut();
+        // Drop the persisted key entirely so nothing of the old user survives a restart.
+        await useAppStore.persist.clearStorage();
       },
     }),
     {
