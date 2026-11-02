@@ -19,6 +19,7 @@
       "bundleIdentifier": "com.orangeuni.app",
       "buildNumber": "1",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Used for profile photo.",
         "NSPhotoLibraryUsageDescription": "Used to upload a profile photo.",
@@ -33,6 +34,9 @@
         "projectId": "4f9f294a-da58-42de-a0c8-daa7a6036de8"
       }
     },
-    "owner": "evilzakotb"
+    "owner": "evilzakotb",
+    "plugins": [
+      "expo-apple-authentication"
+    ]
   }
 }
