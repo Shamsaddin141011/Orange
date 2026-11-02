@@ -1,9 +1,11 @@
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HelpFAQ } from '../components/HelpFAQ';
-import { GraduationCap, Settings2, Edit2, Check } from 'lucide-react-native';
+import { GraduationCap, Settings2, Edit2, Check, Camera } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { supabase, saveUserSocialProfile } from '../lib/supabase';
+import { AvatarError, pickAvatarImage, removeAvatar, uploadAvatar } from '../lib/avatar';
+import { Avatar } from '../components/Avatar';
 import { useEffect, useState } from 'react';
 import { Country } from '../types';
 import { GlassInput } from '../components/GlassInput';
@@ -28,7 +30,7 @@ const STUDY_LEVELS: StudyLevel[] = ["Bachelor's", "Master's", 'PhD', "Associate'
 export function ProfileScreen() {
   const c = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profile, shortlist, matches, compareIds, tracker, signOut, saveProfile, fetchAndScore, username } = useAppStore();
+  const { profile, shortlist, matches, compareIds, tracker, signOut, saveProfile, fetchAndScore, username, avatarUrl, setAvatarUrl, session } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const trackingCount = Object.keys(tracker).length;
 
@@ -40,6 +42,9 @@ export function ProfileScreen() {
   const [editingBio, setEditingBio] = useState(false);
   const [savingBio, setSavingBio] = useState(false);
   const [error, setError] = useState('');
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
 
   const [country, setCountry] = useState<Country>(profile.country);
   const [studyLevel, setStudyLevel] = useState<StudyLevel>((profile.degreeLevel as StudyLevel) ?? "Bachelor's");
@@ -72,6 +77,47 @@ export function ProfileScreen() {
       });
     });
   }, []);
+
+  const changePhoto = async () => {
+    setPhotoMenuOpen(false);
+    setPhotoError('');
+    const userId = session?.user.id;
+    if (!userId) return;
+    try {
+      const base64 = await pickAvatarImage();
+      if (!base64) return;
+      setPhotoBusy(true);
+      setAvatarUrl(await uploadAvatar(userId, base64));
+    } catch (e) {
+      console.error('Failed to update photo', e);
+      setPhotoError(e instanceof AvatarError ? e.message : 'Could not upload your photo. Please try again.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const deletePhoto = async () => {
+    setPhotoMenuOpen(false);
+    setPhotoError('');
+    const userId = session?.user.id;
+    if (!userId) return;
+    setPhotoBusy(true);
+    try {
+      await removeAvatar(userId);
+      setAvatarUrl(null);
+    } catch (e) {
+      console.error('Failed to remove photo', e);
+      setPhotoError('Could not remove your photo. Please try again.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const onPhotoBadgePress = () => {
+    if (photoBusy) return;
+    if (avatarUrl) setPhotoMenuOpen((open) => !open);
+    else changePhoto();
+  };
 
   const saveBio = async () => {
     setSavingBio(true);
@@ -136,7 +182,6 @@ export function ProfileScreen() {
     setEditing(false);
   };
 
-  const initials = (displayName || 'S').charAt(0).toUpperCase();
   const fmtMoney = (n?: number) => n != null ? `$${n.toLocaleString()}` : null;
   const budgetDisplay = profile.budgetMin || profile.budgetMax ? `${fmtMoney(profile.budgetMin) ?? 'Any'} – ${fmtMoney(profile.budgetMax) ?? 'Any'}` : 'Not set';
 
@@ -150,10 +195,33 @@ export function ProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={[styles.avatarRing, { borderColor: c.primaryBorder }]}>
-            <View style={[styles.avatar, { backgroundColor: c.primarySurface }]}>
-              <Text style={[styles.avatarInitial, { color: c.primary }]}>{initials}</Text>
-            </View>
+            <Avatar uri={avatarUrl} name={displayName || 'S'} size={80} bordered={false} />
+            {photoBusy && (
+              <View style={[styles.avatarBusy, { backgroundColor: c.scrim }]}>
+                <ActivityIndicator color="#fff" size="small" />
+              </View>
+            )}
+            <Pressable
+              onPress={onPhotoBadgePress}
+              accessibilityRole="button"
+              accessibilityLabel={avatarUrl ? 'Change profile photo' : 'Add profile photo'}
+              hitSlop={8}
+              style={[styles.photoBadge, { backgroundColor: c.bgMuted, borderColor: c.bg }]}
+            >
+              <Camera size={14} color={c.textSecondary} strokeWidth={2} />
+            </Pressable>
           </View>
+          {photoMenuOpen && (
+            <View style={styles.photoMenu}>
+              <Pressable onPress={changePhoto} style={[styles.photoMenuBtn, { borderColor: c.surfaceBorder, backgroundColor: c.bgElevated }]}>
+                <Text style={[styles.photoMenuText, { color: c.textPrimary }]}>Change photo</Text>
+              </Pressable>
+              <Pressable onPress={deletePhoto} style={[styles.photoMenuBtn, { borderColor: c.dangerBorder, backgroundColor: c.dangerSurface }]}>
+                <Text style={[styles.photoMenuText, { color: c.danger }]}>Remove</Text>
+              </Pressable>
+            </View>
+          )}
+          {!!photoError && <Text style={[styles.photoErrorText, { color: c.danger }]}>{photoError}</Text>}
           <Text style={[styles.displayName, { color: c.textPrimary }]}>{displayName}</Text>
           {username && <Text style={[styles.usernameLabel, { color: c.primary }]}>@{username}</Text>}
           <Text style={[styles.emailLabel, { color: c.textTertiary }]}>{email}</Text>
@@ -311,8 +379,12 @@ const styles = StyleSheet.create({
 
   avatarSection: { alignItems: 'center', paddingVertical: 8, gap: 4 },
   avatarRing: { width: 90, height: 90, borderRadius: 45, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  avatar: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { fontSize: 32, fontFamily: 'Syne_800ExtraBold' },
+  avatarBusy: { position: 'absolute', width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  photoBadge: { position: 'absolute', right: -2, bottom: -2, width: 30, height: 30, borderRadius: 15, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  photoMenu: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  photoMenuBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full, borderWidth: 1 },
+  photoMenuText: { fontSize: 13, fontFamily: 'SpaceGrotesk_500Medium' },
+  photoErrorText: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', textAlign: 'center', marginBottom: 6 },
   displayName: { fontSize: 20, fontFamily: 'Syne_700Bold' },
   usernameLabel: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
   emailLabel: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },

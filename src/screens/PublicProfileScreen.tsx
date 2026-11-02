@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore';
 import { GlassBackground } from '../components/GlassBackground';
 import { GlassCard } from '../components/GlassCard';
 import { GlassButton } from '../components/GlassButton';
+import { Avatar } from '../components/Avatar';
 import { colors, radius } from '../theme';
 
 export function PublicProfileScreen({ route }: any) {
@@ -31,7 +32,7 @@ export function PublicProfileScreen({ route }: any) {
     setMessaging(true);
     try {
       const convId = await getOrCreateConversation(myId, profile.id);
-      navigation.navigate('Chat', { conversationId: convId, otherUsername: profile.username });
+      navigation.navigate('Chat', { conversationId: convId, otherUsername: profile.username, otherAvatarUrl: profile.avatar_url ?? null });
     } catch (e) {
       console.error('Failed to open conversation', e);
     } finally {
@@ -56,7 +57,6 @@ export function PublicProfileScreen({ route }: any) {
     );
   }
 
-  const initials = (profile.display_name || profile.username).charAt(0).toUpperCase();
   const isOwnProfile = myId === profile.id;
 
   return (
@@ -71,9 +71,7 @@ export function PublicProfileScreen({ route }: any) {
         <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
           <View style={styles.avatarGlow} />
           <View style={styles.avatarRing}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
-            </View>
+            <Avatar uri={profile.avatar_url} name={profile.display_name || profile.username} size={84} bordered={false} />
           </View>
           <Text style={styles.displayName}>{profile.display_name || profile.username}</Text>
           <Text style={styles.username}>@{profile.username}</Text>
@@ -168,15 +166,6 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
   },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: colors.orangeDim,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontSize: 40, fontWeight: '800', color: colors.orange },
   displayName: { fontSize: 24, fontWeight: '800', color: colors.textPrimary },
   username: { fontSize: 14, color: colors.textTertiary, fontWeight: '500' },
   bio: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, paddingHorizontal: 24 },

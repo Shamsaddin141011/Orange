@@ -99,7 +99,7 @@ export async function fetchUniversities(params: {
 export async function searchUsers(query: string): Promise<UserPublicProfile[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, country, interests, degree_level, is_public')
+    .select('id, username, display_name, bio, avatar_url, country, interests, degree_level, is_public')
     .ilike('username', `%${query}%`)
     .eq('is_public', true)
     .not('username', 'is', null)
@@ -112,7 +112,7 @@ export async function searchUsers(query: string): Promise<UserPublicProfile[]> {
 export async function getUserById(userId: string): Promise<UserPublicProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, country, interests, degree_level, is_public')
+    .select('id, username, display_name, bio, avatar_url, country, interests, degree_level, is_public')
     .eq('id', userId)
     .single();
   if (error) return null;
@@ -180,7 +180,7 @@ export async function getConversations(myId: string): Promise<Conversation[]> {
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, display_name, bio, country, interests, degree_level, is_public')
+    .select('id, username, display_name, bio, avatar_url, country, interests, degree_level, is_public')
     .in('id', otherIds);
 
   const profileMap: Record<string, UserPublicProfile> = {};

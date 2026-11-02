@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { searchUsers, getOrCreateConversation } from '../lib/supabase';
 import { UserPublicProfile } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { Avatar } from '../components/Avatar';
 import { useThemeColors, radius, iconSize, shadow } from '../theme';
 
 export function PeopleScreen() {
@@ -27,7 +28,7 @@ export function PeopleScreen() {
     setMessagingId(user.id);
     try {
       const conversationId = await getOrCreateConversation(myId, user.id);
-      navigation.navigate('Chat', { conversationId, otherUsername: user.username });
+      navigation.navigate('Chat', { conversationId, otherUsername: user.username, otherAvatarUrl: user.avatar_url ?? null });
     } finally {
       setMessagingId(null);
     }
@@ -109,11 +110,7 @@ export function PeopleScreen() {
           <Animated.View key={user.id} entering={FadeInDown.duration(350).delay(i * 50)}>
             <Pressable onPress={() => navigation.navigate('PublicProfile', { userId: user.id })}>
               <View style={[styles.userCard, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }, shadow.sm]}>
-                <View style={[styles.avatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
-                  <Text style={[styles.avatarText, { color: c.primary }]}>
-                    {(user.display_name || user.username).charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+                <Avatar uri={user.avatar_url} name={user.display_name || user.username} size={48} style={styles.avatar} />
                 <View style={styles.userInfo}>
                   <Text style={[styles.displayName, { color: c.textPrimary }]}>{user.display_name || user.username}</Text>
                   <Text style={[styles.username, { color: c.textTertiary }]}>@{user.username}</Text>
@@ -194,17 +191,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    flexShrink: 0,
-  },
-  avatarText: { fontSize: 20, fontFamily: 'Syne_700Bold' },
+  avatar: { marginRight: 12 },
   userInfo: { flex: 1, gap: 2 },
   displayName: { fontSize: 15, fontFamily: 'Syne_700Bold' },
   username: { fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular' },

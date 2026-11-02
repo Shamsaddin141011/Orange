@@ -80,6 +80,7 @@ export interface UserPublicProfile {
   username: string;
   display_name: string;
   bio: string;
+  avatar_url?: string | null;
   country?: Country;
   interests?: string[];
   degree_level?: string;
