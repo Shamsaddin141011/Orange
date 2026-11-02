@@ -140,6 +140,28 @@ export async function saveUserSocialProfile(
   if (error) throw error;
 }
 
+// ── Account ───────────────────────────────────────────────────────────────────
+
+/** Permanently delete the signed-in user's account and all their data.
+ *  Avatar files go first through the Storage API (SQL can't delete storage
+ *  objects), then the delete_my_account() RPC removes conversations and the
+ *  auth user, which cascades to every other table. See supabase/delete-account.sql. */
+export async function deleteMyAccount(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('You are not signed in.');
+  const userId = session.user.id;
+
+  const { data: files, error: listError } = await supabase.storage.from('avatars').list(userId);
+  if (listError) throw listError;
+  if (files && files.length > 0) {
+    const { error } = await supabase.storage.from('avatars').remove(files.map((f) => `${userId}/${f.name}`));
+    if (error) throw error;
+  }
+
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+}
+
 // ── Conversations ─────────────────────────────────────────────────────────────
 
 /** Find an existing 1-on-1 conversation or create a new one. Returns the conversation ID. */

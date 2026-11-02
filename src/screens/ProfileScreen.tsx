@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { supabase, saveUserSocialProfile } from '../lib/supabase';
 import { AvatarError, pickAvatarImage, removeAvatar, uploadAvatar } from '../lib/avatar';
 import { Avatar } from '../components/Avatar';
+import { DeleteAccountModal } from '../components/DeleteAccountModal';
 import { useEffect, useState } from 'react';
 import { Country } from '../types';
 import { GlassInput } from '../components/GlassInput';
@@ -30,7 +31,7 @@ const STUDY_LEVELS: StudyLevel[] = ["Bachelor's", "Master's", 'PhD', "Associate'
 export function ProfileScreen() {
   const c = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profile, shortlist, matches, compareIds, tracker, signOut, saveProfile, fetchAndScore, username, avatarUrl, setAvatarUrl, session } = useAppStore();
+  const { profile, shortlist, matches, compareIds, tracker, signOut, deleteAccount, saveProfile, fetchAndScore, username, avatarUrl, setAvatarUrl, session } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const trackingCount = Object.keys(tracker).length;
 
@@ -45,6 +46,7 @@ export function ProfileScreen() {
   const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [country, setCountry] = useState<Country>(profile.country);
   const [studyLevel, setStudyLevel] = useState<StudyLevel>((profile.degreeLevel as StudyLevel) ?? "Bachelor's");
@@ -366,9 +368,24 @@ export function ProfileScreen() {
 
         <Button label="Sign Out" variant="secondary" onPress={signOut} />
 
+        <Pressable
+          onPress={() => setDeleteOpen(true)}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={styles.deleteAccountBtn}
+        >
+          <Text style={[styles.deleteAccountText, { color: c.danger }]}>Delete account</Text>
+        </Pressable>
+
         <View style={{ height: insets.bottom + layout.tabBarHeight + layout.tabBarBottomOffset + 16 }} />
       </ScrollView>
       <HelpFAQ />
+      <DeleteAccountModal
+        visible={deleteOpen}
+        username={username}
+        onConfirm={deleteAccount}
+        onDismiss={() => setDeleteOpen(false)}
+      />
     </View>
   );
 }
@@ -422,4 +439,7 @@ const styles = StyleSheet.create({
   infoLabel: { flex: 1, fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular' },
   infoValue: { fontSize: 14, fontFamily: 'SpaceGrotesk_500Medium' },
   none: { fontSize: 14, fontFamily: 'SpaceGrotesk_400Regular' },
+
+  deleteAccountBtn: { alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 },
+  deleteAccountText: { fontSize: 13, fontFamily: 'SpaceGrotesk_500Medium' },
 });
