@@ -9,10 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase, getMessages, sendMessage } from '../lib/supabase';
 import { Message } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { Avatar } from '../components/Avatar';
 import { useThemeColors, radius, iconSize } from '../theme';
 
 export function ChatScreen({ route }: any) {
-  const { conversationId, otherUsername } = route.params as { conversationId: string; otherUsername: string };
+  const { conversationId, otherUsername, otherAvatarUrl } = route.params as { conversationId: string; otherUsername: string; otherAvatarUrl?: string | null };
   const c = useThemeColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -76,8 +77,6 @@ export function ChatScreen({ route }: any) {
     }
   }, [messages.length]);
 
-  const otherInitial = otherUsername.charAt(0).toUpperCase();
-
   const renderMessage = ({ item }: { item: Message }) => {
     const isMe = item.sender_id === myId;
     return (
@@ -115,9 +114,7 @@ export function ChatScreen({ route }: any) {
             <ArrowLeft size={iconSize.sm} color={c.textPrimary} strokeWidth={1.5} />
           </Pressable>
           <View style={styles.headerInfo}>
-            <View style={[styles.headerAvatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
-              <Text style={[styles.headerAvatarText, { color: c.primary }]}>{otherInitial}</Text>
-            </View>
+            <Avatar uri={otherAvatarUrl} name={otherUsername} size={36} />
             <Text style={[styles.headerName, { color: c.textPrimary }]}>@{otherUsername}</Text>
           </View>
           <View style={{ width: 40 }} />
@@ -194,15 +191,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerAvatarText: { fontSize: 15, fontFamily: 'Syne_700Bold' },
   headerName: { fontSize: 16, fontFamily: 'Syne_700Bold' },
 
   messageList: { padding: 16, gap: 4, flexGrow: 1 },

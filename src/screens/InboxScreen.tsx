@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConversations } from '../lib/supabase';
 import { Conversation } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { Avatar } from '../components/Avatar';
 import { useThemeColors, radius, iconSize } from '../theme';
 
 function timeAgo(iso: string): string {
@@ -78,19 +79,17 @@ export function InboxScreen() {
 
           {conversations.map((conv, i) => {
             const other = conv.other_user;
-            const initials = other ? (other.display_name || other.username).charAt(0).toUpperCase() : '?';
             return (
               <Animated.View key={conv.id} entering={FadeInDown.duration(350).delay(i * 50)}>
                 <Pressable
                   onPress={() => navigation.navigate('Chat', {
                     conversationId: conv.id,
                     otherUsername: other?.username ?? 'Unknown',
+                    otherAvatarUrl: other?.avatar_url ?? null,
                   })}
                   style={[styles.convRow, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}
                 >
-                  <View style={[styles.avatar, { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }]}>
-                    <Text style={[styles.avatarText, { color: c.primary }]}>{initials}</Text>
-                  </View>
+                  <Avatar uri={other?.avatar_url} name={other?.display_name || other?.username} size={52} style={styles.avatar} />
                   <View style={styles.convInfo}>
                     <View style={styles.convTop}>
                       <Text style={[styles.convName, { color: c.textPrimary }]}>
@@ -145,16 +144,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
   },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  avatarText: { fontSize: 22, fontFamily: 'Syne_700Bold' },
+  avatar: { marginRight: 14 },
   convInfo: { flex: 1 },
   convTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
   convName: { fontSize: 15, fontFamily: 'SpaceGrotesk_700Bold' },

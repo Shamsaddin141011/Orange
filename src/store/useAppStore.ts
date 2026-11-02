@@ -11,6 +11,7 @@ interface AppState {
   session: Session | null;
   profile: StudentProfile;
   username: string | null;
+  avatarUrl: string | null;
   userDataLoaded: boolean;
   shortlist: Record<string, ShortlistMeta>;
   compareIds: string[];
@@ -22,6 +23,7 @@ interface AppState {
   setSession: (session: Session | null) => void;
   setProfile: (profile: StudentProfile) => void;
   setUsername: (username: string | null) => void;
+  setAvatarUrl: (avatarUrl: string | null) => void;
   setMatches: (matches: MatchResult[]) => void;
   fetchAndScore: (profile: StudentProfile) => Promise<void>;
   loadUserData: () => Promise<void>;
@@ -41,6 +43,7 @@ export const useAppStore = create<AppState>()(
       session: null,
       profile: defaultProfile,
       username: null,
+      avatarUrl: null,
       userDataLoaded: false,
       shortlist: {},
       compareIds: [],
@@ -52,6 +55,7 @@ export const useAppStore = create<AppState>()(
       setSession: (session) => set({ session }),
       setProfile: (profile) => set({ profile }),
       setUsername: (username) => set({ username }),
+      setAvatarUrl: (avatarUrl) => set({ avatarUrl }),
       setMatches: (matches) => set({ matches }),
 
       fetchAndScore: async (profile) => {
@@ -99,7 +103,7 @@ export const useAppStore = create<AppState>()(
 
         if (profileRes.data) {
           const p = profileRes.data;
-          set({ username: p.username ?? null });
+          set({ username: p.username ?? null, avatarUrl: p.avatar_url ?? null });
           set({
             profile: {
               country: p.country ?? 'USA',
@@ -294,6 +298,7 @@ export const useAppStore = create<AppState>()(
           session: null,
           profile: defaultProfile,
           username: null,
+          avatarUrl: null,
           userDataLoaded: false,
           shortlist: {},
           compareIds: [],
