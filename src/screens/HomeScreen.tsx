@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Heart, BarChart3, CheckSquare } from 'lucide-react-native';
-import { CardBanner } from '../components/CardBanner';
+import { UniImage } from '../components/UniImage';
 import { colorIdx } from '../lib/transform';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
@@ -78,14 +78,11 @@ export function HomeScreen() {
                   onPress={() => navigation.navigate('Discover')}
                 >
                   <View style={styles.featuredImageWrap}>
-                    <CardBanner
+                    <UniImage
                       name={m.university.name}
-                      city={m.university.city}
-                      state={m.university.state}
-                      country={m.university.country}
+                      imageUrl={m.university.image_url}
                       idx={colorIdx(m.university.id)}
-                      height={110}
-                      showText={false}
+                      style={styles.featuredImage}
                     />
                   </View>
                   <View style={styles.featuredInfo}>
@@ -190,6 +187,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   featuredImageWrap: { height: 110 },
+  featuredImage: { width: '100%', height: 110 },
   featuredInfo: { padding: 10 },
   featuredName: { fontSize: 13, fontFamily: 'Syne_700Bold', marginBottom: 2 },
   featuredMeta: { fontSize: 11, fontFamily: 'SpaceGrotesk_400Regular' },
