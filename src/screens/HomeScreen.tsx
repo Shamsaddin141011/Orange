@@ -17,6 +17,13 @@ const FEATURES = [
   { Icon: CheckSquare,label: 'Tracker',  desc: 'Track deadlines & applications',tab: 'Tracker' },
 ];
 
+function isCampusPhotoUrl(url?: string | null): boolean {
+  if (!url || !url.includes('wikimedia.org')) return false;
+  let file = url.toLowerCase();
+  try { file = decodeURIComponent(file); } catch {}
+  return !/logo|seal|crest|emblem|coat.of.arms|sign\b|signage|screenshot|map|flag|wordmark|mascot/.test(file);
+}
+
 export function HomeScreen() {
   const navigation = useNavigation<any>();
   const c = useThemeColors();
@@ -24,7 +31,11 @@ export function HomeScreen() {
   const { shortlist, matches } = useAppStore();
   const savedCount = Object.keys(shortlist).length;
   const matchCount = matches.length;
-  const featured = matches.slice(0, 6);
+  // Only feature schools with a real campus photo so the row looks good. Wikimedia Commons images
+  // (Wikidata P18) are curated campus shots; homepage-scraped ones are often logos or screenshots.
+  // Falls back to the plain top 6 if none of the matches qualify.
+  const withPhotos = matches.filter((m) => isCampusPhotoUrl(m.university.image_url));
+  const featured = (withPhotos.length > 0 ? withPhotos : matches).slice(0, 6);
   const [totalSchools, setTotalSchools] = useState<number | null>(null);
 
   useEffect(() => {
