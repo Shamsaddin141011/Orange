@@ -24,6 +24,10 @@ const FAQS: FAQ[] = [
     a: 'Images are pulled automatically from Wikidata, Wikipedia, and the school\'s own homepage. About 68% of schools in our database currently have a photo.\n\nThe rest — mostly small community colleges or international schools without a strong Wikipedia presence — show colored initials as a placeholder. We\'re continuously expanding coverage.',
   },
   {
+    q: 'Where do the campus photos come from?',
+    a: 'Most campus photos come from Wikimedia Commons, where photographers share them under free licences such as CC BY and CC BY-SA. Those licences ask that the author and licence be credited, so each university page shows a small "Photo:" credit on its main image. Tap it to see the original file and full licence terms.\n\nA few photos come from the school\'s own website; for those, the credit shows the site they came from.',
+  },
+  {
     q: 'What does each tab do?',
     a: '• Home — your dashboard with quick stats and top matches.\n• Discover — search and rank universities for you.\n• Shortlist — schools you\'ve saved, with deadlines and application status.\n• Compare — view two or more schools side-by-side.\n• Tracker — track where each application stands (sent, accepted, etc.).\n• People — find other students, view public profiles, and chat.\n• Profile — edit your academics, interests, country, budget, and account info.',
   },
