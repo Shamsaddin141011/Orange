@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: 20,
-    paddingRight: 68, // leave room for the global HelpFAQ button (42px + 16px + gap)
+    paddingRight: 20,
     paddingTop: 16,
     paddingBottom: 12,
   },

@@ -1,5 +1,6 @@
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HelpFAQ } from '../components/HelpFAQ';
 import { GraduationCap, Settings2, Edit2, Check } from 'lucide-react-native';
 import { useAppStore } from '../store/useAppStore';
 import { supabase, saveUserSocialProfile } from '../lib/supabase';
@@ -299,6 +300,7 @@ export function ProfileScreen() {
 
         <View style={{ height: insets.bottom + layout.tabBarHeight + layout.tabBarBottomOffset + 16 }} />
       </ScrollView>
+      <HelpFAQ />
     </View>
   );
 }

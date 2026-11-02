@@ -61,6 +61,7 @@ export function HelpFAQ() {
         onPress={() => setOpen(true)}
         style={({ pressed }) => [
           styles.fab,
+          { top: insets.top + 12 },
           { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder },
           pressed && { backgroundColor: c.primarySurface, borderColor: c.primaryBorder },
         ]}
@@ -129,7 +130,6 @@ export function HelpFAQ() {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 16 : 52,
     right: 16,
     width: 42,
     height: 42,

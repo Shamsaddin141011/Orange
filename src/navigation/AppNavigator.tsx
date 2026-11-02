@@ -26,7 +26,6 @@ import { InboxScreen } from '../screens/InboxScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { UsernameSetupModal } from '../components/UsernameSetupModal';
 import { OnboardingModal } from '../components/OnboardingModal';
-import { HelpFAQ } from '../components/HelpFAQ';
 import { useThemeColors, radius, fonts, iconSize, layout } from '../theme';
 
 export type DiscoverStackParamList = {
@@ -263,7 +262,6 @@ function MainTabs() {
 
       <UsernameSetupModal visible={userDataLoaded && username === null} />
       <OnboardingModal visible={showOnboarding} onDone={() => setOnboardingDismissed(true)} />
-      <HelpFAQ />
     </>
   );
 }
