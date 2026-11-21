@@ -1,5 +1,7 @@
 {
   "cleanUrls": true,
+  "buildCommand": "npx expo export -p web && node scripts/build-university-pages.mjs",
+  "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
