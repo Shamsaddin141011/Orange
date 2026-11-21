@@ -24,11 +24,21 @@ function isCampusPhotoUrl(url?: string | null): boolean {
   return !/logo|seal|crest|emblem|coat.of.arms|sign\b|signage|screenshot|map|flag|wordmark|mascot/.test(file);
 }
 
+function greetingForHour(hour: number) {
+  if (hour < 5) return 'Up late';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export function HomeScreen() {
   const navigation = useNavigation<any>();
   const c = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { shortlist, matches } = useAppStore();
+  const { shortlist, matches, session, username } = useAppStore();
+  const fullName: string | undefined = session?.user.user_metadata?.full_name;
+  const firstName = fullName?.trim().split(/\s+/)[0] || (username ? `@${username}` : undefined);
+  const greeting = `${greetingForHour(new Date().getHours())}${firstName ? `, ${firstName}` : ''}`;
   const savedCount = Object.keys(shortlist).length;
   const matchCount = matches.length;
   // Only feature schools with a real campus photo so the row looks good. Wikimedia Commons images
@@ -53,7 +63,7 @@ export function HomeScreen() {
       >
         {/* Greeting */}
         <Animated.View entering={FadeInDown.duration(500)} style={styles.greetingSection}>
-          <Text style={[styles.eyebrow, { color: c.textTertiary }]}>Good morning 👋</Text>
+          <Text style={[styles.eyebrow, { color: c.textTertiary }]}>{greeting} 👋</Text>
           <Text style={[styles.greeting, { color: c.textPrimary }]}>Your Dashboard</Text>
         </Animated.View>
 
@@ -209,7 +219,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 8,
   },
-  featureWrap: { width: '47.5%' },
+  featureWrap: { flexGrow: 1, flexBasis: '40%' },
   featureCard: {
     borderRadius: radius.lg,
     borderWidth: 1,
