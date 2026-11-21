@@ -279,6 +279,26 @@ function MainTabs({ guest = false }: { guest?: boolean }) {
   );
 }
 
+// Browser tab titles: readable page names instead of internal route names like "ShortlistMain".
+const PAGE_TITLES: Record<string, string> = {
+  Home: 'Dashboard',
+  DiscoverResults: 'Discover',
+  UniversityDetail: 'University',
+  ShortlistMain: 'Shortlist',
+  Tracker: 'Tracker',
+  Compare: 'Compare',
+  PeopleSearch: 'People',
+  PublicProfile: 'Profile',
+  Inbox: 'Messages',
+  Chat: 'Chat',
+  Profile: 'Your profile',
+};
+
+function pageTitle(routeName?: string) {
+  const page = routeName ? PAGE_TITLES[routeName] : undefined;
+  return page ? `${page} · OrangeUni` : 'OrangeUni';
+}
+
 // ─── Root navigator ───────────────────────────────────────────────────────────
 
 export function AppNavigator() {
@@ -326,7 +346,7 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer documentTitle={{ formatter: (_options, route) => pageTitle(route?.name) }}>
       {session ? <MainTabs /> : guest ? <MainTabs guest /> : <AuthScreen />}
     </NavigationContainer>
   );

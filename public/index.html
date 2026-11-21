@@ -11,7 +11,18 @@
     <meta name="color-scheme" content="dark light" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>OrangeUni</title>
+    <title>OrangeUni — Find, compare and track universities</title>
+    <!-- Search engines show this instead of the noscript text (the app renders with JavaScript) -->
+    <meta name="description" content="OrangeUni helps students find, compare and track universities. Get matched with schools that fit your interests, test scores and budget, shortlist favourites, and follow every application deadline." />
+    <link rel="canonical" href="https://www.orangeuni.org/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OrangeUni" />
+    <meta property="og:title" content="OrangeUni — Find, compare and track universities" />
+    <meta property="og:description" content="OrangeUni helps students find, compare and track universities. Get matched with schools that fit your interests, test scores and budget, shortlist favourites, and follow every application deadline." />
+    <meta property="og:url" content="https://www.orangeuni.org/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="OrangeUni — Find, compare and track universities" />
+    <meta name="twitter:description" content="OrangeUni helps students find, compare and track universities. Get matched with schools that fit your interests, test scores and budget, shortlist favourites, and follow every application deadline." />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -54,7 +65,11 @@
 
   <body>
     <noscript>
-      You need to enable JavaScript to run this app.
+      <main style="max-width: 640px; margin: 48px auto; padding: 0 16px; font-family: system-ui, sans-serif; color: #FFFAF5;">
+        <h1>OrangeUni</h1>
+        <p>OrangeUni helps students find, compare and track universities. Get matched with schools that fit your interests, test scores and budget, shortlist favourites, and follow every application deadline.</p>
+        <p>Turn on JavaScript to use the app, or read <a href="/about" style="color: #FF6B1A;">about OrangeUni</a>, our <a href="/privacy" style="color: #FF6B1A;">privacy policy</a> and <a href="/terms" style="color: #FF6B1A;">terms</a>.</p>
+      </main>
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
