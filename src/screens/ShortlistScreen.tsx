@@ -287,8 +287,8 @@ function ShortlistItem(p: ItemProps) {
 
   const nameBlock = (
     <Pressable onPress={p.onOpen} style={{ flex: 1, minWidth: 0 }}>
-      <Text style={[styles.name, { color: c.textPrimary }]} numberOfLines={1}>{p.uni.name}</Text>
-      <Text style={[styles.subtitle, { color: c.textTertiary }]} numberOfLines={1}>{subtitle}</Text>
+      <Text style={[styles.name, p.wide && styles.nameWide, { color: c.textPrimary }]} numberOfLines={1}>{p.uni.name}</Text>
+      <Text style={[styles.subtitle, p.wide && styles.subtitleWide, { color: c.textTertiary }]} numberOfLines={1}>{subtitle}</Text>
     </Pressable>
   );
 
@@ -479,7 +479,7 @@ function StatusPickerModal({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { padding: 16, gap: 12 },
-  listWide: { maxWidth: 1100, width: '100%', alignSelf: 'center', paddingHorizontal: 24, gap: 8 },
+  listWide: { paddingHorizontal: 32, gap: 10 },
 
   listHeader: { marginBottom: 4 },
   headerTop: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
   rowGrid: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   columnHeads: { marginTop: 18, paddingHorizontal: 12 },
   colHead: { fontSize: 11, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: 0.8 },
-  colImage: { width: 200 },
+  colImage: { width: 300 },
   colUni: { flex: 1.2, minWidth: 0, gap: 8 },
   colNote: { flex: 1, minWidth: 0 },
-  colDeadline: { width: 170 },
+  colDeadline: { width: 200 },
 
-  row: { borderWidth: 1, borderRadius: 16, padding: 12 },
-  rowImage: { width: 200, height: 124, borderRadius: 12, overflow: 'hidden' },
+  row: { borderWidth: 1, borderRadius: 18, padding: 14 },
+  rowImage: { width: 300, height: 180, borderRadius: 14, overflow: 'hidden' },
   deadlineCol: { gap: 8 },
   deadlineWideBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   deadlineWideFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -513,6 +513,8 @@ const styles = StyleSheet.create({
   nameLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   name: { fontSize: 17, fontFamily: 'Syne_700Bold' },
   subtitle: { fontSize: 12, fontFamily: 'SpaceGrotesk_400Regular', marginTop: 1 },
+  nameWide: { fontSize: 22 },
+  subtitleWide: { fontSize: 14, marginTop: 3 },
 
   tagsColumn: { justifyContent: 'space-between' },
   tagsRow: { flexDirection: 'row', gap: 6 },
@@ -522,7 +524,7 @@ const styles = StyleSheet.create({
 
   note: { borderWidth: 1, borderRadius: 12, fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', lineHeight: 18, textAlignVertical: 'top' },
   noteCard: { flex: 1, minWidth: 0, paddingHorizontal: 10, paddingVertical: 8 },
-  noteWide: { height: 124, paddingHorizontal: 12, paddingVertical: 10 },
+  noteWide: { height: 180, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, lineHeight: 20 },
 
   deadlineBar: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
   deadlineDate: { fontSize: 14, fontFamily: 'SpaceGrotesk_700Bold' },
