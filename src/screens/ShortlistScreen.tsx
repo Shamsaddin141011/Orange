@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, CalendarClock, CalendarPlus, Heart, Scale, ChevronDown, ArrowUpDown, Check, Trash2 } from 'lucide-react-native';
+import { X, CalendarClock, CalendarPlus, Heart, Scale, ChevronDown, ArrowUpDown, Check, Trash2, Pencil } from 'lucide-react-native';
 import { CalendarPickerModal } from '../components/CalendarPickerModal';
 import { UniImage } from '../components/UniImage';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -404,10 +404,38 @@ function ShortlistItem(p: ItemProps) {
         </View>
         <View style={styles.colNote}>{note}</View>
         <View style={[styles.colDeadline, styles.deadlineCol]}>
-          <Pressable onPress={p.onPickDeadline} accessibilityRole="button" accessibilityLabel="Set application deadline" style={styles.deadlineWideBtn}>
-            {!p.meta.deadline && <CalendarPlus size={14} color={c.textTertiary} strokeWidth={1.75} />}
-            <View>{deadlineText}</View>
-          </Pressable>
+          {p.meta.deadline ? (
+            <>
+              <View style={styles.deadlineWideBtn}>
+                <CalendarClock size={16} color={deadlineColor} strokeWidth={1.75} />
+                <View>{deadlineText}</View>
+              </View>
+              <View style={styles.deadlineEditRow}>
+                <Pressable
+                  onPress={p.onPickDeadline}
+                  style={({ pressed }) => [styles.deadlineEditBtn, { borderColor: c.surfaceBorder }, pressed && { opacity: 0.7 }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change deadline"
+                >
+                  <Pencil size={12} color={c.textSecondary} strokeWidth={2} />
+                  <Text style={[styles.deadlineEditText, { color: c.textSecondary }]}>Change</Text>
+                </Pressable>
+                <Pressable onPress={p.onClearDeadline} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear deadline">
+                  <X size={14} color={c.textTertiary} strokeWidth={2} />
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            <Pressable
+              onPress={p.onPickDeadline}
+              style={({ pressed }) => [styles.deadlineEditBtn, { borderColor: c.surfaceBorder, alignSelf: 'flex-start' }, pressed && { opacity: 0.7 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Set application deadline"
+            >
+              <CalendarPlus size={14} color={c.textSecondary} strokeWidth={1.75} />
+              <Text style={[styles.deadlineEditText, { color: c.textSecondary }]}>Set deadline</Text>
+            </Pressable>
+          )}
           {statusPill}
         </View>
       </View>
@@ -531,7 +559,10 @@ const styles = StyleSheet.create({
   row: { borderWidth: 1, borderRadius: 18, padding: 14 },
   rowImage: { width: 300, height: 180, borderRadius: 14, overflow: 'hidden' },
   deadlineCol: { gap: 8 },
-  deadlineWideBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deadlineWideBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  deadlineEditRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  deadlineEditBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
+  deadlineEditText: { fontSize: 12, fontFamily: 'SpaceGrotesk_500Medium' },
 
   // Phone card
   card: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 10 },
