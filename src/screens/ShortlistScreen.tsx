@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, CalendarClock, CalendarPlus, Heart, Scale, ChevronDown, ArrowUpDown, Check } from 'lucide-react-native';
+import { X, CalendarClock, CalendarPlus, Heart, Scale, ChevronDown, ArrowUpDown, Check, Trash2 } from 'lucide-react-native';
 import { CalendarPickerModal } from '../components/CalendarPickerModal';
 import { UniImage } from '../components/UniImage';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -265,7 +265,9 @@ function ShortlistItem(p: ItemProps) {
   const c = useThemeColors();
   const status = p.meta.appStatus ?? 'unsent';
   const days = p.meta.deadline ? daysUntil(p.meta.deadline) : null;
-  const deadlineColor = days === null ? c.textTertiary : days < 0 ? c.danger : days <= 14 ? c.primary : c.textPrimary;
+  const decided = status === 'accepted' || status === 'not_accepted';
+  const deadlineColor =
+    days === null ? c.textTertiary : decided ? c.textSecondary : days < 0 ? c.danger : days <= 14 ? c.primary : c.textPrimary;
   const subtitle = [p.uni.city, p.uni.country, p.score !== undefined ? `${p.score}% match` : null].filter(Boolean).join(' · ');
 
   const image = (
@@ -353,7 +355,7 @@ function ShortlistItem(p: ItemProps) {
   const deadlineText = p.meta.deadline ? (
     <>
       <Text style={[styles.deadlineDate, { color: deadlineColor }]}>{formatDeadline(p.meta.deadline)}</Text>
-      <Text style={[styles.deadlineDays, { color: days !== null && days < 0 ? c.danger : c.textTertiary }]}>{daysLabel(days as number)}</Text>
+      <Text style={[styles.deadlineDays, { color: days !== null && days < 0 && !decided ? c.danger : c.textTertiary }]}>{daysLabel(days as number)}</Text>
     </>
   ) : (
     <Text style={[styles.setDeadline, { color: c.textTertiary }]}>Set deadline</Text>
@@ -365,11 +367,40 @@ function ShortlistItem(p: ItemProps) {
       <View style={[styles.rowGrid, styles.row, { backgroundColor: c.bgElevated, borderColor: c.surfaceBorder }]}>
         <View style={styles.colImage}>{image}</View>
         <View style={styles.colUni}>
-          <View style={styles.nameLine}>
+          <View style={styles.uniMain}>
             {nameBlock}
-            {compareIcon}
+            {tagSelector}
           </View>
-          {tagSelector}
+          <View style={styles.rowActions}>
+            <Pressable
+              onPress={p.onToggleCompare}
+              style={({ pressed }) => [
+                styles.actionBtn,
+                p.compared
+                  ? { backgroundColor: c.primarySurface, borderColor: c.primaryBorder }
+                  : { backgroundColor: c.surface, borderColor: c.surfaceBorder },
+                pressed && { opacity: 0.75 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={p.compared ? 'Remove from compare' : 'Add to compare'}
+            >
+              {p.compared
+                ? <Check size={15} color={c.primary} strokeWidth={2} />
+                : <Scale size={15} color={c.textSecondary} strokeWidth={1.75} />}
+              <Text style={[styles.actionText, { color: p.compared ? c.primary : c.textSecondary }]}>
+                {p.compared ? 'In compare' : 'Add to compare'}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={p.onRemove}
+              style={({ pressed }) => [styles.actionBtn, { borderColor: c.surfaceBorder }, pressed && { backgroundColor: c.dangerSurface, borderColor: c.dangerBorder }]}
+              accessibilityRole="button"
+              accessibilityLabel="Remove from shortlist"
+            >
+              <Trash2 size={15} color={c.danger} strokeWidth={1.75} />
+              <Text style={[styles.actionText, { color: c.danger }]}>Remove from shortlist</Text>
+            </Pressable>
+          </View>
         </View>
         <View style={styles.colNote}>{note}</View>
         <View style={[styles.colDeadline, styles.deadlineCol]}>
@@ -377,12 +408,7 @@ function ShortlistItem(p: ItemProps) {
             {!p.meta.deadline && <CalendarPlus size={14} color={c.textTertiary} strokeWidth={1.75} />}
             <View>{deadlineText}</View>
           </Pressable>
-          <View style={styles.deadlineWideFooter}>
-            {statusPill}
-            <Pressable onPress={p.onRemove} hitSlop={8} accessibilityLabel="Remove from shortlist">
-              <X size={15} color={c.textTertiary} strokeWidth={2} />
-            </Pressable>
-          </View>
+          {statusPill}
         </View>
       </View>
     );
@@ -494,7 +520,11 @@ const styles = StyleSheet.create({
   columnHeads: { marginTop: 18, paddingHorizontal: 12 },
   colHead: { fontSize: 11, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: 0.8 },
   colImage: { width: 300 },
-  colUni: { flex: 1.2, minWidth: 0, gap: 8 },
+  colUni: { flex: 1.3, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 16 },
+  uniMain: { flex: 1, minWidth: 0, gap: 10 },
+  rowActions: { gap: 8 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  actionText: { fontSize: 13, fontFamily: 'SpaceGrotesk_500Medium' },
   colNote: { flex: 1, minWidth: 0 },
   colDeadline: { width: 200 },
 
@@ -502,7 +532,6 @@ const styles = StyleSheet.create({
   rowImage: { width: 300, height: 180, borderRadius: 14, overflow: 'hidden' },
   deadlineCol: { gap: 8 },
   deadlineWideBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  deadlineWideFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
   // Phone card
   card: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 10 },
