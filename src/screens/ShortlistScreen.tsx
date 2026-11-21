@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
   rowGrid: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   columnHeads: { marginTop: 18, paddingHorizontal: 12 },
   colHead: { fontSize: 11, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: 0.8 },
-  colImage: { width: 120 },
+  colImage: { width: 200 },
   colUni: { flex: 1.2, minWidth: 0, gap: 8 },
   colNote: { flex: 1, minWidth: 0 },
   colDeadline: { width: 170 },
 
   row: { borderWidth: 1, borderRadius: 16, padding: 12 },
-  rowImage: { width: 120, height: 80, borderRadius: 12, overflow: 'hidden' },
+  rowImage: { width: 200, height: 124, borderRadius: 12, overflow: 'hidden' },
   deadlineCol: { gap: 8 },
   deadlineWideBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   deadlineWideFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -507,11 +507,11 @@ const styles = StyleSheet.create({
   // Phone card
   card: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 10 },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 2 },
-  cardMiddle: { flexDirection: 'row', gap: 10, alignItems: 'stretch', height: 100 },
-  cardImage: { width: 100, borderRadius: 12, overflow: 'hidden' },
+  cardMiddle: { flexDirection: 'row', gap: 10, alignItems: 'stretch', height: 112 },
+  cardImage: { width: 120, borderRadius: 12, overflow: 'hidden' },
 
   nameLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  name: { fontSize: 16, fontFamily: 'Syne_700Bold' },
+  name: { fontSize: 17, fontFamily: 'Syne_700Bold' },
   subtitle: { fontSize: 12, fontFamily: 'SpaceGrotesk_400Regular', marginTop: 1 },
 
   tagsColumn: { justifyContent: 'space-between' },
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
 
   note: { borderWidth: 1, borderRadius: 12, fontSize: 13, fontFamily: 'SpaceGrotesk_400Regular', lineHeight: 18, textAlignVertical: 'top' },
   noteCard: { flex: 1, minWidth: 0, paddingHorizontal: 10, paddingVertical: 8 },
-  noteWide: { height: 80, paddingHorizontal: 10, paddingVertical: 8 },
+  noteWide: { height: 124, paddingHorizontal: 12, paddingVertical: 10 },
 
   deadlineBar: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
   deadlineDate: { fontSize: 14, fontFamily: 'SpaceGrotesk_700Bold' },
