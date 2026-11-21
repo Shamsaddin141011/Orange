@@ -14,7 +14,36 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--border);color
 .cta{display:inline-block;background:var(--primary);color:#fff;font-weight:700;padding:12px 22px;border-radius:12px;text-decoration:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}.card h3{margin:0 0 6px;font-size:16px;color:var(--text)}.card p{margin:0;font-size:14px}
-</style></head><body><main>
+</style>
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<!-- Structured data: tells Google the brand name, site and logo (helps the "OrangeUni" brand query) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.orangeuni.org/#organization",
+      "name": "OrangeUni",
+      "url": "https://www.orangeuni.org/",
+      "logo": "https://www.orangeuni.org/icon-512.png",
+      "sameAs": []
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.orangeuni.org/#website",
+      "name": "OrangeUni",
+      "url": "https://www.orangeuni.org/",
+      "publisher": { "@id": "https://www.orangeuni.org/#organization" }
+    }
+  ]
+}
+</script>
+<!-- sameAs: add official social profile URLs (Instagram, X, LinkedIn, ...) to the Organization above when they exist -->
+</head><body><main>
 <section class="hero">
 <h1>OrangeUni</h1>
 <p class="tag">Find, compare, and track the right universities for you.</p>

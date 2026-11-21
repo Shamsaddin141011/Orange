@@ -23,6 +23,34 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="OrangeUni — Find, compare and track universities" />
     <meta name="twitter:description" content="OrangeUni helps students find, compare and track universities. Get matched with schools that fit your interests, test scores and budget, shortlist favourites, and follow every application deadline." />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Structured data: tells Google the brand name, site and logo (helps the "OrangeUni" brand query) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.orangeuni.org/#organization",
+          "name": "OrangeUni",
+          "url": "https://www.orangeuni.org/",
+          "logo": "https://www.orangeuni.org/icon-512.png",
+          "sameAs": []
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.orangeuni.org/#website",
+          "name": "OrangeUni",
+          "url": "https://www.orangeuni.org/",
+          "publisher": { "@id": "https://www.orangeuni.org/#organization" }
+        }
+      ]
+    }
+    </script>
+    <!-- sameAs: add official social profile URLs (Instagram, X, LinkedIn, ...) to the Organization above when they exist -->
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
